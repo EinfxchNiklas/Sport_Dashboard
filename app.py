@@ -5,9 +5,9 @@ from data_sources import bvb
 
 st.set_page_config(page_title="Sports Dashboard", layout="wide")
 
-st.title("🏟️ Borussia Dortmund Dashboard")
+st.title("🟡⚫ Borussia Dortmund Dashboard")
 
-tab1, tab2 = st.tabs(["📅 Spielplan", "🤕 Verletztenliste"])
+tab1, tab2 = st.tabs(["📅 Spielplan", " Verletztenliste"])
 
 with tab1:
     st.subheader("Nächste Spiele")
