@@ -6,7 +6,8 @@ from bs4 import BeautifulSoup
 def get_bvb_fixtures():
     """Holt die nächsten Spiele von Borussia Dortmund von kicker.de"""
     url = "https://www.kicker.de/borussia-dortmund/spielplan"
-    r = requests.get(url)
+    headers = {"User-Agent": "Mozilla/5.0"}
+    r = requests.get(url, headers=headers)
     soup = BeautifulSoup(r.text, "lxml")
 
     data = []
@@ -26,7 +27,8 @@ def get_bvb_fixtures():
 def get_bvb_injuries():
     """Holt verletzte Spieler von Borussia Dortmund (transfermarkt.de)"""
     url = "https://www.transfermarkt.de/borussia-dortmund/sperrenundverletzungen/verein/16"
-    r = requests.get(url, headers={"User-Agent": "Mozilla/5.0"})
+    headers = {"User-Agent": "Mozilla/5.0"}
+    r = requests.get(url, headers=headers)
     soup = BeautifulSoup(r.text, "lxml")
 
     data = []
