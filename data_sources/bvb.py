@@ -10,19 +10,23 @@ def get_bvb_fixtures():
     r = requests.get(url, headers=headers)
     soup = BeautifulSoup(r.text, "lxml")
 
-    table = soup.select_one("table.kick__table--gamelist-timeline")
-    if not table:
-        return pd.DataFrame(columns=["Datum", "Teams", "Ergebnis"])
-
     data = []
-    for row in table.select("tr"):
-        cols = row.select("td")
-        if len(cols) < 3:
-            continue
-        date = cols[0].get_text(strip=True)
-        teams = cols[1].get_text(" ", strip=True)
-        result = cols[2].get_text(strip=True)
-        data.append([date, teams, result])
+    rows = soup.select("tr")  # jede Tabellenzeile = ein Spiel
+    for row in rows:
+        # Datum
+        date_cell = row.select_one("td.kick__table--gamelist_date")
+        date = date_cell.get_text(strip=True) if date_cell else ""
+
+        # Teams
+        teams = [t.get_text(strip=True) for t in row.select("div.kick__v100-gameCell_team_name")]
+        matchup = " vs ".join(teams) if teams else ""
+
+        # Ergebnis
+        result_cell = row.select_one("a.kick__v100-scoreBoard")
+        result = result_cell.get_text(strip=True) if result_cell else "-"
+
+        if date or matchup:
+            data.append([date, matchup, result])
 
     return pd.DataFrame(data, columns=["Datum", "Teams", "Ergebnis"])
 
