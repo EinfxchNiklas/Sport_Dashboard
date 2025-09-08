@@ -10,18 +10,21 @@ def get_bvb_fixtures():
     r = requests.get(url, headers=headers)
     soup = BeautifulSoup(r.text, "lxml")
 
-    data = []
-    for match in soup.select("div.kick__card"): 
-        try:
-            date = match.select_one(".kick__v100-gameCell__info--datetime").get_text(strip=True)
-            competition = match.select_one(".kick__v100-gameCell__competition").get_text(strip=True)
-            teams = match.select_one(".kick__v100-scoreBoard__teams").get_text(" ", strip=True)
-            result = match.select_one(".kick__v100-scoreBoard__score").get_text(strip=True) if match.select_one(".kick__v100-scoreBoard__score") else "-"
-            data.append([date, competition, teams, result])
-        except:
-            continue
+    table = soup.select_one("table.kick__table--gamelist-timeline")
+    if not table:
+        return pd.DataFrame(columns=["Datum", "Teams", "Ergebnis"])
 
-    return pd.DataFrame(data, columns=["Datum", "Wettbewerb", "Teams", "Ergebnis"])
+    data = []
+    for row in table.select("tr"):
+        cols = row.select("td")
+        if len(cols) < 3:
+            continue
+        date = cols[0].get_text(strip=True)
+        teams = cols[1].get_text(" ", strip=True)
+        result = cols[2].get_text(strip=True)
+        data.append([date, teams, result])
+
+    return pd.DataFrame(data, columns=["Datum", "Teams", "Ergebnis"])
 
 
 def get_bvb_injuries():
