@@ -15,7 +15,7 @@ with tab1:
     if df_fixtures.empty:
         st.warning("Keine Daten gefunden.")
     else:
-        st.dataframe(df_fixtures, use_container_width=True)
+        st.dataframe(df_fixtures, width='stretch')
 
 with tab2:
     st.subheader("Aktuelle Verletztenliste")
@@ -23,4 +23,4 @@ with tab2:
     if df_injuries.empty:
         st.info("Aktuell keine Verletzten (oder Daten nicht verfügbar).")
     else:
-        st.dataframe(df_injuries, use_container_width=True)
+        st.dataframe(df_injuries, width='stretch')

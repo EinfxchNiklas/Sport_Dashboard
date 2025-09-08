@@ -6,8 +6,15 @@ from bs4 import BeautifulSoup
 def get_bvb_fixtures():
     """Holt die nächsten Spiele von Borussia Dortmund von kicker.de"""
     url = "https://www.kicker.de/borussia-dortmund/spielplan"
-    headers = {"User-Agent": "Mozilla/5.0"}
+    headers = {
+        "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64)",
+        "Referer": "https://www.kicker.de/"
+    }
     r = requests.get(url, headers=headers)
+    
+    #Debug Ausgabe
+    print("Status Code:", r.status_code)
+    print("HTML Vorschau:", r.text[:1000])
     soup = BeautifulSoup(r.text, "lxml")
 
     data = []
@@ -18,7 +25,7 @@ def get_bvb_fixtures():
         date = date_cell.get_text(strip=True) if date_cell else ""
 
         # Teams
-        teams = [t.get_text(strip=True) for t in row.select("div.kick__v100-gameCell_team_name")]
+        teams = [t.get_text(strip=True) for t in row.select("div.kick__v100-gameCell__team__name")]
         matchup = " vs ".join(teams) if teams else ""
 
         # Ergebnis
