@@ -11,7 +11,7 @@ def get_bvb_fixtures():
     soup = BeautifulSoup(r.text, "lxml")
 
     data = []
-    for match in soup.select("div.gameCell"):
+    for match in soup.select("div.kick__card"): 
         try:
             date = match.select_one(".kick__v100-gameCell__info--datetime").get_text(strip=True)
             competition = match.select_one(".kick__v100-gameCell__competition").get_text(strip=True)
