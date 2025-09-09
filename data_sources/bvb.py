@@ -3,39 +3,40 @@ import pandas as pd
 from bs4 import BeautifulSoup
 
 
-def get_bvb_fixtures():
-    """Holt die nächsten Spiele von Borussia Dortmund von kicker.de"""
-    url = "https://www.kicker.de/borussia-dortmund/spielplan"
-    headers = {
-        "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64)",
-        "Referer": "https://www.kicker.de/"
-    }
-    r = requests.get(url, headers=headers)
-    
-    #Debug Ausgabe
-    print("Status Code:", r.status_code)
-    print("HTML Vorschau:", r.text[:1000])
-    soup = BeautifulSoup(r.text, "lxml")
+BASE_URL = "https://api.openligadb.de"
 
-    data = []
-    rows = soup.select("tr")  # jede Tabellenzeile = ein Spiel
-    for row in rows:
-        # Datum
-        date_cell = row.select_one("td.kick__table--gamelist_date")
-        date = date_cell.get_text(strip=True) if date_cell else ""
+def get_bvb_matches(season=2024):
+    """Lädt den Spielplan von Borussia Dortmund für eine Saison."""
+    url = f"{BASE_URL}/getmatchdata/bl1/{season}/borussia-dortmund"
+    response = requests.get(url)
+    if response.status_code != 200:
+        return pd.DataFrame()
 
-        # Teams
-        teams = [t.get_text(strip=True) for t in row.select("div.kick__v100-gameCell__team__name")]
-        matchup = " vs ".join(teams) if teams else ""
+    data = response.json()
+    matches = []
 
-        # Ergebnis
-        result_cell = row.select_one("a.kick__v100-scoreBoard")
-        result = result_cell.get_text(strip=True) if result_cell else "-"
+    for match in data:
+        home = match["Team1"]["TeamName"]
+        away = match["Team2"]["TeamName"]
+        date = match["MatchDateTime"]
 
-        if date or matchup:
-            data.append([date, matchup, result])
+        # Ergebnis prüfen
+        result = ""
+        if match["MatchIsFinished"]:
+            goals_home = match["MatchResults"][-1]["PointsTeam1"]
+            goals_away = match["MatchResults"][-1]["PointsTeam2"]
+            result = f"{goals_home}:{goals_away}"
+        else:
+            result = "Noch nicht gespielt"
 
-    return pd.DataFrame(data, columns=["Datum", "Teams", "Ergebnis"])
+        matches.append({
+            "Datum": date[:10],
+            "Heim": home,
+            "Auswärts": away,
+            "Ergebnis": result
+        })
+
+    return pd.DataFrame(matches)
 
 
 def get_bvb_injuries():
