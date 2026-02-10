@@ -1,0 +1,84 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sport Dashboard</title>
+    <style>
+        body {
+            background-color: #2e2e2e;
+            color: white;
+            font-family: Arial, sans-serif;
+            text-align: center;
+            padding: 50px;
+        }
+        .button {
+            background-color: black;
+            color: white;
+            border: 2px solid cyan;
+            padding: 15px 30px;
+            margin: 20px;
+            font-size: 18px;
+            cursor: pointer;
+            border-radius: 5px;
+            display: inline-block;
+        }
+        .button:hover {
+            background-color: cyan;
+            color: black;
+        }
+        .icon {
+            display: block;
+            margin: 0 auto 10px;
+            width: 50px;
+            height: 50px;
+        }
+        .football-icon {
+            filter: invert(1); /* Makes the icon white */
+            transition: filter 0.3s ease;
+        }
+        .button:hover .football-icon {
+            filter: invert(0); /* Makes the icon black on hover */
+        }
+        .formula1-icon {
+            filter: invert(1); /* Makes the icon white */
+            transition: filter 0.3s ease;
+        }
+        .button:hover .formula1-icon {
+            filter: invert(0); /* Makes the icon black on hover */
+        }
+        .american-football-icon {
+            filter: invert(1); /* Makes the icon white */
+            transition: filter 0.3s ease;
+        }
+        .button:hover .american-football-icon {
+            filter: invert(0); /* Makes the icon black on hover */
+        }
+    </style>
+</head>
+<body>
+    <h1>Welcome to the Sport Dashboard</h1>
+    <p>Select a sport to view more information:</p>
+
+    <a href="/football">
+        <button class="button">
+            <img src="/static/images/fussball.png" alt="Football Icon" class="icon football-icon">
+            Fußball
+        </button>
+    </a>
+
+    <a href="/formula1">
+        <button class="button">
+            <img src="/static/images/f1-auto.png" alt="Formula 1 Icon" class="icon formula1-icon">
+            Formel 1
+        </button>
+    </a>
+
+    <a href="/american_football">
+        <button class="button">
+            <img src="/static/images/american-football.png" alt="American Football Icon" class="icon american-football-icon">
+            American Football
+        </button>
+    </a>
+</body>
+</html>

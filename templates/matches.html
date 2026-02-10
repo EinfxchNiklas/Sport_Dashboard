@@ -1,0 +1,45 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Borussia Dortmund Matches</title>
+</head>
+    <style>
+        body {
+            background-color: #1F1F1F;
+            color: white;
+            font-family: Arial, sans-serif;
+            text-align: left;
+            padding: 50px;
+        }
+    </style>
+<body>
+    <h1>Borussia Dortmund Matches</h1>
+    <h2>Last 4 Matches</h2>
+    <ul>
+        {% for match in matches[:4] %}
+        <li>
+            {% if match.team1 and match.team2 and match.matchResults|length > 1 %}
+                {{ match.team1.teamName }} vs {{ match.team2.teamName }} - {{ match.matchResults[1].pointsTeam1 }}:{{ match.matchResults[1].pointsTeam2 }}
+            {% else %}
+                Match data unavailable
+            {% endif %}
+        </li>
+        {% endfor %}
+    </ul>
+
+    <h2>Next 5 Matches</h2>
+    <ul>
+        {% for match in matches[4:] %}
+        <li>
+            {% if match.team1 and match.team2 %}
+                {{ match.team1.teamName }} vs {{ match.team2.teamName }} - {{ match.formattedDateTime }}
+            {% else %}
+                Match data unavailable
+            {% endif %}
+        </li>
+        {% endfor %}
+    </ul>
+</body>
+</html>
