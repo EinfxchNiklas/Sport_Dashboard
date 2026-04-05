@@ -1,45 +1,410 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="de">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Borussia Dortmund Matches</title>
-</head>
+    <title>{{ selected_team_name }} – Spiele</title>
     <style>
         body {
-            background-color: #1F1F1F;
-            color: white;
-            font-family: Arial, sans-serif;
+            background-color: #141414;
+            color: #f5f5f5;
+            font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
+            padding: 30px;
+        }
+
+        .home-button {
+            position: fixed;
+            top: 18px;
+            left: 18px;
+            z-index: 1000;
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            padding: 8px 12px;
+            background: #1e1e1e;
+            border: 1px solid #2d2d2d;
+            border-radius: 8px;
+            color: #f5f5f5;
+            text-decoration: none;
+            font-size: 13px;
+            font-weight: 600;
+        }
+
+        .home-button:hover {
+            background: #2a2a2a;
+            border-color: #ffd24a;
+            color: #ffd24a;
+        }
+
+        .page-grid {
+            max-width: 1500px;
+            margin: 0 auto;
+            display: grid;
+            grid-template-columns: 200px 1fr 360px;
+            grid-template-areas: "teams matches standings";
+            column-gap: 30px;
+            row-gap: 20px;
+            align-items: start;
+        }
+
+        .panel {
+            background: #1e1e1e;
+            border: 1px solid #2d2d2d;
+            border-radius: 12px;
+            overflow: hidden;
+        }
+
+        .table-wrap {
+            width: 100%;
+            grid-area: matches;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+
+        thead {
+            background: #2a2a2a;
+        }
+
+        th,
+        td {
+            padding: 14px 16px;
+            border-bottom: 1px solid #2d2d2d;
+            font-size: 15px;
+        }
+
+        th {
+            text-transform: uppercase;
+            letter-spacing: 0.04em;
+            font-size: 12px;
+            color: #bdbdbd;
+        }
+
+        td.team-home {
+            text-align: right;
+            width: 38%;
+            font-weight: 600;
+        }
+
+        td.center {
+            text-align: center;
+            width: 24%;
+            font-weight: 700;
+            color: #ffd24a;
+        }
+
+        td.team-away {
             text-align: left;
-            padding: 50px;
+            width: 38%;
+            font-weight: 600;
+        }
+
+        tbody tr:hover {
+            background: #242424;
+        }
+
+        .date-time {
+            color: #d9d9d9;
+            font-weight: 500;
+        }
+
+        .team-cell {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .team-cell.home {
+            flex-direction: row-reverse;
+        }
+
+        .team-cell.away {
+            flex-direction: row;
+        }
+
+        .team-logo {
+            flex-shrink: 0;
+            width: 50px;
+            height: 50px;
+            object-fit: contain;
+        }
+
+        .standings-wrap {
+            width: 100%;
+            grid-area: standings;
+        }
+
+        .team-picker {
+            grid-area: teams;
+            display: flex;
+            flex-direction: column;
+            gap: 4px;
+        }
+
+        .team-btn {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            padding: 8px 10px;
+            background: #1e1e1e;
+            border: 1px solid #2d2d2d;
+            border-radius: 8px;
+            color: #f5f5f5;
+            font-size: 13px;
+            font-family: inherit;
+            cursor: pointer;
+            text-decoration: none;
+            transition: background 0.15s, border-color 0.15s;
+            width: 100%;
+            box-sizing: border-box;
+            text-align: left;
+        }
+
+        .team-btn:hover {
+            background: #2a2a2a;
+            border-color: #444;
+        }
+
+        .team-btn.active {
+            background: #2a2a2a;
+            border-color: #ffd24a;
+            color: #ffd24a;
+            font-weight: 600;
+        }
+
+        .team-btn img {
+            width: 24px;
+            height: 24px;
+            object-fit: contain;
+            flex-shrink: 0;
+        }
+
+        .standings-wrap .team-logo {
+            width: 26px;
+            height: 26px;
+        }
+
+        .standings-wrap th,
+        .standings-wrap td {
+            padding: 10px 8px;
+            font-size: 13px;
+        }
+
+        .standings-wrap td {
+            border-bottom: 1px solid #2d2d2d;
+        }
+
+        .standings-wrap tr.champions-league {
+            background-color: rgba(30, 80, 200, 0.22);
+        }
+
+        .standings-wrap tr.champions-league:hover {
+            background-color: rgba(30, 80, 200, 0.35);
+        }
+
+        .standings-wrap tr.europa-league {
+            background-color: rgba(200, 100, 0, 0.22);
+        }
+
+        .standings-wrap tr.europa-league:hover {
+            background-color: rgba(200, 100, 0, 0.35);
+        }
+
+        .standings-wrap tr.conference-league {
+            background-color: rgba(30, 150, 60, 0.22);
+        }
+
+        .standings-wrap tr.conference-league:hover {
+            background-color: rgba(30, 150, 60, 0.35);
+        }
+
+        .standings-wrap tr.relegation-playoff {
+            background-color: rgba(200, 50, 50, 0.18);
+        }
+
+        .standings-wrap tr.relegation-playoff:hover {
+            background-color: rgba(200, 50, 50, 0.30);
+        }
+
+        .standings-wrap tr.relegation {
+            background-color: rgba(180, 30, 30, 0.30);
+        }
+
+        .standings-wrap tr.relegation:hover {
+            background-color: rgba(180, 30, 30, 0.44);
+        }
+
+        .standings-wrap td.pos,
+        .standings-wrap td.num {
+            text-align: center;
+            white-space: nowrap;
+        }
+
+        .standings-wrap td.points {
+            text-align: center;
+            font-weight: 700;
+            color: #ffd24a;
+        }
+
+        .standings-wrap .team-name {
+            text-align: left;
+            font-weight: 600;
+        }
+
+        .standings-wrap .team-inline {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        h1 {
+            max-width: 1500px;
+            margin: 0 auto 6px auto;
+        }
+
+        p.subtitle {
+            max-width: 1500px;
+            margin: 0 auto 18px auto;
+            color: #a9a9a9;
+        }
+
+        .panel-title {
+            margin: 0;
+            padding: 14px 16px;
+            font-size: 14px;
+            text-transform: uppercase;
+            letter-spacing: 0.04em;
+            color: #bdbdbd;
+            border-bottom: 1px solid #2d2d2d;
+            background: #2a2a2a;
+        }
+
+        @media (max-width: 700px) {
+            body {
+                padding: 14px;
+            }
+
+            .page-grid {
+                grid-template-columns: 1fr;
+                grid-template-areas:
+                    "teams"
+                    "matches"
+                    "standings";
+                gap: 14px;
+            }
+
+            th,
+            td {
+                padding: 10px 8px;
+                font-size: 13px;
+            }
+
+            td.center {
+                font-size: 12px;
+            }
         }
     </style>
+</head>
 <body>
-    <h1>Borussia Dortmund Matches</h1>
-    <h2>Last 4 Matches</h2>
-    <ul>
-        {% for match in matches[:4] %}
-        <li>
-            {% if match.team1 and match.team2 and match.matchResults|length > 1 %}
-                {{ match.team1.teamName }} vs {{ match.team2.teamName }} - {{ match.matchResults[1].pointsTeam1 }}:{{ match.matchResults[1].pointsTeam2 }}
-            {% else %}
-                Match data unavailable
-            {% endif %}
-        </li>
-        {% endfor %}
-    </ul>
+    <a href="/" class="home-button">← Home</a>
+    <h1>{{ selected_team_name }} – Spiele</h1>
+    <p class="subtitle"></p>
 
-    <h2>Next 5 Matches</h2>
-    <ul>
-        {% for match in matches[4:] %}
-        <li>
-            {% if match.team1 and match.team2 %}
-                {{ match.team1.teamName }} vs {{ match.team2.teamName }} - {{ match.formattedDateTime }}
-            {% else %}
-                Match data unavailable
-            {% endif %}
-        </li>
-        {% endfor %}
-    </ul>
+    <div class="page-grid">
+        <nav class="team-picker">
+            {% for team in standings %}
+            <a href="/football?team={{ team.teamId }}"
+               class="team-btn{% if team.teamId == selected_team_id %} active{% endif %}">
+                {% if team.logo %}
+                    <img src="{{ team.logo }}" alt="{{ team.teamName }}" />
+                {% endif %}
+                <span>{{ team.teamName }}</span>
+            </a>
+            {% endfor %}
+        </nav>
+
+        <aside class="panel standings-wrap">
+            <h2 class="panel-title">Bundesliga Tabelle</h2>
+            <table>
+                <thead>
+                    <tr>
+                        <th>Pl.</th>
+                        <th>Team</th>
+                        <th>Sp.</th>
+                        <th>TD</th>
+                        <th>Pkt.</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% if standings %}
+                        {% for team in standings %}
+                        <tr{% if team.position <= 4 %} class="champions-league"{% elif team.position == 5 %} class="europa-league"{% elif team.position == 6 %} class="conference-league"{% elif team.position == 16 %} class="relegation-playoff"{% elif team.position >= 17 %} class="relegation"{% endif %}>
+                            <td class="pos">{{ team.position }}</td>
+                            <td class="team-name">
+                                <div class="team-inline">
+                                    {% if team.logo %}
+                                        <img src="{{ team.logo }}" alt="{{ team.teamName }}" class="team-logo" />
+                                    {% endif %}
+                                    <span>{{ team.teamName }}</span>
+                                </div>
+                            </td>
+                            <td class="num">{{ team.playedGames }}</td>
+                            <td class="num">{{ team.goalDifference }}</td>
+                            <td class="points">{{ team.points }}</td>
+                        </tr>
+                        {% endfor %}
+                    {% else %}
+                        <tr>
+                            <td colspan="5" class="center">Keine Tabellendaten verfügbar.</td>
+                        </tr>
+                    {% endif %}
+                </tbody>
+            </table>
+        </aside>
+
+        <section class="panel table-wrap">
+            <h2 class="panel-title">Spiele</h2>
+            <table>
+                <thead>
+                    <tr>
+                        <th>Heim</th>
+                        <th>Ergebnis / Termin</th>
+                        <th>Gast</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for match in matches %}
+                    <tr>
+                        <td class="team-home">
+                            <div class="team-cell home">
+                                {% if match.team1.logo %}
+                                    <img src="{{ match.team1.logo }}" alt="{{ match.team1.teamName }}" class="team-logo" />
+                                {% endif %}
+                                <span>{{ match.team1.teamName if match.team1 else "Unbekannt" }}</span>
+                            </div>
+                        </td>
+                        <td class="center">
+                            {% if match.status == "FINISHED" and match.matchResults|length > 1 %}
+                                {{ match.matchResults[1].pointsTeam1 }} : {{ match.matchResults[1].pointsTeam2 }}
+                            {% else %}
+                                <span class="date-time">{{ match.formattedDateTime }}</span>
+                            {% endif %}
+                        </td>
+                        <td class="team-away">
+                            <div class="team-cell away">
+                                {% if match.team2.logo %}
+                                    <img src="{{ match.team2.logo }}" alt="{{ match.team2.teamName }}" class="team-logo" />
+                                {% endif %}
+                                <span>{{ match.team2.teamName if match.team2 else "Unbekannt" }}</span>
+                            </div>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </section>
+    </div>
 </body>
 </html>
