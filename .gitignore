@@ -1,4 +1,6 @@
 __pycache__
 test.py
+.devcontainer
+.vscode
 
 # https://sport-dashboard.streamlit.app/
