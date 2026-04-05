@@ -3,4 +3,6 @@ test.py
 .devcontainer
 .vscode
 
+config.py
+
 # https://sport-dashboard.streamlit.app/
