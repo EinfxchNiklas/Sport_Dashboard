@@ -7,7 +7,7 @@ app = Flask(__name__)
 def homepage():
     return render_template('homepage.html')
 
-@app.route('/football')
+@app.route('/fussball')
 def display_matches():
     team_id = request.args.get('team', 4, type=int)
     standings = fetch_bundesliga_table()

@@ -315,7 +315,7 @@
     <div class="page-grid">
         <nav class="team-picker">
             {% for team in standings %}
-            <a href="/football?team={{ team.teamId }}"
+            <a href="/fussball?team={{ team.teamId }}"
                class="team-btn{% if team.teamId == selected_team_id %} active{% endif %}">
                 {% if team.logo %}
                     <img src="{{ team.logo }}" alt="{{ team.teamName }}" />
