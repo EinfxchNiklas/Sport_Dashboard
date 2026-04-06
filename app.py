@@ -15,7 +15,7 @@ def display_matches():
     selected_team = next((t for t in standings if t.get('teamId') == team_id), None)
     selected_team_name = selected_team['teamName'] if selected_team else 'Bundesliga'
     return render_template(
-        'matches.html',
+        'fussball.html',
         matches=matches,
         standings=standings,
         selected_team_id=team_id,

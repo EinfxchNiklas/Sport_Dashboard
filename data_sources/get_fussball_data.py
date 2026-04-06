@@ -56,7 +56,7 @@ def get_team_logo_path(team_name):
 def fetch_team_matches(team_id=4):
     """
     Fetches matches for any Bundesliga team from football-data.org and returns
-    a list compatible with the existing Jinja template in matches.html.
+    a list compatible with the existing Jinja template in fussball.html.
     """
     api_key = FOOTBALL_DATA_API_KEY
     if not api_key:
@@ -118,7 +118,7 @@ def fetch_team_matches(team_id=4):
                 },
                 "matchDateTime": match_dt.isoformat(),
                 "formattedDateTime": match_dt.astimezone().strftime("%H:%M - %d.%m.%Y"),
-                # matches.html expects index 1, so we provide a 2-item list.
+                # fussball.html expects index 1, so we provide a 2-item list.
                 "matchResults": [
                     {"pointsTeam1": home_score, "pointsTeam2": away_score},
                     {"pointsTeam1": home_score, "pointsTeam2": away_score},
