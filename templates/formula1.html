@@ -1,0 +1,829 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Formel 1 - Rennwochenenden</title>
+    <style>
+        :root {
+            --bg: #121418;
+            --panel: #1e1e1e;
+            --panel-open: #222a35;
+            --line: #2d2d2d;
+            --text: #f4f7fb;
+            --muted: #aeb8c7;
+            --accent: #ff2d2d;
+            --accent-soft: rgba(255, 45, 45, 0.16);
+        }
+
+        body {
+            margin: 0;
+            min-height: 100vh;
+            background-color: #141414;
+            color: var(--text);
+            font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
+            padding: 24px;
+            box-sizing: border-box;
+        }
+
+        .home-button {
+            position: fixed;
+            top: 18px;
+            left: 18px;
+            z-index: 1000;
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            padding: 8px 12px;
+            background: #171b22;
+            border: 1px solid var(--line);
+            border-radius: 8px;
+            color: var(--text);
+            text-decoration: none;
+            font-size: 13px;
+            font-weight: 600;
+        }
+
+        .home-button:hover {
+            border-color: var(--accent);
+            color: var(--accent);
+        }
+
+        .page {
+            max-width: 1100px;
+            margin: 20px auto 0;
+        }
+
+        .content-grid {
+            display: grid;
+            grid-template-columns: 1fr 360px;
+            gap: 16px;
+            align-items: start;
+        }
+
+        .page-title {
+            margin: 0 0 8px;
+            font-size: clamp(2rem, 3.2vw, 2.5rem);
+            font-weight: 700;
+            line-height: 1.2;
+            text-align: left;
+        }
+
+        .subtitle {
+            margin: 8px 0 24px;
+            color: var(--muted);
+            font-size: 1rem;
+        }
+
+        .weekend-filter {
+            display: flex;
+            width: 100%;
+            border: 1px solid #3a4658;
+            border-radius: 8px;
+            overflow: hidden;
+            margin-bottom: 14px;
+            max-width: 540px;
+        }
+
+        .weekend-filter-btn {
+            border: none;
+            background: #1f2631;
+            color: #d9e2f0;
+            padding: 10px 12px;
+            font-size: 0.92rem;
+            font-weight: 600;
+            cursor: pointer;
+            flex: 1;
+        }
+
+        .weekend-filter-btn.active {
+            background: var(--accent-soft);
+            color: #ffd5d5;
+        }
+
+        .weekends {
+            display: grid;
+            gap: 14px;
+        }
+
+        .weekend {
+            border: 1px solid var(--line);
+            border-radius: 14px;
+            background: var(--panel);
+            overflow: hidden;
+            transition: transform 0.22s ease, border-color 0.22s ease, background 0.22s ease;
+        }
+
+        .weekend:hover {
+            transform: translateY(-2px);
+            border-color: #465163;
+        }
+
+        .weekend-header {
+            width: 100%;
+            border: none;
+            background: transparent;
+            color: inherit;
+            display: grid;
+            grid-template-columns: 1fr;
+            align-items: center;
+            gap: 12px;
+            padding: 16px 18px;
+            text-align: left;
+            cursor: pointer;
+        }
+
+        .weekend-title {
+            font-size: 1.1rem;
+            font-weight: 700;
+        }
+
+        .weekend-meta {
+            margin-top: 4px;
+            color: var(--muted);
+            font-size: 0.92rem;
+        }
+
+        .sessions {
+            max-height: 0;
+            overflow: hidden;
+            border-top: 1px solid transparent;
+            transition: max-height 0.35s ease, border-color 0.35s ease;
+        }
+
+        .sessions-inner {
+            padding: 0 18px 16px;
+        }
+
+        .session-row {
+            display: grid;
+            grid-template-columns: 1fr auto;
+            gap: 12px;
+            padding: 10px 0;
+            border-bottom: 1px dashed #384353;
+        }
+
+        .session-row.session-toggleable {
+            display: block;
+            padding: 8px 0;
+        }
+
+        .session-toggle {
+            width: 100%;
+            border: none;
+            background: transparent;
+            color: inherit;
+            display: grid;
+            grid-template-columns: 1fr auto;
+            gap: 12px;
+            text-align: left;
+            align-items: center;
+            cursor: pointer;
+            padding: 2px 0;
+        }
+
+        .session-row.session-toggleable .session-toggle .session-name::after {
+            content: "  (anzeigen)";
+            color: #9aa6ba;
+            font-weight: 500;
+            font-size: 0.82rem;
+        }
+
+        .session-row.session-toggleable.open .session-toggle .session-name::after {
+            content: "  (ausblenden)";
+        }
+
+        .session-row:last-child {
+            border-bottom: none;
+            padding-bottom: 4px;
+        }
+
+        .session-name {
+            font-weight: 600;
+        }
+
+        .session-time {
+            color: #e8eef8;
+            font-weight: 600;
+        }
+
+        .session-result {
+            grid-column: 1 / -1;
+            margin-top: 4px;
+            color: var(--text);
+            font-size: 0.86rem;
+            font-weight: 600;
+            display: none;
+        }
+
+        .session-row.session-toggleable.open .session-result {
+            display: block;
+        }
+
+        .session-result.loading {
+            color: var(--muted);
+            font-weight: 500;
+        }
+
+        .session-result-list {
+            display: grid;
+            gap: 4px;
+        }
+
+        .session-result-item {
+            display: grid;
+            grid-template-columns: 34px 82px 88px;
+            align-items: center;
+            column-gap: 6px;
+            color: var(--text);
+            font-size: 0.84rem;
+            width: fit-content;
+        }
+
+        .session-result-item.cutoff-divider {
+            border-top: 2px solid rgba(255, 45, 45, 0.45);
+            margin-top: 8px;
+            padding-top: 8px;
+        }
+
+        .session-result-pos {
+            width: 34px;
+            font-weight: 700;
+            color: #e8eef8;
+        }
+
+        .session-result-driver {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            font-weight: 600;
+            min-width: 0;
+        }
+
+        .session-result-time {
+            color: var(--muted);
+            font-size: 0.78rem;
+            font-weight: 500;
+            justify-self: end;
+            text-align: right;
+            font-family: "Consolas", "Courier New", monospace;
+            font-variant-numeric: tabular-nums;
+        }
+
+        .session-mini-logo {
+            width: 16px;
+            height: 16px;
+            object-fit: contain;
+            flex-shrink: 0;
+        }
+
+        .championship-panel {
+            background: var(--panel);
+            border: 1px solid var(--line);
+            border-radius: 12px;
+            padding: 14px;
+            width: 100%;
+            box-sizing: border-box;
+        }
+
+        .championship-title {
+            margin: 2px 0 10px;
+            font-size: 1.12rem;
+            font-weight: 700;
+            color: #dee6f3;
+        }
+
+        .championship-subtitle {
+            margin: 0 0 12px;
+            color: var(--muted);
+            font-size: 0.9rem;
+        }
+
+        .champ-switch {
+            display: flex;
+            width: 100%;
+            border: 1px solid #3a4658;
+            border-radius: 8px;
+            overflow: hidden;
+            margin-bottom: 12px;
+        }
+
+        .champ-switch-btn {
+            border: none;
+            background: #1f2631;
+            color: #d9e2f0;
+            padding: 10px 12px;
+            font-size: 0.92rem;
+            font-weight: 600;
+            cursor: pointer;
+            flex: 1;
+        }
+
+        .champ-switch-btn.active {
+            background: var(--accent-soft);
+            color: #ffd5d5;
+        }
+
+        .champ-table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+
+        .champ-table th,
+        .champ-table td {
+            padding: 10px 8px;
+            font-size: 0.95rem;
+            border-bottom: 1px solid #2a3443;
+        }
+
+        .champ-table th {
+            color: #aeb8c7;
+            font-weight: 600;
+            text-align: left;
+        }
+
+        .champ-table td.pos,
+        .champ-table td.pts {
+            width: 1%;
+            white-space: nowrap;
+            font-weight: 700;
+        }
+
+        .champ-table td.pos {
+            text-align: left;
+            padding-right: 16px;
+        }
+
+        .champ-table td.pts {
+            text-align: right;
+        }
+
+        .name-cell {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            min-width: 0;
+        }
+
+        .team-logo {
+            width: 22px;
+            height: 22px;
+            object-fit: contain;
+            flex-shrink: 0;
+        }
+
+        .team-logo-placeholder {
+            width: 22px;
+            height: 22px;
+            border-radius: 50%;
+            background: #2b3443;
+            color: #90a1ba;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 0.65rem;
+            font-weight: 700;
+            flex-shrink: 0;
+        }
+
+        .champ-table-wrap {
+            display: none;
+        }
+
+        .champ-table-wrap.active {
+            display: block;
+        }
+
+        .weekend.open {
+            background: var(--panel-open);
+            border-color: var(--accent);
+        }
+
+        .weekend.open .sessions {
+            max-height: 3200px;
+            border-color: var(--line);
+        }
+
+        .weekends-view {
+            display: none;
+        }
+
+        .weekends-view.active {
+            display: block;
+        }
+
+        .empty {
+            border: 1px solid var(--line);
+            border-radius: 12px;
+            padding: 18px;
+            background: var(--panel);
+            color: var(--muted);
+        }
+
+        .loading {
+            color: var(--muted);
+            font-size: 0.95rem;
+            padding: 6px 0;
+        }
+
+        @media (max-width: 760px) {
+            body {
+                padding: 16px;
+            }
+
+            .page {
+                margin-top: 52px;
+            }
+
+            .weekend-header {
+                grid-template-columns: 1fr;
+            }
+
+            .session-row {
+                grid-template-columns: 1fr;
+                gap: 4px;
+            }
+
+            .content-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .championship-panel {
+                position: static;
+            }
+        }
+    </style>
+</head>
+<body>
+    <a href="/" class="home-button">← Home</a>
+
+    <main class="page">
+        <h1 class="page-title">Formel 1 Rennwochenenden</h1>
+        <p ></p>
+
+        <div class="content-grid">
+            <section>
+                <div class="weekend-filter" data-weekend-filter>
+                    <button type="button" class="weekend-filter-btn active" data-weekend-target="upcoming">Zukünftige Rennen</button>
+                    <button type="button" class="weekend-filter-btn" data-weekend-target="past">Vergangene Rennen</button>
+                </div>
+
+                <section class="weekends-view active" data-weekends-view="upcoming">
+                    {% if upcoming_weekends %}
+                        <section class="weekends">
+                            {% for weekend in upcoming_weekends %}
+                                <article class="weekend" data-weekend>
+                                    <button class="weekend-header" type="button" data-toggle>
+                                        <div>
+                                            <div class="weekend-title">{{ weekend.meeting_name }}</div>
+                                            <div class="weekend-meta">
+                                                {{ weekend.location }}, {{ weekend.country_name }} | Start: {{ weekend.formatted_weekend }}
+                                            </div>
+                                        </div>
+                                    </button>
+
+                                    <div class="sessions">
+                                        <div class="sessions-inner">
+                                            {% if weekend.sessions %}
+                                                {% for session in weekend.sessions %}
+                                                    <div class="session-row">
+                                                        <div class="session-name">{{ session.session_name }}</div>
+                                                        <div class="session-time">{{ session.formatted_date }} - {{ session.formatted_time }}</div>
+                                                    </div>
+                                                {% endfor %}
+                                            {% else %}
+                                                <div class="session-row">
+                                                    <div class="session-name">Keine Session-Daten verfügbar</div>
+                                                    <div class="session-time">--</div>
+                                                </div>
+                                            {% endif %}
+                                        </div>
+                                    </div>
+                                </article>
+                            {% endfor %}
+                        </section>
+                    {% else %}
+                        <div class="empty">Keine zukünftigen Rennwochenenden gefunden.</div>
+                    {% endif %}
+                </section>
+
+                <section class="weekends-view" data-weekends-view="past">
+                    <div class="loading" data-past-loading>Vergangene Rennen werden beim Umschalten geladen ...</div>
+                    <div data-past-content></div>
+                </section>
+            </section>
+
+            <aside class="championship-panel" data-championship>
+                <h3 class="championship-title">Championship</h3>
+                <p class="championship-subtitle">
+                    {% if championship.session_label %}
+                        Stand nach {{ championship.session_label }}
+                    {% else %}
+                        Aktuell keine Championship-Daten
+                    {% endif %}
+                </p>
+
+                <div class="champ-switch">
+                    <button type="button" class="champ-switch-btn active" data-champ-target="drivers">Fahrer</button>
+                    <button type="button" class="champ-switch-btn" data-champ-target="teams">Konstrukteure</button>
+                </div>
+
+                <div class="champ-table-wrap active" data-champ-table="drivers">
+                    <table class="champ-table">
+                        <thead>
+                            <tr>
+                                <th>Pos</th>
+                                <th>Fahrer</th>
+                                <th>Pkt</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% if championship.drivers %}
+                                {% for row in championship.drivers %}
+                                    <tr>
+                                        <td class="pos">{{ row.position }}</td>
+                                        <td>
+                                            <div class="name-cell">
+                                                {% if row.team_logo %}
+                                                    <img src="{{ row.team_logo }}" alt="Team Logo" class="team-logo" loading="lazy">
+                                                {% else %}
+                                                    <span class="team-logo-placeholder">T</span>
+                                                {% endif %}
+                                                <span>{{ row.name }}</span>
+                                            </div>
+                                        </td>
+                                        <td class="pts">{{ row.points }}</td>
+                                    </tr>
+                                {% endfor %}
+                            {% else %}
+                                <tr>
+                                    <td colspan="3">Keine Daten verfügbar</td>
+                                </tr>
+                            {% endif %}
+                        </tbody>
+                    </table>
+                </div>
+
+                <div class="champ-table-wrap" data-champ-table="teams">
+                    <table class="champ-table">
+                        <thead>
+                            <tr>
+                                <th>Pos</th>
+                                <th>Team</th>
+                                <th>Pkt</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% if championship.teams %}
+                                {% for row in championship.teams %}
+                                    <tr>
+                                        <td class="pos">{{ row.position }}</td>
+                                        <td>
+                                            <div class="name-cell">
+                                                {% if row.team_logo %}
+                                                    <img src="{{ row.team_logo }}" alt="Team Logo" class="team-logo" loading="lazy">
+                                                {% else %}
+                                                    <span class="team-logo-placeholder">T</span>
+                                                {% endif %}
+                                                <span>{{ row.name }}</span>
+                                            </div>
+                                        </td>
+                                        <td class="pts">{{ row.points }}</td>
+                                    </tr>
+                                {% endfor %}
+                            {% else %}
+                                <tr>
+                                    <td colspan="3">Keine Daten verfügbar</td>
+                                </tr>
+                            {% endif %}
+                        </tbody>
+                    </table>
+                </div>
+            </aside>
+        </div>
+    </main>
+
+    <script>
+        let pastLoaded = false;
+        const pastResultsLoadedMeetings = new Set();
+
+        function loadPastResultsForMeeting(card) {
+            const meetingKey = card.dataset.meetingKey;
+            if (!meetingKey || pastResultsLoadedMeetings.has(meetingKey)) {
+                return;
+            }
+
+            const resultNodes = card.querySelectorAll('[data-result-for]');
+            resultNodes.forEach((node) => {
+                node.textContent = 'Ergebnisse werden geladen ...';
+                node.classList.add('loading');
+            });
+
+            fetch(`/formula1/past-weekends/${meetingKey}/results`)
+                .then((response) => response.json())
+                .then((resultMap) => {
+                    resultNodes.forEach((node) => {
+                        const sessionKey = node.dataset.resultFor;
+                        const summary = resultMap ? resultMap[sessionKey] : null;
+                        if (!summary || !summary.rows || summary.rows.length === 0) {
+                            node.textContent = 'Kein Ergebnis verfügbar';
+                            node.classList.remove('loading');
+                            return;
+                        }
+
+                        const rowsMarkup = summary.rows.map((row) => {
+                            const logoMarkup = row.team_logo
+                                ? `<img src="${row.team_logo}" alt="Team Logo" class="session-mini-logo" loading="lazy">`
+                                : '';
+                            const positionLabel = row.position_label || (row.position !== null && row.position !== undefined ? `P${row.position}` : 'NC');
+                            const timeOrGapValue = row.time_or_gap || '-';
+                            const timeOrGap = `<span class="session-result-time">${timeOrGapValue}</span>`;
+                            const sessionName = summary.session_name || '';
+                            const isQualifyingSession = sessionName === 'Qualifying' || sessionName === 'Sprint Qualifying' || sessionName === 'Sprint Shootout';
+                            const needsDivider = isQualifyingSession && (row.position === 11 || row.position === 17);
+                            const rowClass = needsDivider ? 'session-result-item cutoff-divider' : 'session-result-item';
+                            return `<div class="${rowClass}"><span class="session-result-pos">${positionLabel}</span><span class="session-result-driver">${logoMarkup}<span>${row.driver}</span></span>${timeOrGap}</div>`;
+                        }).join('');
+
+                        node.innerHTML = `<div class="session-result-list">${rowsMarkup}</div>`;
+                        node.classList.remove('loading');
+                    });
+                    pastResultsLoadedMeetings.add(meetingKey);
+                })
+                .catch(() => {
+                    resultNodes.forEach((node) => {
+                        node.textContent = 'Fehler beim Laden der Ergebnisse';
+                        node.classList.remove('loading');
+                    });
+                });
+        }
+
+        function bindWeekendCardToggles() {
+            const weekendCards = document.querySelectorAll('[data-weekend]');
+
+            weekendCards.forEach((card) => {
+                const toggle = card.querySelector('[data-toggle]');
+                if (!toggle || toggle.dataset.bound === '1') {
+                    return;
+                }
+
+                toggle.dataset.bound = '1';
+                toggle.addEventListener('click', () => {
+                    const isOpen = card.classList.contains('open');
+
+                    weekendCards.forEach((otherCard) => {
+                        otherCard.classList.remove('open');
+                    });
+
+                    if (!isOpen) {
+                        card.classList.add('open');
+
+                        const parentView = card.closest('[data-weekends-view]');
+                        if (parentView && parentView.dataset.weekendsView === 'past') {
+                            loadPastResultsForMeeting(card);
+                        }
+                    }
+                });
+            });
+        }
+
+        function bindSessionResultToggles() {
+            const toggleButtons = document.querySelectorAll('[data-session-toggle]');
+
+            toggleButtons.forEach((button) => {
+                if (button.dataset.bound === '1') {
+                    return;
+                }
+
+                button.dataset.bound = '1';
+                button.addEventListener('click', () => {
+                    const row = button.closest('.session-row.session-toggleable');
+                    if (!row) {
+                        return;
+                    }
+                    row.classList.toggle('open');
+                });
+            });
+        }
+
+        bindWeekendCardToggles();
+        bindSessionResultToggles();
+
+        function renderPastWeekends(weekends) {
+            const pastContent = document.querySelector('[data-past-content]');
+            const pastLoading = document.querySelector('[data-past-loading]');
+            if (!pastContent) {
+                return;
+            }
+
+            if (!weekends || weekends.length === 0) {
+                pastContent.innerHTML = '<div class="empty">Keine vergangenen Rennwochenenden in dieser Saison gefunden.</div>';
+                if (pastLoading) pastLoading.style.display = 'none';
+                bindWeekendCardToggles();
+                return;
+            }
+
+            const weekendsMarkup = weekends.map((weekend) => {
+                const sessions = weekend.sessions || [];
+                const sessionMarkup = sessions.length > 0
+                    ? sessions.map((session) => {
+                        const sessionKey = session.session_key || '';
+                        return `
+                            <div class="session-row session-toggleable">
+                                <button class="session-toggle" type="button" data-session-toggle>
+                                    <span class="session-name">${session.session_name || 'Session'}</span>
+                                    <span class="session-time">${session.formatted_date || 'TBA'} - ${session.formatted_time || '--:--'}</span>
+                                </button>
+                                <div class="session-result loading" data-result-for="${sessionKey}">Ergebnisse werden beim Aufklappen geladen ...</div>
+                            </div>
+                        `;
+                    }).join('')
+                    : `
+                        <div class="session-row">
+                            <div class="session-name">Keine Session-Daten verfügbar</div>
+                            <div class="session-time">--</div>
+                        </div>
+                    `;
+
+                return `
+                    <article class="weekend" data-weekend data-meeting-key="${weekend.meeting_key || ''}">
+                        <button class="weekend-header" type="button" data-toggle>
+                            <div>
+                                <div class="weekend-title">${weekend.meeting_name || 'Grand Prix'}</div>
+                                <div class="weekend-meta">${weekend.location || 'Unknown'}, ${weekend.country_name || 'Unknown'} | Start: ${weekend.formatted_weekend || 'TBA'}</div>
+                            </div>
+                        </button>
+                        <div class="sessions">
+                            <div class="sessions-inner">${sessionMarkup}</div>
+                        </div>
+                    </article>
+                `;
+            }).join('');
+
+            pastContent.innerHTML = `<section class="weekends">${weekendsMarkup}</section>`;
+            if (pastLoading) pastLoading.style.display = 'none';
+            bindWeekendCardToggles();
+            bindSessionResultToggles();
+        }
+
+        const weekendFilter = document.querySelector('[data-weekend-filter]');
+        if (weekendFilter) {
+            const filterButtons = weekendFilter.querySelectorAll('[data-weekend-target]');
+            const weekendViews = document.querySelectorAll('[data-weekends-view]');
+            const pastLoading = document.querySelector('[data-past-loading]');
+            const pastContent = document.querySelector('[data-past-content]');
+
+            filterButtons.forEach((button) => {
+                button.addEventListener('click', () => {
+                    const target = button.dataset.weekendTarget;
+
+                    filterButtons.forEach((btn) => btn.classList.remove('active'));
+                    button.classList.add('active');
+
+                    weekendViews.forEach((view) => {
+                        view.classList.toggle('active', view.dataset.weekendsView === target);
+                    });
+
+                    document.querySelectorAll('[data-weekend]').forEach((card) => card.classList.remove('open'));
+
+                    if (target === 'past' && !pastLoaded) {
+                        if (pastLoading) pastLoading.style.display = 'block';
+                        if (pastContent) pastContent.innerHTML = '';
+
+                        fetch('/formula1/past-weekends')
+                            .then((response) => response.json())
+                            .then((pastWeekends) => {
+                                renderPastWeekends(pastWeekends);
+                                pastLoaded = true;
+                            })
+                            .catch(() => {
+                                if (pastLoading) {
+                                    pastLoading.textContent = 'Fehler beim Laden der vergangenen Rennen.';
+                                }
+                            });
+                    }
+                });
+            });
+        }
+
+        const championshipPanel = document.querySelector('[data-championship]');
+        if (championshipPanel) {
+            const buttons = championshipPanel.querySelectorAll('[data-champ-target]');
+            const tables = championshipPanel.querySelectorAll('[data-champ-table]');
+
+            buttons.forEach((button) => {
+                button.addEventListener('click', () => {
+                    const target = button.dataset.champTarget;
+
+                    buttons.forEach((btn) => btn.classList.remove('active'));
+                    button.classList.add('active');
+
+                    tables.forEach((table) => {
+                        table.classList.toggle('active', table.dataset.champTable === target);
+                    });
+                });
+            });
+        }
+    </script>
+</body>
+</html>

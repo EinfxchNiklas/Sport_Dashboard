@@ -1,5 +1,10 @@
-from flask import Flask, render_template, request
+from flask import Flask, jsonify, render_template, request
 from data_sources.get_fussball_data import fetch_team_matches, fetch_bundesliga_table
+from data_sources.get_formula1_data import (
+    fetch_formula1_weekends,
+    fetch_championship_standings,
+    fetch_meeting_session_result_summaries,
+)
 
 app = Flask(__name__)
 
@@ -23,8 +28,30 @@ def display_matches():
     )
 
 @app.route('/formula1')
-def formula1_placeholder():
-    return render_template('placeholder.html', sport="Formula 1")
+def formula1_dashboard():
+    upcoming_weekends = fetch_formula1_weekends(limit=None, timeframe='upcoming')
+    championship = fetch_championship_standings()
+    return render_template(
+        'formula1.html',
+        upcoming_weekends=upcoming_weekends,
+        past_weekends=[],
+        championship=championship,
+    )
+
+
+@app.route('/formula1/past-weekends')
+def formula1_past_weekends():
+    past_weekends = fetch_formula1_weekends(
+        limit=None,
+        timeframe='past',
+        include_session_results=False,
+    )
+    return jsonify(past_weekends)
+
+
+@app.route('/formula1/past-weekends/<int:meeting_key>/results')
+def formula1_past_weekend_results(meeting_key):
+    return jsonify(fetch_meeting_session_result_summaries(meeting_key))
 
 @app.route('/american_football')
 def american_football_placeholder():
