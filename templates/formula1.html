@@ -885,7 +885,11 @@
             }
 
             const weekendsMarkup = weekends.map((weekend) => {
-                const sessions = weekend.sessions || [];
+                const sessions = (weekend.sessions || []).sort((a, b) => {
+                    const dateA = a.date_start || '';
+                    const dateB = b.date_start || '';
+                    return dateA.localeCompare(dateB);
+                });
                 const hasPracticeSessions = sessions.some(s => s.session_name && s.session_name.startsWith('Practice'));
                 const isSprint = sessions.some(s => {
                     const name = s.session_name || '';
