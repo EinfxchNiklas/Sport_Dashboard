@@ -569,14 +569,14 @@
     <a href="/" class="home-button">← Home</a>
 
     <main class="page">
-        <h1 class="page-title">Formel 1 Rennwochenenden</h1>
+        <h1 class="page-title">Formula 1 Race Weekends</h1>
         <p ></p>
 
         <div class="content-grid">
             <section>
                 <div class="weekend-filter" data-weekend-filter>
-                    <button type="button" class="weekend-filter-btn active" data-weekend-target="upcoming">Zukünftige Rennen</button>
-                    <button type="button" class="weekend-filter-btn" data-weekend-target="past">Vergangene Rennen</button>
+                    <button type="button" class="weekend-filter-btn active" data-weekend-target="upcoming">Upcoming Races</button>
+                    <button type="button" class="weekend-filter-btn" data-weekend-target="past">Past Races</button>
                 </div>
 
                 <section class="weekends-view active" data-weekends-view="upcoming">
@@ -628,15 +628,15 @@
                 <h3 class="championship-title">Championship</h3>
                 <p class="championship-subtitle">
                     {% if championship.session_label %}
-                        Stand nach {{ championship.session_label }}
+                        Standings after the {{ championship.session_label }}
                     {% else %}
                         Aktuell keine Championship-Daten
                     {% endif %}
                 </p>
 
                 <div class="champ-switch">
-                    <button type="button" class="champ-switch-btn active" data-champ-target="drivers">Fahrer</button>
-                    <button type="button" class="champ-switch-btn" data-champ-target="teams">Konstrukteure</button>
+                    <button type="button" class="champ-switch-btn active" data-champ-target="drivers">Drivers</button>
+                    <button type="button" class="champ-switch-btn" data-champ-target="teams">Constructors</button>
                 </div>
 
                 <div class="champ-table-wrap active" data-champ-table="drivers">
@@ -644,8 +644,8 @@
                         <thead>
                             <tr>
                                 <th>Pos</th>
-                                <th>Fahrer</th>
-                                <th>Pkt</th>
+                                <th>Driver</th>
+                                <th>Pts</th>
                             </tr>
                         </thead>
                         <tbody>
