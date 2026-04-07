@@ -426,6 +426,63 @@
             padding: 6px 0;
         }
 
+        .practice-compare-wrap {
+            margin-top: 12px;
+            padding-top: 12px;
+        }
+
+        .practice-compare-btn {
+            display: inline-block;
+            padding: 7px 14px;
+            background: transparent;
+            border: 1px solid #3a4658;
+            border-radius: 6px;
+            color: #aeb8c7;
+            font-size: 0.83rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: border-color 0.2s ease, color 0.2s ease;
+        }
+
+        .practice-compare-btn:hover,
+        .practice-compare-btn.active {
+            border-color: var(--accent);
+            color: var(--text);
+        }
+
+        .practice-compare-grid {
+            display: none;
+            overflow-x: auto;
+            gap: 18px;
+            margin-top: 12px;
+        }
+
+        .practice-compare-grid.active {
+            display: flex;
+        }
+
+        .practice-col {
+            flex: 0 0 auto;
+        }
+
+        .practice-col-title {
+            font-weight: 700;
+            font-size: 0.82rem;
+            color: var(--muted);
+            margin-bottom: 8px;
+            padding-bottom: 5px;
+            border-bottom: 1px solid var(--line);
+            text-transform: uppercase;
+            letter-spacing: 0.06em;
+            white-space: nowrap;
+        }
+
+        .practice-no-data {
+            color: var(--muted);
+            font-size: 0.88rem;
+            margin: 8px 0 0;
+        }
+
         @media (max-width: 760px) {
             body {
                 padding: 16px;
@@ -606,6 +663,7 @@
     <script>
         let pastLoaded = false;
         const pastResultsLoadedMeetings = new Set();
+        const meetingResultsCache = {};
 
         function loadPastResultsForMeeting(card) {
             const meetingKey = card.dataset.meetingKey;
@@ -648,7 +706,12 @@
                         node.innerHTML = `<div class="session-result-list">${rowsMarkup}</div>`;
                         node.classList.remove('loading');
                     });
+                    meetingResultsCache[meetingKey] = resultMap;
                     pastResultsLoadedMeetings.add(meetingKey);
+                    const practiceGrid = card.querySelector('[data-practice-grid]');
+                    if (practiceGrid && practiceGrid.classList.contains('active')) {
+                        renderPracticeGrid(practiceGrid, resultMap);
+                    }
                 })
                 .catch(() => {
                     resultNodes.forEach((node) => {
@@ -706,6 +769,104 @@
             });
         }
 
+        function renderPracticeGrid(grid, resultMap) {
+            const practiceSessions = Object.values(resultMap)
+                .filter((s) => s.session_name && s.session_name.startsWith('Practice'))
+                .sort((a, b) => a.session_name.localeCompare(b.session_name));
+
+            if (practiceSessions.length === 0) {
+                grid.innerHTML = '<p class="practice-no-data">Keine Trainingsdaten verfügbar.</p>';
+                return;
+            }
+
+            grid.innerHTML = practiceSessions.map((session) => {
+                const rowsMarkup = (session.rows || []).map((row) => {
+                    const logoMarkup = row.team_logo
+                        ? `<img src="${row.team_logo}" alt="" class="session-mini-logo" loading="lazy">`
+                        : '';
+                    const posLabel = row.position_label || (row.position != null ? `P${row.position}` : 'NC');
+                    const timeOrGap = row.time_or_gap || '-';
+                    return `<div class="session-result-item"><span class="session-result-pos">${posLabel}</span><span class="session-result-driver">${logoMarkup}<span>${row.driver}</span></span><span class="session-result-time">${timeOrGap}</span></div>`;
+                }).join('');
+                return `<div class="practice-col"><div class="practice-col-title">${session.session_name}</div><div class="session-result-list">${rowsMarkup}</div></div>`;
+            }).join('');
+        }
+
+        function togglePracticeCompare(card) {
+            const meetingKey = card.dataset.meetingKey;
+            if (!meetingKey) return;
+
+            const grid = card.querySelector('[data-practice-grid]');
+            const btn = card.querySelector('[data-practice-compare]');
+            if (!grid) return;
+
+            if (grid.classList.contains('active')) {
+                grid.classList.remove('active');
+                if (btn) { btn.classList.remove('active'); btn.textContent = 'Alle Trainings vergleichen'; }
+                return;
+            }
+
+            if (meetingResultsCache[meetingKey]) {
+                renderPracticeGrid(grid, meetingResultsCache[meetingKey]);
+                grid.classList.add('active');
+                if (btn) { btn.classList.add('active'); btn.textContent = 'Trainings ausblenden'; }
+                return;
+            }
+
+            if (btn) { btn.disabled = true; btn.textContent = 'Lädt …'; }
+
+            fetch(`/formula1/past-weekends/${meetingKey}/results`)
+                .then((response) => response.json())
+                .then((resultMap) => {
+                    meetingResultsCache[meetingKey] = resultMap;
+                    pastResultsLoadedMeetings.add(meetingKey);
+                    const resultNodes = card.querySelectorAll('[data-result-for]');
+                    resultNodes.forEach((node) => {
+                        const sessionKey = node.dataset.resultFor;
+                        const summary = resultMap ? resultMap[sessionKey] : null;
+                        if (!summary || !summary.rows || summary.rows.length === 0) {
+                            node.textContent = 'Kein Ergebnis verfügbar';
+                            node.classList.remove('loading');
+                            return;
+                        }
+                        const rowsMarkup = summary.rows.map((row) => {
+                            const logoMarkup = row.team_logo
+                                ? `<img src="${row.team_logo}" alt="Team Logo" class="session-mini-logo" loading="lazy">`
+                                : '';
+                            const positionLabel = row.position_label || (row.position !== null && row.position !== undefined ? `P${row.position}` : 'NC');
+                            const timeOrGapValue = row.time_or_gap || '-';
+                            const timeOrGap = `<span class="session-result-time">${timeOrGapValue}</span>`;
+                            const sessionName = summary.session_name || '';
+                            const isQualifyingSession = sessionName === 'Qualifying' || sessionName === 'Sprint Qualifying' || sessionName === 'Sprint Shootout';
+                            const needsDivider = isQualifyingSession && (row.position === 11 || row.position === 17);
+                            const rowClass = needsDivider ? 'session-result-item cutoff-divider' : 'session-result-item';
+                            return `<div class="${rowClass}"><span class="session-result-pos">${positionLabel}</span><span class="session-result-driver">${logoMarkup}<span>${row.driver}</span></span>${timeOrGap}</div>`;
+                        }).join('');
+                        node.innerHTML = `<div class="session-result-list">${rowsMarkup}</div>`;
+                        node.classList.remove('loading');
+                    });
+                    renderPracticeGrid(grid, resultMap);
+                    grid.classList.add('active');
+                    if (btn) { btn.disabled = false; btn.classList.add('active'); btn.textContent = 'Trainings ausblenden'; }
+                })
+                .catch(() => {
+                    grid.innerHTML = '<p class="practice-no-data">Fehler beim Laden.</p>';
+                    grid.classList.add('active');
+                    if (btn) { btn.disabled = false; btn.textContent = 'Alle Trainings vergleichen'; }
+                });
+        }
+
+        function bindPracticeCompareButtons() {
+            document.querySelectorAll('[data-practice-compare]').forEach((btn) => {
+                if (btn.dataset.bound === '1') return;
+                btn.dataset.bound = '1';
+                btn.addEventListener('click', () => {
+                    const card = btn.closest('[data-weekend]');
+                    if (card) togglePracticeCompare(card);
+                });
+            });
+        }
+
         bindWeekendCardToggles();
         bindSessionResultToggles();
 
@@ -725,6 +886,13 @@
 
             const weekendsMarkup = weekends.map((weekend) => {
                 const sessions = weekend.sessions || [];
+                const hasPracticeSessions = sessions.some(s => s.session_name && s.session_name.startsWith('Practice'));
+                const isSprint = sessions.some(s => {
+                    const name = s.session_name || '';
+                    return name.includes('Sprint');
+                });
+                const showPracticeButton = hasPracticeSessions && !isSprint;
+
                 const sessionMarkup = sessions.length > 0
                     ? sessions.map((session) => {
                         const sessionKey = session.session_key || '';
@@ -737,7 +905,7 @@
                                 <div class="session-result loading" data-result-for="${sessionKey}">Ergebnisse werden beim Aufklappen geladen ...</div>
                             </div>
                         `;
-                    }).join('')
+                    }).join('') + (showPracticeButton ? `<div class="practice-compare-wrap"><button class="practice-compare-btn" type="button" data-practice-compare>Alle Trainings vergleichen</button><div class="practice-compare-grid" data-practice-grid></div></div>` : '')
                     : `
                         <div class="session-row">
                             <div class="session-name">Keine Session-Daten verfügbar</div>
@@ -764,6 +932,7 @@
             if (pastLoading) pastLoading.style.display = 'none';
             bindWeekendCardToggles();
             bindSessionResultToggles();
+            bindPracticeCompareButtons();
         }
 
         const weekendFilter = document.querySelector('[data-weekend-filter]');
