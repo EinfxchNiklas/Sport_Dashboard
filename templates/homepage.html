@@ -1,97 +1,209 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="de">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Sport Dashboard</title>
     <style>
-        body {
-            background-color: #2e2e2e;
-            color: white;
-            font-family: Arial, sans-serif;
-            text-align: center;
-            padding: 50px;
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
         }
 
-        .page-title {
-            font-size: clamp(2rem, 3.2vw, 2.5rem);
-            font-weight: 700;
-            line-height: 1.2;
-            margin: 56px auto 12px;
-            text-align: center;
+        body {
+            height: 100vh;
+            overflow: hidden;
+            font-family: 'Arial', sans-serif;
         }
-        a {
-            text-decoration: none; /* Remove underline and purple lines */
+
+        .container {
+            display: flex;
+            height: 100vh;
+            width: 100vw;
         }
-        .button {
-            background-color: black;
-            color: white;
-            border: 2px solid cyan;
-            padding: 15px 30px;
-            margin: 20px;
-            font-size: 18px;
+
+        /* ── Basis jeder Sektion ── */
+        .sport-section {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            position: relative;
+            overflow: hidden;
             cursor: pointer;
-            border-radius: 5px;
-            display: inline-block;
-            width: 250px; /* Set consistent width */
-            height: 150px; /* Set consistent height */
+            text-decoration: none;
+            transition: flex 0.5s cubic-bezier(0.4, 0, 0.2, 1);
+            background-repeat: no-repeat;
+            background-size: 100% 100%;
         }
-        .button:hover {
-            background-color: cyan;
-            color: black;
+
+        .sport-section:hover {
+            flex: 1.18;
         }
-        .icon {
-            display: block;
-            margin: 0 auto 10px;
-            width: 50px;
-            height: 50px;
+
+        .trophy-layer {
+            position: absolute;
+            inset: 0;
+            z-index: 0;
+            pointer-events: none;
+            background-repeat: no-repeat;
+            background-position: center 58%;
+            background-size: min(62%, 340px) auto;
+            opacity: 0.2;
+            filter: drop-shadow(0 8px 24px rgba(0, 0, 0, 0.45));
+            transition: transform 0.45s ease, opacity 0.45s ease;
         }
-        .football-icon {
-            filter: invert(1); /* Makes the icon white */
-            transition: filter 0.3s ease;
+
+        .sport-section:hover .trophy-layer {
+            opacity: 0.28;
+            transform: scale(1.03);
         }
-        .button:hover .football-icon {
-            filter: invert(0); /* Makes the icon black on hover */
+
+        .trophy-fussball {
+            background-image: url('/static/images/Trophies/Bundesligaschale1.png');
         }
-        .formula1-icon {
-            filter: invert(1); /* Makes the icon white */
-            transition: filter 0.3s ease;
+
+        .trophy-formula1 {
+            background-image: url('/static/images/Trophies/f1_trophy.png');
+            background-size: min(96%, 620px) auto;
         }
-        .button:hover .formula1-icon {
-            filter: invert(0); /* Makes the icon black on hover */
+
+        .trophy-american-football {
+            background-image: url('/static/images/Trophies/lombardi.png');
         }
-        .american-football-icon {
-            filter: invert(1); /* Makes the icon white */
-            transition: filter 0.3s ease;
+
+        /* Trennlinie zwischen Sektionen */
+        .sport-section:not(:last-child) {
+            border-right: 1px solid rgba(255, 255, 255, 0.18);
         }
-        .button:hover .american-football-icon {
-            filter: invert(0); /* Makes the icon black on hover */
+
+        /* ── Farbverläufe ── */
+        .fussball {
+            background:
+                radial-gradient(circle at 50% -15%, rgba(224, 194, 88, 0.40) 0%, rgba(224, 194, 88, 0.16) 34%, rgba(0, 0, 0, 0) 66%),
+                linear-gradient(to bottom, #1d1b14 0%, #12110c 54%, #000000 100%);
+        }
+
+        .formula1 {
+            background:
+                radial-gradient(circle at 50% -15%, rgba(185, 62, 62, 0.40) 0%, rgba(185, 62, 62, 0.16) 34%, rgba(0, 0, 0, 0) 66%),
+                linear-gradient(to bottom, #1b1414 0%, #110d0d 54%, #000000 100%);
+        }
+
+        .american-football {
+            background:
+                radial-gradient(circle at 50% -15%, rgba(72, 156, 106, 0.38) 0%, rgba(72, 156, 106, 0.16) 34%, rgba(0, 0, 0, 0) 66%),
+                linear-gradient(to bottom, #131b16 0%, #0d110e 54%, #000000 100%);
+        }
+
+        /* ── Vordergrund-Inhalt ── */
+        .content {
+            position: relative;
+            z-index: 2;
+            text-align: center;
+            color: white;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 16px;
+            transition: transform 0.5s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        .sport-section:hover .content {
+            transform: scale(1.02) translateY(-2px);
+        }
+
+        /* Sport-Name */
+        .sport-name {
+            font-size: clamp(1.4rem, 2.4vw, 2.2rem);
+            font-weight: 800;
+            letter-spacing: 3px;
+            text-transform: uppercase;
+            text-shadow: 0 2px 12px rgba(0, 0, 0, 0.9);
+            white-space: nowrap;
+        }
+
+        /* Untertitel – erscheint beim Hover */
+        .sport-subtitle {
+            font-size: 0.85rem;
+            letter-spacing: 2px;
+            text-transform: uppercase;
+            opacity: 0;
+            transform: translateY(12px);
+            transition: opacity 0.4s ease 0.05s, transform 0.4s ease 0.05s;
+            text-shadow: 0 1px 6px rgba(0, 0, 0, 0.8);
+            color: rgba(255, 255, 255, 0.85);
+        }
+
+        .sport-section:hover .sport-subtitle {
+            opacity: 1;
+            transform: translateY(0);
+        }
+
+        /* Pfeil unten beim Hover */
+        .arrow {
+            font-size: 1.4rem;
+            opacity: 0;
+            transform: translateY(8px);
+            transition: opacity 0.4s ease 0.1s, transform 0.4s ease 0.1s;
+        }
+
+        .sport-section:hover .arrow {
+            opacity: 0.7;
+            transform: translateY(0);
+        }
+
+        /* Helles Overlay beim Hover */
+        .sport-section::before {
+            content: '';
+            position: absolute;
+            inset: 0;
+            background: rgba(255, 255, 255, 0);
+            transition: background 0.5s ease;
+            z-index: 1;
+            pointer-events: none;
+        }
+
+        .sport-section:hover::before {
+            background: rgba(255, 255, 255, 0.03);
         }
     </style>
 </head>
 <body>
-    <h1 class="page-title">Welcome to the Sport Dashboard</h1>
-    <p>Select a sport to view more information:</p>
+    <div class="container">
 
-    <a href="/fussball">
-        <button class="button">
-            <img src="/static/images/fussball.png" alt="Football Icon" class="icon football-icon">
-            Fußball
-        </button>
-    </a>
+        <!-- ── Fußball ── -->
+        <a href="/fussball" class="sport-section fussball">
+            <span class="trophy-layer trophy-fussball"></span>
+            <div class="content">
+                <div class="sport-name">Fußball</div>
+                <div class="sport-subtitle">Bundesliga &amp; Tabelle</div>
+                <div class="arrow">↓</div>
+            </div>
+        </a>
 
-    <a href="/formula1">
-        <button class="button">
-            <img src="/static/images/f1-auto.png" alt="Formula 1 Icon" class="icon formula1-icon">
-            Formel 1
-        </button>
-    </a>
+        <!-- ── Formel 1 ── -->
+        <a href="/formula1" class="sport-section formula1">
+            <span class="trophy-layer trophy-formula1"></span>
+            <div class="content">
+                <div class="sport-name">Formel 1</div>
+                <div class="sport-subtitle">Rennen &amp; Standings</div>
+                <div class="arrow">↓</div>
+            </div>
+        </a>
 
-    <a href="/american_football">
-        <button class="button">
-            <img src="/static/images/american-football.png" alt="American Football Icon" class="icon american-football-icon">
-            American Football
-        </button>
-    </a>
+        <!-- ── American Football ── -->
+        <a href="/american_football" class="sport-section american-football">
+            <span class="trophy-layer trophy-american-football"></span>
+            <div class="content">
+                <div class="sport-name">American Football</div>
+                <div class="sport-subtitle">NFL &amp; mehr</div>
+                <div class="arrow">↓</div>
+            </div>
+        </a>
+
+    </div>
 </body>
 </html>
