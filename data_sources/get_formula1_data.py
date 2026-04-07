@@ -209,6 +209,27 @@ def _format_seconds_to_lap_time(seconds_value):
         return None
 
 
+def _format_interval_to_previous(current_gap, previous_gap):
+    try:
+        gap_float = float(current_gap)
+    except (TypeError, ValueError):
+        return None
+
+    if previous_gap is not None:
+        try:
+            previous_gap_float = float(previous_gap)
+            interval_to_previous = gap_float - previous_gap_float
+            if interval_to_previous > 0:
+                return f"+{interval_to_previous:.3f}s"
+        except (TypeError, ValueError):
+            pass
+
+    if gap_float > 0:
+        return f"+{gap_float:.3f}s"
+
+    return None
+
+
 def _build_session_result_rows(
     result_rows,
     acronym_by_driver_number=None,
@@ -234,6 +255,8 @@ def _build_session_result_rows(
 
     rows = []
     previous_gap = None
+    previous_gap_by_quali_phase = [None, None, None]
+    quali_phase_labels = ("Q1", "Q2", "Q3")
     for idx, row in enumerate(ordered_rows):
         position = row.get("position")
         driver_number = row.get("driver_number")
@@ -252,31 +275,26 @@ def _build_session_result_rows(
             position_label = "NC"
 
         # Get gap_to_leader - handle both scalar and array values
-        current_gap = _last_non_null(row.get("gap_to_leader"))
-        
+        raw_gap = row.get("gap_to_leader")
+        current_gap = _last_non_null(raw_gap)
+
         # Get duration - handle both scalar and array values
-        current_duration = _last_non_null(row.get("duration"))
+        raw_duration = row.get("duration")
+        current_duration = _last_non_null(raw_duration)
 
         # Determine time/gap display based on session type
         time_or_gap = None
         
+        is_quali_like = session_name in ("Qualifying", "Sprint Qualifying", "Sprint Shootout")
+        time_or_gap_phases = []
+
         if session_name in ("Race", "Sprint"):
             # For Race/Sprint: Leader shows "Leader", others show gap to previous car
             if idx == 0 and position is not None:
                 time_or_gap = "Leader"
             else:
-                if current_gap is not None and previous_gap is not None:
-                    try:
-                        # Gap to previous car = current_gap - previous_gap
-                        gap_to_prev = float(current_gap) - float(previous_gap)
-                        time_or_gap = f"+{gap_to_prev:.3f}s"
-                    except (TypeError, ValueError):
-                        pass
-                elif current_gap is not None:
-                    try:
-                        time_or_gap = f"+{float(current_gap):.3f}s"
-                    except (TypeError, ValueError):
-                        pass
+                if current_gap is not None:
+                    time_or_gap = _format_interval_to_previous(current_gap, previous_gap)
 
                 if time_or_gap is None and row.get("dnf"):
                     time_or_gap = "-"
@@ -293,26 +311,37 @@ def _build_session_result_rows(
                             pass
         else:
             # For Qualifying/Practice: First shows best lap time, others show interval to previous
-            is_quali_like = session_name in ("Qualifying", "Sprint Qualifying", "Sprint Shootout")
             show_lap_time_for_position = is_quali_like and position in (11, 17)
 
-            if current_duration is not None and (idx == 0 or show_lap_time_for_position):
+            if is_quali_like:
+                gap_values = raw_gap if isinstance(raw_gap, list) else [raw_gap]
+                duration_values = raw_duration if isinstance(raw_duration, list) else [raw_duration]
+
+                for phase_idx, phase_label in enumerate(quali_phase_labels):
+                    phase_gap = gap_values[phase_idx] if phase_idx < len(gap_values) else None
+                    phase_duration = (
+                        duration_values[phase_idx] if phase_idx < len(duration_values) else None
+                    )
+
+                    phase_display = _format_interval_to_previous(
+                        phase_gap,
+                        previous_gap_by_quali_phase[phase_idx],
+                    )
+                    if phase_display is None and phase_duration is not None:
+                        phase_display = _format_seconds_to_lap_time(phase_duration)
+
+                    if phase_display is not None:
+                        time_or_gap_phases.append({"label": phase_label, "value": phase_display})
+
+                    if phase_gap is not None:
+                        previous_gap_by_quali_phase[phase_idx] = phase_gap
+
+                if time_or_gap_phases:
+                    time_or_gap = time_or_gap_phases[-1]["value"]
+            elif current_duration is not None and (idx == 0 or show_lap_time_for_position):
                 time_or_gap = _format_seconds_to_lap_time(current_duration)
             elif current_gap is not None:
-                try:
-                    gap_float = float(current_gap)
-                    if previous_gap is not None:
-                        previous_gap_float = float(previous_gap)
-                        interval_to_previous = gap_float - previous_gap_float
-                        if interval_to_previous > 0:
-                            time_or_gap = f"+{interval_to_previous:.3f}s"
-                        elif gap_float > 0:
-                            # Fallback for mixed quali phases (e.g. P10->P11) where simple subtraction can be <= 0.
-                            time_or_gap = f"+{gap_float:.3f}s"
-                    elif gap_float > 0:
-                        time_or_gap = f"+{gap_float:.3f}s"
-                except (TypeError, ValueError):
-                    pass
+                time_or_gap = _format_interval_to_previous(current_gap, previous_gap)
 
         rows.append(
             {
@@ -321,10 +350,11 @@ def _build_session_result_rows(
                 "driver": (acronym_by_driver_number or {}).get(driver_number, f"#{driver_number}"),
                 "team_logo": (team_logo_by_driver_number or {}).get(driver_number),
                 "time_or_gap": time_or_gap,
+                "time_or_gap_phases": time_or_gap_phases,
             }
         )
-        
-        if current_gap is not None:
+
+        if current_gap is not None and not is_quali_like:
             previous_gap = current_gap
 
     return rows
@@ -604,6 +634,13 @@ def fetch_championship_standings(year=None):
             "session_label": None,
         }
 
+    meetings_payload = _get_json("meetings", params={"year": target_year})
+    meeting_name_by_key = {
+        m["meeting_key"]: m.get("meeting_name")
+        for m in meetings_payload
+        if isinstance(m, dict) and m.get("meeting_key")
+    }
+
     now = datetime.now().astimezone()
     race_sessions = []
     for session in sessions_payload:
@@ -697,5 +734,8 @@ def fetch_championship_standings(year=None):
     return {
         "drivers": drivers,
         "teams": teams,
-        "session_label": latest_race.get("meeting_name"),
+        "session_label": (
+            latest_race.get("meeting_name")
+            or meeting_name_by_key.get(latest_race.get("meeting_key"))
+        ),
     }

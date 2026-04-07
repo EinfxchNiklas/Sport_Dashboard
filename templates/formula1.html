@@ -270,6 +270,60 @@
             font-variant-numeric: tabular-nums;
         }
 
+        .session-result-time-stack {
+            display: grid;
+            gap: 2px;
+            justify-items: end;
+            font-family: "Consolas", "Courier New", monospace;
+            font-variant-numeric: tabular-nums;
+        }
+
+        .session-result-time-line {
+            color: var(--muted);
+            font-size: 0.74rem;
+            font-weight: 500;
+            text-align: right;
+            white-space: nowrap;
+        }
+
+        .session-result-time-line .phase-label {
+            color: #c8d2e3;
+            font-weight: 600;
+            margin-right: 4px;
+        }
+
+        .session-result-item.quali-columns,
+        .session-result-item.quali-header {
+            grid-template-columns: 34px 82px 70px 70px 70px;
+            width: fit-content;
+        }
+
+        .session-result-item.quali-header {
+            color: #b7c3d7;
+            font-size: 0.72rem;
+            text-transform: uppercase;
+            letter-spacing: 0.06em;
+            border-bottom: 1px solid #2f3948;
+            padding-bottom: 6px;
+            margin-bottom: 2px;
+        }
+
+        .session-result-item.quali-header .session-result-pos,
+        .session-result-item.quali-header .session-result-driver {
+            color: #92a3bb;
+            font-weight: 600;
+        }
+
+        .quali-col {
+            color: var(--muted);
+            font-size: 0.76rem;
+            font-weight: 500;
+            text-align: right;
+            font-family: "Consolas", "Courier New", monospace;
+            font-variant-numeric: tabular-nums;
+            white-space: nowrap;
+        }
+
         .session-mini-logo {
             width: 16px;
             height: 16px;
@@ -689,19 +743,7 @@
                             return;
                         }
 
-                        const rowsMarkup = summary.rows.map((row) => {
-                            const logoMarkup = row.team_logo
-                                ? `<img src="${row.team_logo}" alt="Team Logo" class="session-mini-logo" loading="lazy">`
-                                : '';
-                            const positionLabel = row.position_label || (row.position !== null && row.position !== undefined ? `P${row.position}` : 'NC');
-                            const timeOrGapValue = row.time_or_gap || '-';
-                            const timeOrGap = `<span class="session-result-time">${timeOrGapValue}</span>`;
-                            const sessionName = summary.session_name || '';
-                            const isQualifyingSession = sessionName === 'Qualifying' || sessionName === 'Sprint Qualifying' || sessionName === 'Sprint Shootout';
-                            const needsDivider = isQualifyingSession && (row.position === 11 || row.position === 17);
-                            const rowClass = needsDivider ? 'session-result-item cutoff-divider' : 'session-result-item';
-                            return `<div class="${rowClass}"><span class="session-result-pos">${positionLabel}</span><span class="session-result-driver">${logoMarkup}<span>${row.driver}</span></span>${timeOrGap}</div>`;
-                        }).join('');
+                        const rowsMarkup = buildSummaryRowsMarkup(summary);
 
                         node.innerHTML = `<div class="session-result-list">${rowsMarkup}</div>`;
                         node.classList.remove('loading');
@@ -769,6 +811,58 @@
             });
         }
 
+        function buildTimeMarkup(row) {
+            if (Array.isArray(row.time_or_gap_phases) && row.time_or_gap_phases.length > 0) {
+                const phaseLines = row.time_or_gap_phases.map((phase) => {
+                    const label = phase.label || '';
+                    const value = phase.value || '-';
+                    return `<div class="session-result-time-line"><span class="phase-label">${label}</span>${value}</div>`;
+                }).join('');
+                return `<span class="session-result-time-stack">${phaseLines}</span>`;
+            }
+
+            const timeOrGapValue = row.time_or_gap || '-';
+            return `<span class="session-result-time">${timeOrGapValue}</span>`;
+        }
+
+        function buildSummaryRowsMarkup(summary) {
+            const sessionName = summary.session_name || '';
+            const isQualifyingSession = sessionName === 'Qualifying' || sessionName === 'Sprint Qualifying' || sessionName === 'Sprint Shootout';
+
+            const rowsMarkup = summary.rows.map((row) => {
+                const logoMarkup = row.team_logo
+                    ? `<img src="${row.team_logo}" alt="Team Logo" class="session-mini-logo" loading="lazy">`
+                    : '';
+                const positionLabel = row.position_label || (row.position !== null && row.position !== undefined ? `P${row.position}` : 'NC');
+                const needsDivider = isQualifyingSession && (row.position === 11 || row.position === 17);
+                const rowClassBase = isQualifyingSession ? 'session-result-item quali-columns' : 'session-result-item';
+                const rowClass = needsDivider ? `${rowClassBase} cutoff-divider` : rowClassBase;
+
+                if (isQualifyingSession) {
+                    const phaseValues = { Q1: '', Q2: '', Q3: '' };
+                    if (Array.isArray(row.time_or_gap_phases)) {
+                        row.time_or_gap_phases.forEach((phase) => {
+                            if (phase && phase.label && Object.prototype.hasOwnProperty.call(phaseValues, phase.label)) {
+                                phaseValues[phase.label] = phase.value || '';
+                            }
+                        });
+                    }
+
+                    return `<div class="${rowClass}"><span class="session-result-pos">${positionLabel}</span><span class="session-result-driver">${logoMarkup}<span>${row.driver}</span></span><span class="quali-col">${phaseValues.Q1}</span><span class="quali-col">${phaseValues.Q2}</span><span class="quali-col">${phaseValues.Q3}</span></div>`;
+                }
+
+                const timeMarkup = buildTimeMarkup(row);
+                return `<div class="${rowClass}"><span class="session-result-pos">${positionLabel}</span><span class="session-result-driver">${logoMarkup}<span>${row.driver}</span></span>${timeMarkup}</div>`;
+            }).join('');
+
+            if (!isQualifyingSession) {
+                return rowsMarkup;
+            }
+
+            const headerMarkup = '<div class="session-result-item quali-header"><span class="session-result-pos">Pos</span><span class="session-result-driver">Fahrer</span><span class="quali-col">Q1</span><span class="quali-col">Q2</span><span class="quali-col">Q3</span></div>';
+            return `${headerMarkup}${rowsMarkup}`;
+        }
+
         function renderPracticeGrid(grid, resultMap) {
             const practiceSessions = Object.values(resultMap)
                 .filter((s) => s.session_name && s.session_name.startsWith('Practice'))
@@ -785,8 +879,8 @@
                         ? `<img src="${row.team_logo}" alt="" class="session-mini-logo" loading="lazy">`
                         : '';
                     const posLabel = row.position_label || (row.position != null ? `P${row.position}` : 'NC');
-                    const timeOrGap = row.time_or_gap || '-';
-                    return `<div class="session-result-item"><span class="session-result-pos">${posLabel}</span><span class="session-result-driver">${logoMarkup}<span>${row.driver}</span></span><span class="session-result-time">${timeOrGap}</span></div>`;
+                    const timeMarkup = buildTimeMarkup(row);
+                    return `<div class="session-result-item"><span class="session-result-pos">${posLabel}</span><span class="session-result-driver">${logoMarkup}<span>${row.driver}</span></span>${timeMarkup}</div>`;
                 }).join('');
                 return `<div class="practice-col"><div class="practice-col-title">${session.session_name}</div><div class="session-result-list">${rowsMarkup}</div></div>`;
             }).join('');
@@ -829,19 +923,7 @@
                             node.classList.remove('loading');
                             return;
                         }
-                        const rowsMarkup = summary.rows.map((row) => {
-                            const logoMarkup = row.team_logo
-                                ? `<img src="${row.team_logo}" alt="Team Logo" class="session-mini-logo" loading="lazy">`
-                                : '';
-                            const positionLabel = row.position_label || (row.position !== null && row.position !== undefined ? `P${row.position}` : 'NC');
-                            const timeOrGapValue = row.time_or_gap || '-';
-                            const timeOrGap = `<span class="session-result-time">${timeOrGapValue}</span>`;
-                            const sessionName = summary.session_name || '';
-                            const isQualifyingSession = sessionName === 'Qualifying' || sessionName === 'Sprint Qualifying' || sessionName === 'Sprint Shootout';
-                            const needsDivider = isQualifyingSession && (row.position === 11 || row.position === 17);
-                            const rowClass = needsDivider ? 'session-result-item cutoff-divider' : 'session-result-item';
-                            return `<div class="${rowClass}"><span class="session-result-pos">${positionLabel}</span><span class="session-result-driver">${logoMarkup}<span>${row.driver}</span></span>${timeOrGap}</div>`;
-                        }).join('');
+                        const rowsMarkup = buildSummaryRowsMarkup(summary);
                         node.innerHTML = `<div class="session-result-list">${rowsMarkup}</div>`;
                         node.classList.remove('loading');
                     });
