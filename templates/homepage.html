@@ -37,6 +37,7 @@
             transition: flex 0.5s cubic-bezier(0.4, 0, 0.2, 1);
             background-repeat: no-repeat;
             background-size: 100% 100%;
+            isolation: isolate;
         }
 
         .sport-section:hover {
@@ -49,16 +50,18 @@
             z-index: 0;
             pointer-events: none;
             background-repeat: no-repeat;
-            background-position: center 58%;
-            background-size: min(62%, 340px) auto;
-            opacity: 0.2;
-            filter: drop-shadow(0 8px 24px rgba(0, 0, 0, 0.45));
-            transition: transform 0.45s ease, opacity 0.45s ease;
+            background-position: center calc(58% - 70px);
+            background-size: auto 400px;
+            opacity: 0.23;
+            mix-blend-mode: screen;
+            filter: saturate(1.08) contrast(1.06);
+            transition: transform 0.45s ease, opacity 0.45s ease, filter 0.45s ease;
         }
 
         .sport-section:hover .trophy-layer {
-            opacity: 0.28;
+            opacity: 0.31;
             transform: scale(1.03);
+            filter: saturate(1.16) contrast(1.1);
         }
 
         .trophy-fussball {
@@ -67,7 +70,6 @@
 
         .trophy-formula1 {
             background-image: url('/static/images/Trophies/f1_trophy.png');
-            background-size: min(96%, 620px) auto;
         }
 
         .trophy-american-football {
@@ -82,20 +84,20 @@
         /* ── Farbverläufe ── */
         .fussball {
             background:
-                radial-gradient(circle at 50% -15%, rgba(224, 194, 88, 0.40) 0%, rgba(224, 194, 88, 0.16) 34%, rgba(0, 0, 0, 0) 66%),
-                linear-gradient(to bottom, #1d1b14 0%, #12110c 54%, #000000 100%);
+                radial-gradient(circle at 50% -15%, rgba(255, 215, 40, 0.74) 0%, rgba(255, 215, 40, 0.36) 40%, rgba(0, 0, 0, 0) 72%),
+                linear-gradient(to bottom, #3a300f 0%, #241d0b 52%, #050401 100%);
         }
 
         .formula1 {
             background:
-                radial-gradient(circle at 50% -15%, rgba(185, 62, 62, 0.40) 0%, rgba(185, 62, 62, 0.16) 34%, rgba(0, 0, 0, 0) 66%),
-                linear-gradient(to bottom, #1b1414 0%, #110d0d 54%, #000000 100%);
+                radial-gradient(circle at 50% -15%, rgba(235, 45, 45, 0.76) 0%, rgba(235, 45, 45, 0.34) 40%, rgba(0, 0, 0, 0) 72%),
+                linear-gradient(to bottom, #3a1212 0%, #240b0b 52%, #050101 100%);
         }
 
         .american-football {
             background:
-                radial-gradient(circle at 50% -15%, rgba(72, 156, 106, 0.38) 0%, rgba(72, 156, 106, 0.16) 34%, rgba(0, 0, 0, 0) 66%),
-                linear-gradient(to bottom, #131b16 0%, #0d110e 54%, #000000 100%);
+                radial-gradient(circle at 50% -15%, rgba(54, 210, 105, 0.72) 0%, rgba(54, 210, 105, 0.32) 40%, rgba(0, 0, 0, 0) 72%),
+                linear-gradient(to bottom, #10301e 0%, #0a1e13 52%, #010603 100%);
         }
 
         /* ── Vordergrund-Inhalt ── */
@@ -160,14 +162,22 @@
             content: '';
             position: absolute;
             inset: 0;
-            background: rgba(255, 255, 255, 0);
+            background: transparent;
             transition: background 0.5s ease;
             z-index: 1;
             pointer-events: none;
         }
 
-        .sport-section:hover::before {
-            background: rgba(255, 255, 255, 0.03);
+        .fussball:hover::before {
+            background: rgba(255, 214, 45, 0.12);
+        }
+
+        .formula1:hover::before {
+            background: rgba(235, 45, 45, 0.12);
+        }
+
+        .american-football:hover::before {
+            background: rgba(54, 210, 105, 0.12);
         }
     </style>
 </head>
