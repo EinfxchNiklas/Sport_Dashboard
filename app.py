@@ -10,6 +10,7 @@ from data_sources.get_formula1_data import (
 )
 
 app = Flask(__name__)
+app.config['SEND_FILE_MAX_AGE_DEFAULT'] = 60 * 60 * 24 * 7  # 1 Woche
 
 @app.route('/')
 def homepage():
