@@ -7,5 +7,3 @@ test.py
 venv/
 env/
 *.egg-info/
-
-config.py
