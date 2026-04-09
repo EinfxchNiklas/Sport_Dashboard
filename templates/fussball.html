@@ -291,17 +291,19 @@
             display: flex;
             align-items: center;
             justify-content: center;
-            background: rgba(0, 0, 0, 0.85);
+            background: transparent;
+            backdrop-filter: blur(4px);
             z-index: 3000;
             padding: 20px;
         }
 
         .api-lock-modal {
             width: min(560px, 100%);
-            background: #1a1a1a;
-            border: 1px solid #3b3b3b;
+            background: rgba(26, 26, 26, 0.8);
+            border: none;
             border-radius: 14px;
-            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.55);
+            box-shadow: 0 8px 16px rgba(0, 0, 0, 0.15);
+            backdrop-filter: blur(6px);
             padding: 22px;
             text-align: center;
         }
