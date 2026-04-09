@@ -1,8 +1,11 @@
 from datetime import datetime, timezone
-from config import FOOTBALL_DATA_API_KEY
 import os
-
 import requests
+
+from dotenv import load_dotenv
+
+load_dotenv()
+FOOTBALL_DATA_API_KEY = os.environ.get('FOOTBALL_DATA_API_KEY')
 
 # Mapping von Team-Namen zu lokalen Bild-Dateinamen (im static/images/ Ordner)
 TEAM_LOGO_MAPPING = {
@@ -25,6 +28,35 @@ TEAM_LOGO_MAPPING = {
     "VfL Wolfsburg": "Wolfsburg.png",
     "1. FC Heidenheim 1846": "Heidenheim.png",
 }
+
+_bundesliga_table_cache = {
+    "data": [],
+    "fetched_at": None,
+}
+TABLE_CACHE_TTL_SECONDS = 300  # 5 Minuten
+
+
+def _get_cached_bundesliga_table(now_utc=None):
+    if now_utc is None:
+        now_utc = datetime.now(timezone.utc)
+
+    fetched_at = _bundesliga_table_cache["fetched_at"]
+    if fetched_at is None:
+        return None
+
+    cache_age_seconds = (now_utc - fetched_at).total_seconds()
+    if cache_age_seconds >= TABLE_CACHE_TTL_SECONDS:
+        return None
+
+    return _bundesliga_table_cache["data"]
+
+
+def _set_cached_bundesliga_table(table_data, now_utc=None):
+    if now_utc is None:
+        now_utc = datetime.now(timezone.utc)
+
+    _bundesliga_table_cache["data"] = table_data
+    _bundesliga_table_cache["fetched_at"] = now_utc
 
 
 def get_team_logo_path(team_name):
@@ -56,11 +88,12 @@ def get_team_logo_path(team_name):
 def fetch_team_matches(team_id=4):
     """
     Fetches matches for any Bundesliga team from football-data.org and returns
-    a list compatible with the existing Jinja template in fussball.html.
+    a tuple: (matches_list, is_rate_limited)
+    Returns empty list and rate_limited flag if API error occurs.
     """
     api_key = FOOTBALL_DATA_API_KEY
     if not api_key:
-        return []
+        return [], False
 
     base_url = "https://api.football-data.org/v4"
     competitions = "BL1,DFB,CL,EL,UECL"
@@ -75,9 +108,13 @@ def fetch_team_matches(team_id=4):
             params=params,
             timeout=15,
         )
+        
+        if response.status_code == 429:
+            return [], True
+        
         response.raise_for_status()
     except requests.RequestException:
-        return []
+        return [], False
 
     payload = response.json()
     raw_matches = payload.get("matches", [])
@@ -138,17 +175,22 @@ def fetch_team_matches(team_id=4):
     past_matches = [m for m in season_matches if datetime.fromisoformat(m["matchDateTime"]) < now_utc]
     future_matches = [m for m in season_matches if datetime.fromisoformat(m["matchDateTime"]) >= now_utc]
 
-    return past_matches[-4:] + future_matches
+    return past_matches[-4:] + future_matches, False
 
 
 def fetch_bundesliga_table():
     """
     Fetches Bundesliga standings from football-data.org and returns
-    a list for display in the matches template.
+    a tuple: (standings_list, is_rate_limited)
     """
     api_key = FOOTBALL_DATA_API_KEY
     if not api_key:
-        return []
+        return [], False
+
+    now_utc = datetime.now(timezone.utc)
+    cached_table = _get_cached_bundesliga_table(now_utc)
+    if cached_table is not None:
+        return cached_table, False
 
     base_url = "https://api.football-data.org/v4"
     headers = {"X-Auth-Token": api_key}
@@ -159,14 +201,18 @@ def fetch_bundesliga_table():
             headers=headers,
             timeout=15,
         )
+        
+        if response.status_code == 429:
+            return [], True
+        
         response.raise_for_status()
     except requests.RequestException:
-        return []
+        return [], False
 
     payload = response.json()
     standings = payload.get("standings", [])
     if not standings:
-        return []
+        return [], False
 
     table = standings[0].get("table", [])
     transformed_table = []
@@ -186,12 +232,14 @@ def fetch_bundesliga_table():
             }
         )
 
-    return transformed_table
+    _set_cached_bundesliga_table(transformed_table, now_utc)
+
+    return transformed_table, False
 
 # Keep legacy alias
 fetch_bvb_matches = fetch_team_matches
 
 if __name__ == "__main__":
-    bvb_matches = fetch_team_matches()
+    bvb_matches, _ = fetch_team_matches()
     for match in bvb_matches:
         print(match)
