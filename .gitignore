@@ -2,7 +2,10 @@ __pycache__
 test.py
 .devcontainer
 .vscode
+.env
+.env.local
+venv/
+env/
+*.egg-info/
 
 config.py
-
-# https://sport-dashboard.streamlit.app/
