@@ -1,5 +1,8 @@
 from flask import Flask, jsonify, render_template, request
-from data_sources.get_fussball_data import fetch_team_matches, fetch_bundesliga_table
+from data_sources.get_fussball_data import (
+    fetch_team_matches,
+    fetch_bundesliga_table,
+)
 from data_sources.get_formula1_data import (
     fetch_formula1_weekends,
     fetch_championship_standings,
@@ -15,16 +18,23 @@ def homepage():
 @app.route('/fussball')
 def display_matches():
     team_id = request.args.get('team', 4, type=int)
-    standings = fetch_bundesliga_table()
-    matches = fetch_team_matches(team_id)
+    
+    standings, standings_rate_limited = fetch_bundesliga_table()
+    matches, matches_rate_limited = fetch_team_matches(team_id)
+    
+    api_rate_limited = standings_rate_limited or matches_rate_limited
+    
     selected_team = next((t for t in standings if t.get('teamId') == team_id), None)
     selected_team_name = selected_team['teamName'] if selected_team else 'Bundesliga'
+    
     return render_template(
         'fussball.html',
         matches=matches,
         standings=standings,
         selected_team_id=team_id,
         selected_team_name=selected_team_name,
+        api_rate_limited=api_rate_limited,
+        api_block_seconds_left=60 if api_rate_limited else 0,
     )
 
 @app.route('/formula1')
@@ -58,4 +68,6 @@ def american_football_placeholder():
     return render_template('placeholder.html', sport="American Football")
 
 if __name__ == '__main__':
-    app.run(debug=True)
+    import os
+    debug_mode = os.environ.get('DEBUG', 'False') == 'True'
+    app.run(debug=debug_mode, host='0.0.0.0', port=int(os.environ.get('PORT', 5000)))

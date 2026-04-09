@@ -285,6 +285,64 @@
             background: #2a2a2a;
         }
 
+        .api-lock-overlay {
+            position: fixed;
+            inset: 0;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: rgba(0, 0, 0, 0.85);
+            z-index: 3000;
+            padding: 20px;
+        }
+
+        .api-lock-modal {
+            width: min(560px, 100%);
+            background: #1a1a1a;
+            border: 1px solid #3b3b3b;
+            border-radius: 14px;
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.55);
+            padding: 22px;
+            text-align: center;
+        }
+
+        .api-lock-modal h2 {
+            margin: 0 0 10px 0;
+            font-size: clamp(1.35rem, 2.8vw, 1.8rem);
+        }
+
+        .api-lock-modal p {
+            margin: 0;
+            color: #d0d0d0;
+            line-height: 1.45;
+        }
+
+        .api-lock-countdown {
+            margin: 16px 0 18px 0;
+            font-size: clamp(1.9rem, 5vw, 2.5rem);
+            font-weight: 700;
+            color: #ffd24a;
+            letter-spacing: 0.03em;
+        }
+
+        .api-lock-home {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            min-height: 44px;
+            padding: 10px 16px;
+            background: #ffd24a;
+            color: #111;
+            border-radius: 10px;
+            text-decoration: none;
+            font-weight: 700;
+        }
+
+        .api-lock-home:hover {
+            background: #f3c52f;
+        }
+
         @media (max-width: 700px) {
             body {
                 padding: 14px;
@@ -312,6 +370,19 @@
     </style>
 </head>
 <body>
+    {% if api_rate_limited %}
+    <div class="api-lock-overlay" role="dialog" aria-modal="true" aria-labelledby="apiLockTitle">
+        <div class="api-lock-modal">
+            <h2 id="apiLockTitle">API-Limit erreicht</h2>
+            <p>
+                Die 10 API-Calls pro Minute sind aufgebraucht. Du kannst erst nach Ablauf des Countdowns wieder auf diese Seite.
+            </p>
+            <div class="api-lock-countdown" id="apiLockCountdown">01:00</div>
+            <a class="api-lock-home" href="/">Zur Homepage</a>
+        </div>
+    </div>
+    {% endif %}
+
     <a href="/" class="home-button">← Home</a>
     <h1 class="page-title">{{ selected_team_name }} – Spiele</h1>
     <p class="subtitle"></p>
@@ -410,5 +481,55 @@
             </table>
         </section>
     </div>
+    {% if api_rate_limited %}
+    <script>
+        (function () {
+            var remainingFromServer = {{ api_block_seconds_left | int }};
+            var countdownEl = document.getElementById('apiLockCountdown');
+            var storageKey = 'fussballApiLockEndsAt';
+            var serverEndsAt = Date.now() + remainingFromServer * 1000;
+
+            function getEndsAt() {
+                var storedEndsAt = Number(window.localStorage.getItem(storageKey));
+                var now = Date.now();
+
+                if (!Number.isFinite(storedEndsAt) || storedEndsAt <= now) {
+                    storedEndsAt = serverEndsAt;
+                }
+
+                window.localStorage.setItem(storageKey, String(storedEndsAt));
+
+                return storedEndsAt;
+            }
+
+            function formatTime(seconds) {
+                var minutes = Math.floor(seconds / 60);
+                var rest = seconds % 60;
+                return String(minutes).padStart(2, '0') + ':' + String(rest).padStart(2, '0');
+            }
+
+            function tick() {
+                if (!countdownEl) {
+                    return;
+                }
+
+                var endsAt = getEndsAt();
+                var remaining = Math.ceil((endsAt - Date.now()) / 1000);
+
+                countdownEl.textContent = formatTime(Math.max(0, remaining));
+
+                if (remaining <= 0) {
+                    window.localStorage.removeItem(storageKey);
+                    window.location.reload();
+                    return;
+                }
+
+                window.setTimeout(tick, 1000);
+            }
+
+            tick();
+        })();
+    </script>
+    {% endif %}
 </body>
 </html>
