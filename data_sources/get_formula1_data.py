@@ -527,7 +527,14 @@ def fetch_formula1_weekends(
         return []
 
     now = datetime.now().astimezone()
-    meetings = [m for m in meetings_payload if m.get("meeting_key")]
+
+    # Filter only the two specific canceled race weekends by meeting_key.
+    excluded_meeting_keys = {"1282", "1283"}
+    meetings = [
+        m
+        for m in meetings_payload
+        if m.get("meeting_key") and str(m.get("meeting_key")) not in excluded_meeting_keys
+    ]
 
     past_result_summaries_by_meeting = {}
 
