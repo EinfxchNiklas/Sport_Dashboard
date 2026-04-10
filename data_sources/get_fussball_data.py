@@ -74,13 +74,13 @@ def get_team_logo_path(team_name):
         "..",
         "static",
         "images",
-        "Team_Logos",
+        "BL_Team_Logos",
         filename,
     )
     
     if os.path.exists(image_path):
         # Rückgabe als URL-Pfad für das Template
-        return f"/static/images/Team_Logos/{filename}"
+        return f"/static/images/BL_Team_Logos/{filename}"
     
     return None
 
