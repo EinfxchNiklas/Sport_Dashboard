@@ -416,7 +416,23 @@
     </div>
     {% endif %}
 
+    <div class="page-shell">
+        <!-- Season Selector -->
+        <div class="season-picker panel">
+            <div class="panel-header">
+                Saisons
+            </div>
+            <div class="panel-body panel-body-vertical">
+                {% for season_num, season_label in available_seasons %}
+                    <a class="season-btn-vertical {% if season_num == selected_season %}active{% endif %}" href="/american_football?season={{ season_num }}&type={{ season_type }}">
+                        {{ season_label }}{% if season_num == current_season %}<br><span class="current-season-note">(aktuell)</span>{% endif %}
+                    </a>
+                {% endfor %}
+            </div>
+        </div>
+
     <div class="page-grid">
+
         <!-- Team Selector -->
         <div class="team-picker panel">
             <div style="padding: 12px; background: #2a2a2a; font-weight: 600; font-size: 12px; text-transform: uppercase; color: #bdbdbd;">
@@ -669,11 +685,12 @@
 
         async function loadWeekResults() {
             const week = parseInt(document.body.dataset.selectedWeek || '1', 10);
+            const season = parseInt(document.body.dataset.selectedSeason || '2024', 10);
             const seasonType = document.body.dataset.seasonType || 'reg';
             const loadingChip = document.getElementById('results-loading-chip');
 
             try {
-                const response = await fetch(`/american_football/week-results?week=${week}&type=${seasonType}`);
+                const response = await fetch(`/american_football/week-results?season=${season}&week=${week}&type=${seasonType}`);
                 if (!response.ok) {
                     throw new Error('Failed to load week results');
                 }

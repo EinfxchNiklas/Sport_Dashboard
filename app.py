@@ -1,5 +1,6 @@
 from flask import Flask, jsonify, render_template, request
 from concurrent.futures import ThreadPoolExecutor
+from datetime import datetime
 from data_sources.get_fussball_data import (
     fetch_team_matches,
     fetch_bundesliga_table,
@@ -22,6 +23,17 @@ from data_sources.get_nfl_data import (
 
 app = Flask(__name__)
 app.config['SEND_FILE_MAX_AGE_DEFAULT'] = 60 * 60 * 24 * 7  # 1 Woche
+
+
+def _find_latest_available_nfl_week(season, season_type, max_week):
+    """Return latest week/round that has at least one game for the given season/type."""
+    for week in range(max_week, 0, -1):
+        games, rate_limited = fetch_nfl_scores(season, week, season_type)
+        if rate_limited:
+            break
+        if games:
+            return week, games, False
+    return 1, None, False
 
 @app.route('/')
 def homepage():
@@ -77,23 +89,27 @@ def formula1_past_weekend_results(meeting_key):
 
 @app.route('/american_football')
 def american_football():
+    # Keep season choices aligned with available API data.
+    now = datetime.now()
+    current_season = now.year if now.month >= 8 else now.year - 1
+    min_available_season = 2022
+    max_available_season = max(now.year, current_season)
+
+    available_seasons = [(y, str(y)) for y in range(min_available_season, max_available_season + 1)]
+
+    selected_season = request.args.get('season', current_season, type=int)
+    if selected_season < min_available_season or selected_season > max_available_season:
+        selected_season = current_season
+    
     season_type = request.args.get('type', 'reg', type=str)
     if season_type not in ('reg', 'post'):
         season_type = 'reg'
 
     if season_type == 'reg':
-        selected_week = request.args.get('week', 1, type=int)
-        if selected_week < 1:
-            selected_week = 1
-        if selected_week > 18:
-            selected_week = 18
+        max_week = 18
         available_weeks = [(w, f'Woche {w}') for w in range(1, 19)]
     else:
-        selected_week = request.args.get('week', 1, type=int)
-        if selected_week < 1:
-            selected_week = 1
-        if selected_week > 4:
-            selected_week = 4
+        max_week = 4
         available_weeks = [
             (1, 'Wild Card'),
             (2, 'Divisional Round'),
@@ -101,12 +117,34 @@ def american_football():
             (4, 'Super Bowl'),
         ]
 
-    with ThreadPoolExecutor(max_workers=2) as executor:
-        scores_future = executor.submit(fetch_nfl_scores, None, selected_week, season_type)
-        teams_future = executor.submit(fetch_nfl_teams)
+    week_param = request.args.get('week', type=int)
+    prefetched_scores = None
+    prefetched_scores_rate_limited = False
 
-        scores, scores_rate_limited = scores_future.result()
-        teams, teams_rate_limited = teams_future.result()
+    if week_param is None:
+        selected_week, prefetched_scores, prefetched_scores_rate_limited = _find_latest_available_nfl_week(
+            selected_season,
+            season_type,
+            max_week,
+        )
+    else:
+        selected_week = week_param
+        if selected_week < 1:
+            selected_week = 1
+        if selected_week > max_week:
+            selected_week = max_week
+
+    if prefetched_scores is None:
+        with ThreadPoolExecutor(max_workers=2) as executor:
+            scores_future = executor.submit(fetch_nfl_scores, selected_season, selected_week, season_type)
+            teams_future = executor.submit(fetch_nfl_teams)
+
+            scores, scores_rate_limited = scores_future.result()
+            teams, teams_rate_limited = teams_future.result()
+    else:
+        scores = prefetched_scores
+        scores_rate_limited = prefetched_scores_rate_limited
+        teams, teams_rate_limited = fetch_nfl_teams()
 
     standings = build_nfl_standings_from_teams(teams)
     standings_rate_limited = False if standings else teams_rate_limited
@@ -134,6 +172,9 @@ def american_football():
         selected_week=selected_week,
         selected_week_label=selected_week_label,
         available_weeks=available_weeks,
+        available_seasons=available_seasons,
+        selected_season=selected_season,
+        current_season=current_season,
         season_type=season_type,
         all_teams=all_teams,
         league_standings=league_standings,
@@ -145,6 +186,15 @@ def american_football():
 
 @app.route('/american_football/week-results')
 def american_football_week_results():
+    # Keep season query consistent with the season selector bounds.
+    now = datetime.now()
+    current_season = now.year if now.month >= 8 else now.year - 1
+    min_available_season = 2022
+    max_available_season = max(now.year, current_season)
+
+    selected_season = request.args.get('season', current_season, type=int)
+    if selected_season < min_available_season or selected_season > max_available_season:
+        selected_season = current_season
     season_type = request.args.get('type', 'reg', type=str)
     if season_type not in ('reg', 'post'):
         season_type = 'reg'
@@ -156,7 +206,7 @@ def american_football_week_results():
     if selected_week > max_week:
         selected_week = max_week
 
-    scores, scores_rate_limited = fetch_nfl_scores(week=selected_week, season_type=season_type)
+    scores, scores_rate_limited = fetch_nfl_scores(selected_season, selected_week, season_type)
     enriched_matches, boxscores_rate_limited = enrich_matches_with_boxscores(scores)
 
     return jsonify(
