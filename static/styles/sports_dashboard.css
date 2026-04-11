@@ -1,0 +1,1281 @@
+﻿/* Sport Dashboard Styles */
+/*
+    Inhaltsverzeichnis
+    1) Common
+    2) NFL (american_football)
+    3) Formula 1
+    4) Fussball
+*/
+
+/* ===== Common ===== */
+/*
+    Aktuell keine globalen, ungescopten Regeln.
+    Alle Regeln sind absichtlich per body.page-* gescopt,
+    damit es keine Überschneidungen zwischen den Seiten gibt.
+*/
+
+/* ===== NFL (american_football) ===== */
+body.page-american {
+            background-color: #141414;
+            color: #f5f5f5;
+            font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
+            padding: 30px;
+        }
+body.page-american .home-button {
+            position: fixed;
+            top: 18px;
+            left: 18px;
+            z-index: 1000;
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            padding: 8px 12px;
+            background: #1e1e1e;
+            border: 1px solid #2d2d2d;
+            border-radius: 8px;
+            color: #f5f5f5;
+            text-decoration: none;
+            font-size: 13px;
+            font-weight: 600;
+        }
+body.page-american .home-button:hover {
+            background: #2a2a2a;
+            border-color: #22c55e;
+            color: #22c55e;
+        }
+body.page-american h1 {
+            max-width: 1500px;
+            margin: 8px auto 6px auto;
+            font-size: clamp(2rem, 3.2vw, 2.5rem);
+            font-weight: 700;
+            line-height: 1.2;
+            text-align: left;
+        }
+body.page-american .section {
+            margin-bottom: 40px;
+        }
+body.page-american .section h2 {
+            font-size: 20px;
+            margin-bottom: 15px;
+            color: #f5f5f5;
+            border-bottom: 2px solid #2d2d2d;
+            padding-bottom: 10px;
+        }
+body.page-american .page-shell {
+            max-width: 1500px;
+            margin: 0 auto;
+            position: relative;
+        }
+body.page-american .page-grid {
+            display: grid;
+            grid-template-columns: 250px 1fr 400px;
+            grid-template-areas: "teams matches standings";
+            column-gap: 30px;
+            row-gap: 20px;
+            align-items: start;
+        }
+body.page-american .panel {
+            background: #1e1e1e;
+            border: 1px solid #2d2d2d;
+            border-radius: 12px;
+            overflow: hidden;
+        }
+body.page-american .matches-wrap {
+            width: 100%;
+            grid-area: matches;
+        }
+body.page-american .standings-wrap {
+            width: 100%;
+            grid-area: standings;
+        }
+body.page-american .team-picker {
+            grid-area: teams;
+            display: flex;
+            flex-direction: column;
+            gap: 4px;
+        }
+body.page-american .season-picker {
+            position: absolute;
+            top: 0;
+            left: -170px;
+            width: 140px;
+            display: flex;
+            flex-direction: column;
+            gap: 4px;
+        }
+body.page-american table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+body.page-american thead {
+            background: #2a2a2a;
+        }
+body.page-american th, body.page-american td {
+            padding: 12px 14px;
+            border-bottom: 1px solid #2d2d2d;
+            font-size: 14px;
+        }
+body.page-american th {
+            text-transform: uppercase;
+            letter-spacing: 0.04em;
+            font-size: 11px;
+            color: #bdbdbd;
+            font-weight: 600;
+        }
+body.page-american tbody tr:hover {
+            background: #242424;
+        }
+body.page-american .match-row {
+            display: flex;
+            align-items: center;
+            gap: 20px;
+            padding: 16px;
+            border-bottom: 1px solid #2d2d2d;
+        }
+body.page-american .match-row:hover {
+            background: #242424;
+        }
+body.page-american .match-team {
+            flex: 1;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+body.page-american .team-logo {
+            width: 50px;
+            height: 50px;
+            min-width: 50px;
+            min-height: 50px;
+            max-width: 50px;
+            max-height: 50px;
+            object-fit: contain;
+            flex-shrink: 0;
+            align-self: center;
+            display: block;
+        }
+body.page-american .team-info {
+            flex: 1;
+        }
+body.page-american .team-name {
+            font-weight: 600;
+            margin-bottom: 4px;
+        }
+body.page-american .match-time {
+            font-size: 12px;
+            color: #b0b0b0;
+        }
+body.page-american .score-stack {
+            min-width: 220px;
+            text-align: center;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 6px;
+        }
+body.page-american .match-score {
+            text-align: center;
+            min-width: 80px;
+            font-size: 24px;
+            font-weight: 700;
+            color: #ffd24a;
+        }
+body.page-american .quarter-scores {
+            font-size: 12px;
+            color: #b0b0b0;
+            text-align: center;
+            min-height: 16px;
+        }
+body.page-american .loading-chip {
+            display: inline-block;
+            margin-left: 10px;
+            padding: 3px 8px;
+            border: 1px solid #2d2d2d;
+            border-radius: 999px;
+            font-size: 11px;
+            color: #9ca3af;
+        }
+body.page-american .team-btn {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            padding: 10px 12px;
+            background: #1e1e1e;
+            border: 1px solid #2d2d2d;
+            border-radius: 8px;
+            color: #f5f5f5;
+            font-size: 13px;
+            font-family: inherit;
+            cursor: pointer;
+            text-decoration: none;
+            transition: background 0.15s, border-color 0.15s;
+            width: 100%;
+            box-sizing: border-box;
+            text-align: left;
+        }
+body.page-american .team-btn:hover {
+            background: #2a2a2a;
+            border-color: #444;
+        }
+body.page-american .team-btn.active {
+            background: #2a2a2a;
+            border-color: #22c55e;
+            color: #22c55e;
+            font-weight: 600;
+        }
+body.page-american .team-btn.disabled {
+            cursor: not-allowed;
+            opacity: 0.75;
+        }
+body.page-american .week-nav {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+            padding: 12px;
+            border-bottom: 1px solid #2d2d2d;
+            background: #1a1a1a;
+        }
+body.page-american .season-type-nav {
+            display: flex;
+            gap: 8px;
+            flex-wrap: wrap;
+            align-items: center;
+            padding: 8px 12px;
+            border-bottom: 1px solid #2d2d2d;
+            background: #1a1a1a;
+        }
+body.page-american .season-type-nav .week-btn {
+            padding: 5px 10px;
+        }
+body.page-american .week-btn {
+            padding: 6px 10px;
+            border: 1px solid #3a3a3a;
+            border-radius: 6px;
+            text-decoration: none;
+            color: #d0d0d0;
+            font-size: 12px;
+        }
+body.page-american .week-btn:hover {
+            border-color: #22c55e;
+            color: #22c55e;
+        }
+body.page-american .week-btn.active {
+            border-color: #22c55e;
+            color: #22c55e;
+            font-weight: 600;
+        }
+body.page-american .season-btn-vertical {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            padding: 10px 12px;
+            background: #1e1e1e;
+            border: 1px solid #2d2d2d;
+            border-radius: 8px;
+            color: #f5f5f5;
+            font-size: 13px;
+            font-family: inherit;
+            cursor: pointer;
+            text-decoration: none;
+            transition: background 0.15s, border-color 0.15s;
+            width: 100%;
+            box-sizing: border-box;
+            text-align: center;
+        }
+body.page-american .season-btn-vertical:hover {
+            background: #2a2a2a;
+            border-color: #444;
+        }
+body.page-american .season-btn-vertical.active {
+            background: #2a2a2a;
+            border-color: #22c55e;
+            color: #22c55e;
+            font-weight: 600;
+        }
+body.page-american .team-btn img {
+            width: 24px;
+            height: 24px;
+            min-width: 24px;
+            min-height: 24px;
+            max-width: 24px;
+            max-height: 24px;
+            object-fit: contain;
+            flex-shrink: 0;
+            display: block;
+        }
+body.page-american .standings-table {
+            width: 100%;
+            border-collapse: separate;
+            border-spacing: 0;
+        }
+body.page-american .standings-table.panel {
+            border-radius: 4px;
+            overflow: hidden;
+        }
+body.page-american .standings-table th, body.page-american .standings-table td {
+            padding: 10px 8px;
+            font-size: 12px;
+            border-bottom: 1px solid #2d2d2d;
+        }
+body.page-american .standings-table tbody tr:last-child td {
+            border-bottom: none;
+        }
+body.page-american .standings-table td.team {
+            text-align: left;
+            vertical-align: middle;
+        }
+body.page-american .standings-table .team-cell {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+body.page-american .standings-table .logo {
+            width: 24px;
+            height: 24px;
+            min-width: 24px;
+            min-height: 24px;
+            max-width: 24px;
+            max-height: 24px;
+            object-fit: contain;
+            flex-shrink: 0;
+            align-self: center;
+            display: block;
+        }
+body.page-american .standings-table .team-name {
+            font-weight: 500;
+            margin: 0;
+        }
+body.page-american .standings-section {
+            margin-bottom: 18px;
+        }
+body.page-american .standings-section h3 {
+            font-size: 14px;
+            margin-bottom: 10px;
+            color: #d9d9d9;
+            background: #262626;
+            padding: 8px 12px;
+            border-radius: 4px;
+        }
+body.page-american .rate-limit-warning {
+            background: #3d2d2d;
+            border: 1px solid #8b4444;
+            color: #ff9999;
+            padding: 12px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+            font-size: 13px;
+        }
+body.page-american .no-data {
+            text-align: center;
+            padding: 30px;
+            color: #999;
+            font-size: 14px;
+        }
+body.page-american .division-row {
+            background: rgba(45, 45, 45, 0.5);
+            font-weight: 600;
+        }
+body.page-american .conference-row {
+            background: rgba(60, 60, 60, 0.3);
+            font-weight: 600;
+        }
+body.page-american .tabs {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 15px;
+            border-bottom: 2px solid #2d2d2d;
+        }
+body.page-american .tab-btn {
+            padding: 10px 16px;
+            background: none;
+            border: none;
+            border-bottom: 2px solid transparent;
+            color: #b0b0b0;
+            cursor: pointer;
+            font-size: 14px;
+            font-weight: 500;
+            transition: color 0.2s, border-color 0.2s;
+        }
+body.page-american .tab-btn:hover {
+            color: #f5f5f5;
+        }
+body.page-american .tab-btn.active {
+            color: #22c55e;
+            border-bottom-color: #22c55e;
+        }
+body.page-american .tab-content {
+            display: none;
+        }
+body.page-american .tab-content.active {
+            display: block;
+        }
+body.page-american .all-standings-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 20px;
+        }
+body.page-american .panel-header {
+            padding: 12px;
+            background: #2a2a2a;
+            font-weight: 600;
+            font-size: 12px;
+            text-transform: uppercase;
+            color: #bdbdbd;
+        }
+body.page-american .panel-body {
+            padding: 8px;
+        }
+body.page-american .panel-body-vertical {
+            display: flex;
+            flex-direction: column;
+            gap: 4px;
+        }
+body.page-american .current-season-note {
+            opacity: 0.6;
+            font-size: 11px;
+        }
+body.page-american .team-logo-fallback {
+            width: 50px;
+            height: 50px;
+            background: #2d2d2d;
+            border-radius: 4px;
+        }
+body.page-american .match-meta {
+            font-size: 11px;
+            color: #9ca3af;
+        }
+body.page-american .match-team-away {
+            flex-direction: row-reverse;
+        }
+body.page-american .team-info-right {
+            text-align: right;
+        }
+body.page-american .standings-content {
+            padding: 14px;
+        }
+body.page-american .standings-header-afc {
+            background: #3d2d2d;
+        }
+body.page-american .standings-header-nfc {
+            background: #2d3d4d;
+        }
+body.page-american .col-team {
+            width: 50%;
+            text-align: left;
+        }
+body.page-american .col-stat {
+            width: 12%;
+            text-align: center;
+        }
+body.page-american .col-pct {
+            width: 14%;
+            text-align: center;
+        }
+body.page-american .text-center {
+            text-align: center;
+        }
+body.page-american .pct-value {
+            text-align: center;
+            color: #ffd24a;
+            font-weight: 600;
+        }
+@media (max-width: 1400px) {
+
+body.page-american .season-picker {
+                position: static;
+                width: 100%;
+                margin-bottom: 20px;
+            }
+body.page-american .page-grid {
+                grid-template-columns: 1fr;
+                grid-template-areas: "matches" "standings" "teams";
+            }
+body.page-american .all-standings-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+
+/* ===== Formula 1 ===== */
+body.page-formula1 {
+            --bg: #121418;
+            --panel: #1e1e1e;
+            --panel-open: #222a35;
+            --line: #2d2d2d;
+            --text: #f4f7fb;
+            --muted: #aeb8c7;
+            --accent: #ff2d2d;
+            --accent-soft: rgba(255, 45, 45, 0.16);
+        }
+body.page-formula1 {
+            margin: 0;
+            min-height: 100vh;
+            background-color: #141414;
+            color: var(--text);
+            font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
+            padding: 24px;
+            box-sizing: border-box;
+        }
+body.page-formula1 .home-button {
+            position: fixed;
+            top: 18px;
+            left: 18px;
+            z-index: 1000;
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            padding: 8px 12px;
+            background: #171b22;
+            border: 1px solid var(--line);
+            border-radius: 8px;
+            color: var(--text);
+            text-decoration: none;
+            font-size: 13px;
+            font-weight: 600;
+        }
+body.page-formula1 .home-button:hover {
+            border-color: var(--accent);
+            color: var(--accent);
+        }
+body.page-formula1 .page {
+            max-width: 1100px;
+            margin: 20px auto 0;
+        }
+body.page-formula1 .content-grid {
+            display: grid;
+            grid-template-columns: 1fr 360px;
+            gap: 16px;
+            align-items: start;
+        }
+body.page-formula1 .page-title {
+            margin: 0 0 8px;
+            font-size: clamp(2rem, 3.2vw, 2.5rem);
+            font-weight: 700;
+            line-height: 1.2;
+            text-align: left;
+        }
+body.page-formula1 .subtitle {
+            margin: 8px 0 24px;
+            color: var(--muted);
+            font-size: 1rem;
+        }
+body.page-formula1 .weekend-filter {
+            display: flex;
+            width: 100%;
+            border: 1px solid #3a4658;
+            border-radius: 8px;
+            overflow: hidden;
+            margin-bottom: 14px;
+            max-width: 540px;
+        }
+body.page-formula1 .weekend-filter-btn {
+            border: none;
+            background: #1f2631;
+            color: #d9e2f0;
+            padding: 10px 12px;
+            font-size: 0.92rem;
+            font-weight: 600;
+            cursor: pointer;
+            flex: 1;
+        }
+body.page-formula1 .weekend-filter-btn.active {
+            background: var(--accent-soft);
+            color: #ffd5d5;
+        }
+body.page-formula1 .weekends {
+            display: grid;
+            gap: 14px;
+        }
+body.page-formula1 .weekend {
+            border: 1px solid var(--line);
+            border-radius: 14px;
+            background: var(--panel);
+            overflow: hidden;
+            transition: transform 0.22s ease, border-color 0.22s ease, background 0.22s ease;
+        }
+body.page-formula1 .weekend:hover {
+            transform: translateY(-2px);
+            border-color: #465163;
+        }
+body.page-formula1 .weekend-header {
+            width: 100%;
+            border: none;
+            background: transparent;
+            color: inherit;
+            display: grid;
+            grid-template-columns: 1fr;
+            align-items: center;
+            gap: 12px;
+            padding: 16px 18px;
+            text-align: left;
+            cursor: pointer;
+        }
+body.page-formula1 .weekend-title {
+            font-size: 1.1rem;
+            font-weight: 700;
+        }
+body.page-formula1 .weekend-meta {
+            margin-top: 4px;
+            color: var(--muted);
+            font-size: 0.92rem;
+        }
+body.page-formula1 .sessions {
+            max-height: 0;
+            overflow: hidden;
+            border-top: 1px solid transparent;
+            transition: max-height 0.35s ease, border-color 0.35s ease;
+        }
+body.page-formula1 .sessions-inner {
+            padding: 0 18px 16px;
+        }
+body.page-formula1 .session-row {
+            display: grid;
+            grid-template-columns: 1fr auto;
+            gap: 12px;
+            padding: 10px 0;
+            border-bottom: 1px dashed #384353;
+        }
+body.page-formula1 .session-row.session-toggleable {
+            display: block;
+            padding: 8px 0;
+        }
+body.page-formula1 .session-toggle {
+            width: 100%;
+            border: none;
+            background: transparent;
+            color: inherit;
+            display: grid;
+            grid-template-columns: 1fr auto;
+            gap: 12px;
+            text-align: left;
+            align-items: center;
+            cursor: pointer;
+            padding: 2px 0;
+        }
+body.page-formula1 .session-row.session-toggleable .session-toggle .session-name::after {
+            content: "  (anzeigen)";
+            color: #9aa6ba;
+            font-weight: 500;
+            font-size: 0.82rem;
+        }
+body.page-formula1 .session-row.session-toggleable.open .session-toggle .session-name::after {
+            content: "  (verbergen)";
+        }
+body.page-formula1 .session-row:last-child {
+            border-bottom: none;
+            padding-bottom: 4px;
+        }
+body.page-formula1 .session-name {
+            font-weight: 600;
+        }
+body.page-formula1 .session-time {
+            color: #e8eef8;
+            font-weight: 600;
+        }
+body.page-formula1 .session-result {
+            grid-column: 1 / -1;
+            margin-top: 4px;
+            color: var(--text);
+            font-size: 0.86rem;
+            font-weight: 600;
+            display: none;
+        }
+body.page-formula1 .session-row.session-toggleable.open .session-result {
+            display: block;
+        }
+body.page-formula1 .session-result.loading {
+            color: var(--muted);
+            font-weight: 500;
+        }
+body.page-formula1 .session-result-list {
+            display: grid;
+            gap: 4px;
+        }
+body.page-formula1 .session-result-item {
+            display: grid;
+            grid-template-columns: 34px 82px 88px;
+            align-items: center;
+            column-gap: 6px;
+            color: var(--text);
+            font-size: 0.84rem;
+            width: fit-content;
+        }
+body.page-formula1 .session-result-item.cutoff-divider {
+            border-top: 2px solid rgba(255, 45, 45, 0.45);
+            margin-top: 8px;
+            padding-top: 8px;
+        }
+body.page-formula1 .session-result-pos {
+            width: 34px;
+            font-weight: 700;
+            color: #e8eef8;
+        }
+body.page-formula1 .session-result-driver {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            font-weight: 600;
+            min-width: 0;
+        }
+body.page-formula1 .session-result-time {
+            color: var(--muted);
+            font-size: 0.78rem;
+            font-weight: 500;
+            justify-self: end;
+            text-align: right;
+            font-family: "Consolas", "Courier New", monospace;
+            font-variant-numeric: tabular-nums;
+        }
+body.page-formula1 .session-result-time-stack {
+            display: grid;
+            gap: 2px;
+            justify-items: end;
+            font-family: "Consolas", "Courier New", monospace;
+            font-variant-numeric: tabular-nums;
+        }
+body.page-formula1 .session-result-time-line {
+            color: var(--muted);
+            font-size: 0.74rem;
+            font-weight: 500;
+            text-align: right;
+            white-space: nowrap;
+        }
+body.page-formula1 .session-result-time-line .phase-label {
+            color: #c8d2e3;
+            font-weight: 600;
+            margin-right: 4px;
+        }
+body.page-formula1 .session-result-item.quali-columns, body.page-formula1 .session-result-item.quali-header {
+            grid-template-columns: 34px 82px 70px 70px 70px;
+            width: fit-content;
+        }
+body.page-formula1 .session-result-item.quali-header {
+            color: #b7c3d7;
+            font-size: 0.72rem;
+            text-transform: uppercase;
+            letter-spacing: 0.06em;
+            border-bottom: 1px solid #2f3948;
+            padding-bottom: 6px;
+            margin-bottom: 2px;
+        }
+body.page-formula1 .session-result-item.quali-header .session-result-pos, body.page-formula1 .session-result-item.quali-header .session-result-driver {
+            color: #92a3bb;
+            font-weight: 600;
+        }
+body.page-formula1 .quali-col {
+            color: var(--muted);
+            font-size: 0.76rem;
+            font-weight: 500;
+            text-align: right;
+            font-family: "Consolas", "Courier New", monospace;
+            font-variant-numeric: tabular-nums;
+            white-space: nowrap;
+        }
+body.page-formula1 .session-mini-logo {
+            width: 16px;
+            height: 16px;
+            object-fit: contain;
+            flex-shrink: 0;
+        }
+body.page-formula1 .championship-panel {
+            background: var(--panel);
+            border: 1px solid var(--line);
+            border-radius: 12px;
+            padding: 14px;
+            width: 100%;
+            box-sizing: border-box;
+        }
+body.page-formula1 .championship-title {
+            margin: 2px 0 10px;
+            font-size: 1.12rem;
+            font-weight: 700;
+            color: #dee6f3;
+        }
+body.page-formula1 .championship-subtitle {
+            margin: 0 0 12px;
+            color: var(--muted);
+            font-size: 0.9rem;
+        }
+body.page-formula1 .champ-switch {
+            display: flex;
+            width: 100%;
+            border: 1px solid #3a4658;
+            border-radius: 8px;
+            overflow: hidden;
+            margin-bottom: 12px;
+        }
+body.page-formula1 .champ-switch-btn {
+            border: none;
+            background: #1f2631;
+            color: #d9e2f0;
+            padding: 10px 12px;
+            font-size: 0.92rem;
+            font-weight: 600;
+            cursor: pointer;
+            flex: 1;
+        }
+body.page-formula1 .champ-switch-btn.active {
+            background: var(--accent-soft);
+            color: #ffd5d5;
+        }
+body.page-formula1 .champ-table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+body.page-formula1 .champ-table th, body.page-formula1 .champ-table td {
+            padding: 10px 8px;
+            font-size: 0.95rem;
+            border-bottom: 1px solid #2a3443;
+        }
+body.page-formula1 .champ-table th {
+            color: #aeb8c7;
+            font-weight: 600;
+            text-align: left;
+        }
+body.page-formula1 .champ-table td.pos, body.page-formula1 .champ-table td.pts {
+            width: 1%;
+            white-space: nowrap;
+            font-weight: 700;
+        }
+body.page-formula1 .champ-table td.pos {
+            text-align: left;
+            padding-right: 16px;
+        }
+body.page-formula1 .champ-table td.pts {
+            text-align: right;
+        }
+body.page-formula1 .name-cell {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            min-width: 0;
+        }
+body.page-formula1 .team-logo {
+            width: 22px;
+            height: 22px;
+            object-fit: contain;
+            flex-shrink: 0;
+        }
+body.page-formula1 .team-logo-placeholder {
+            width: 22px;
+            height: 22px;
+            border-radius: 50%;
+            background: #2b3443;
+            color: #90a1ba;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 0.65rem;
+            font-weight: 700;
+            flex-shrink: 0;
+        }
+body.page-formula1 .champ-table-wrap {
+            display: none;
+        }
+body.page-formula1 .champ-table-wrap.active {
+            display: block;
+        }
+body.page-formula1 .weekend.open {
+            background: var(--panel-open);
+            border-color: var(--accent);
+        }
+body.page-formula1 .weekend.open .sessions {
+            max-height: 3200px;
+            border-color: var(--line);
+        }
+body.page-formula1 .weekends-view {
+            display: none;
+        }
+body.page-formula1 .weekends-view.active {
+            display: block;
+        }
+body.page-formula1 .empty {
+            border: 1px solid var(--line);
+            border-radius: 12px;
+            padding: 18px;
+            background: var(--panel);
+            color: var(--muted);
+        }
+body.page-formula1 .loading {
+            color: var(--muted);
+            font-size: 0.95rem;
+            padding: 6px 0;
+        }
+body.page-formula1 .practice-compare-wrap {
+            margin-top: 12px;
+            padding-top: 12px;
+        }
+body.page-formula1 .practice-compare-btn {
+            display: inline-block;
+            padding: 7px 14px;
+            background: transparent;
+            border: 1px solid #3a4658;
+            border-radius: 6px;
+            color: #aeb8c7;
+            font-size: 0.83rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: border-color 0.2s ease, color 0.2s ease;
+        }
+body.page-formula1 .practice-compare-btn:hover, body.page-formula1 .practice-compare-btn.active {
+            border-color: var(--accent);
+            color: var(--text);
+        }
+body.page-formula1 .practice-compare-grid {
+            display: none;
+            overflow-x: auto;
+            gap: 18px;
+            margin-top: 12px;
+        }
+body.page-formula1 .practice-compare-grid.active {
+            display: flex;
+        }
+body.page-formula1 .practice-col {
+            flex: 0 0 auto;
+        }
+body.page-formula1 .practice-col-title {
+            font-weight: 700;
+            font-size: 0.82rem;
+            color: var(--muted);
+            margin-bottom: 8px;
+            padding-bottom: 5px;
+            border-bottom: 1px solid var(--line);
+            text-transform: uppercase;
+            letter-spacing: 0.06em;
+            white-space: nowrap;
+        }
+body.page-formula1 .practice-no-data {
+            color: var(--muted);
+            font-size: 0.88rem;
+            margin: 8px 0 0;
+        }
+@media (max-width: 760px) {
+
+body.page-formula1 {
+                padding: 16px;
+            }
+body.page-formula1 .page {
+                margin-top: 52px;
+            }
+body.page-formula1 .weekend-header {
+                grid-template-columns: 1fr;
+            }
+body.page-formula1 .session-row {
+                grid-template-columns: 1fr;
+                gap: 4px;
+            }
+body.page-formula1 .content-grid {
+                grid-template-columns: 1fr;
+            }
+body.page-formula1 .championship-panel {
+                position: static;
+            }
+        }
+
+/* ===== Fussball ===== */
+body.page-fussball {
+            background-color: #141414;
+            color: #f5f5f5;
+            font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
+            padding: 30px;
+        }
+body.page-fussball .home-button {
+            position: fixed;
+            top: 18px;
+            left: 18px;
+            z-index: 1000;
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            padding: 8px 12px;
+            background: #1e1e1e;
+            border: 1px solid #2d2d2d;
+            border-radius: 8px;
+            color: #f5f5f5;
+            text-decoration: none;
+            font-size: 13px;
+            font-weight: 600;
+        }
+body.page-fussball .home-button:hover {
+            background: #2a2a2a;
+            border-color: #ffd24a;
+            color: #ffd24a;
+        }
+body.page-fussball .page-grid {
+            max-width: 1500px;
+            margin: 0 auto;
+            display: grid;
+            grid-template-columns: 200px 1fr 360px;
+            grid-template-areas: "teams matches standings";
+            column-gap: 30px;
+            row-gap: 20px;
+            align-items: start;
+        }
+body.page-fussball .panel {
+            background: #1e1e1e;
+            border: 1px solid #2d2d2d;
+            border-radius: 12px;
+            overflow: hidden;
+        }
+body.page-fussball .table-wrap {
+            width: 100%;
+            grid-area: matches;
+        }
+body.page-fussball table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+body.page-fussball thead {
+            background: #2a2a2a;
+        }
+body.page-fussball th, body.page-fussball td {
+            padding: 14px 16px;
+            border-bottom: 1px solid #2d2d2d;
+            font-size: 15px;
+        }
+body.page-fussball th {
+            text-transform: uppercase;
+            letter-spacing: 0.04em;
+            font-size: 12px;
+            color: #bdbdbd;
+        }
+body.page-fussball td.team-home {
+            text-align: right;
+            width: 38%;
+            font-weight: 600;
+        }
+body.page-fussball td.center {
+            text-align: center;
+            width: 24%;
+            font-weight: 700;
+            color: #ffd24a;
+        }
+body.page-fussball td.team-away {
+            text-align: left;
+            width: 38%;
+            font-weight: 600;
+        }
+body.page-fussball tbody tr:hover {
+            background: #242424;
+        }
+body.page-fussball .date-time {
+            color: #d9d9d9;
+            font-weight: 500;
+        }
+body.page-fussball .team-cell {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+body.page-fussball .team-cell.home {
+            flex-direction: row-reverse;
+        }
+body.page-fussball .team-cell.away {
+            flex-direction: row;
+        }
+body.page-fussball .team-logo {
+            flex-shrink: 0;
+            width: 50px;
+            height: 50px;
+            object-fit: contain;
+        }
+body.page-fussball .standings-wrap {
+            width: 100%;
+            grid-area: standings;
+        }
+body.page-fussball .team-picker {
+            grid-area: teams;
+            display: flex;
+            flex-direction: column;
+            gap: 4px;
+        }
+body.page-fussball .team-btn {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            padding: 8px 10px;
+            background: #1e1e1e;
+            border: 1px solid #2d2d2d;
+            border-radius: 8px;
+            color: #f5f5f5;
+            font-size: 13px;
+            font-family: inherit;
+            cursor: pointer;
+            text-decoration: none;
+            transition: background 0.15s, border-color 0.15s;
+            width: 100%;
+            box-sizing: border-box;
+            text-align: left;
+        }
+body.page-fussball .team-btn:hover {
+            background: #2a2a2a;
+            border-color: #444;
+        }
+body.page-fussball .team-btn.active {
+            background: #2a2a2a;
+            border-color: #ffd24a;
+            color: #ffd24a;
+            font-weight: 600;
+        }
+body.page-fussball .team-btn img {
+            width: 24px;
+            height: 24px;
+            object-fit: contain;
+            flex-shrink: 0;
+        }
+body.page-fussball .standings-wrap .team-logo {
+            width: 26px;
+            height: 26px;
+        }
+body.page-fussball .standings-wrap th, body.page-fussball .standings-wrap td {
+            padding: 10px 8px;
+            font-size: 13px;
+        }
+body.page-fussball .standings-wrap td {
+            border-bottom: 1px solid #2d2d2d;
+        }
+body.page-fussball .standings-wrap tr.champions-league {
+            background-color: rgba(30, 80, 200, 0.22);
+        }
+body.page-fussball .standings-wrap tr.champions-league:hover {
+            background-color: rgba(30, 80, 200, 0.35);
+        }
+body.page-fussball .standings-wrap tr.europa-league {
+            background-color: rgba(200, 100, 0, 0.22);
+        }
+body.page-fussball .standings-wrap tr.europa-league:hover {
+            background-color: rgba(200, 100, 0, 0.35);
+        }
+body.page-fussball .standings-wrap tr.conference-league {
+            background-color: rgba(30, 150, 60, 0.22);
+        }
+body.page-fussball .standings-wrap tr.conference-league:hover {
+            background-color: rgba(30, 150, 60, 0.35);
+        }
+body.page-fussball .standings-wrap tr.relegation-playoff {
+            background-color: rgba(200, 50, 50, 0.18);
+        }
+body.page-fussball .standings-wrap tr.relegation-playoff:hover {
+            background-color: rgba(200, 50, 50, 0.30);
+        }
+body.page-fussball .standings-wrap tr.relegation {
+            background-color: rgba(180, 30, 30, 0.30);
+        }
+body.page-fussball .standings-wrap tr.relegation:hover {
+            background-color: rgba(180, 30, 30, 0.44);
+        }
+body.page-fussball .standings-wrap td.pos, body.page-fussball .standings-wrap td.num {
+            text-align: center;
+            white-space: nowrap;
+        }
+body.page-fussball .standings-wrap td.points {
+            text-align: center;
+            font-weight: 700;
+            color: #ffd24a;
+        }
+body.page-fussball .standings-wrap .team-name {
+            text-align: left;
+            font-weight: 600;
+        }
+body.page-fussball .standings-wrap .team-inline {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+body.page-fussball .page-title {
+            max-width: 1500px;
+            margin: 8px auto 6px auto;
+            font-size: clamp(2rem, 3.2vw, 2.5rem);
+            font-weight: 700;
+            line-height: 1.2;
+            text-align: left;
+        }
+body.page-fussball p.subtitle {
+            max-width: 1500px;
+            margin: 0 auto 18px auto;
+            color: #a9a9a9;
+        }
+body.page-fussball .panel-title {
+            margin: 0;
+            padding: 14px 16px;
+            font-size: 14px;
+            text-transform: uppercase;
+            letter-spacing: 0.04em;
+            color: #bdbdbd;
+            border-bottom: 1px solid #2d2d2d;
+            background: #2a2a2a;
+        }
+body.page-fussball .api-lock-overlay {
+            position: fixed;
+            inset: 0;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: transparent;
+            backdrop-filter: blur(4px);
+            z-index: 3000;
+            padding: 20px;
+        }
+body.page-fussball .api-lock-modal {
+            width: min(560px, 100%);
+            background: rgba(26, 26, 26, 0.8);
+            border: none;
+            border-radius: 14px;
+            box-shadow: 0 8px 16px rgba(0, 0, 0, 0.15);
+            backdrop-filter: blur(6px);
+            padding: 22px;
+            text-align: center;
+        }
+body.page-fussball .api-lock-modal h2 {
+            margin: 0 0 10px 0;
+            font-size: clamp(1.35rem, 2.8vw, 1.8rem);
+        }
+body.page-fussball .api-lock-modal p {
+            margin: 0;
+            color: #d0d0d0;
+            line-height: 1.45;
+        }
+body.page-fussball .api-lock-countdown {
+            margin: 16px 0 18px 0;
+            font-size: clamp(1.9rem, 5vw, 2.5rem);
+            font-weight: 700;
+            color: #ffd24a;
+            letter-spacing: 0.03em;
+        }
+body.page-fussball .api-lock-home {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            min-height: 44px;
+            padding: 10px 16px;
+            background: #ffd24a;
+            color: #111;
+            border-radius: 10px;
+            text-decoration: none;
+            font-weight: 700;
+        }
+body.page-fussball .api-lock-home:hover {
+            background: #f3c52f;
+        }
+@media (max-width: 700px) {
+
+body.page-fussball {
+                padding: 14px;
+            }
+body.page-fussball .page-grid {
+                grid-template-columns: 1fr;
+                grid-template-areas:
+                    "teams"
+                    "matches"
+                    "standings";
+                gap: 14px;
+            }
+body.page-fussball th, body.page-fussball td {
+                padding: 10px 8px;
+                font-size: 13px;
+            }
+body.page-fussball td.center {
+                font-size: 12px;
+            }
+        }
+
