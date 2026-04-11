@@ -1,0 +1,722 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>NFL - American Football</title>
+    <style>
+        body {
+            background-color: #141414;
+            color: #f5f5f5;
+            font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
+            padding: 30px;
+        }
+
+        .home-button {
+            position: fixed;
+            top: 18px;
+            left: 18px;
+            z-index: 1000;
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            padding: 8px 12px;
+            background: #1e1e1e;
+            border: 1px solid #2d2d2d;
+            border-radius: 8px;
+            color: #f5f5f5;
+            text-decoration: none;
+            font-size: 13px;
+            font-weight: 600;
+        }
+
+        .home-button:hover {
+            background: #2a2a2a;
+            border-color: #22c55e;
+            color: #22c55e;
+        }
+
+        h1 {
+            max-width: 1500px;
+            margin: 8px auto 6px auto;
+            font-size: clamp(2rem, 3.2vw, 2.5rem);
+            font-weight: 700;
+            line-height: 1.2;
+            text-align: left;
+        }
+
+        .section {
+            margin-bottom: 40px;
+        }
+
+        .section h2 {
+            font-size: 20px;
+            margin-bottom: 15px;
+            color: #f5f5f5;
+            border-bottom: 2px solid #2d2d2d;
+            padding-bottom: 10px;
+        }
+
+        .page-grid {
+            max-width: 1500px;
+            margin: 0 auto;
+            display: grid;
+            grid-template-columns: 250px 1fr 400px;
+            grid-template-areas: "teams matches standings";
+            column-gap: 30px;
+            row-gap: 20px;
+            align-items: start;
+        }
+
+        .panel {
+            background: #1e1e1e;
+            border: 1px solid #2d2d2d;
+            border-radius: 12px;
+            overflow: hidden;
+        }
+
+        .matches-wrap {
+            width: 100%;
+            grid-area: matches;
+        }
+
+        .standings-wrap {
+            width: 100%;
+            grid-area: standings;
+        }
+
+        .team-picker {
+            grid-area: teams;
+            display: flex;
+            flex-direction: column;
+            gap: 4px;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+
+        thead {
+            background: #2a2a2a;
+        }
+
+        th,
+        td {
+            padding: 12px 14px;
+            border-bottom: 1px solid #2d2d2d;
+            font-size: 14px;
+        }
+
+        th {
+            text-transform: uppercase;
+            letter-spacing: 0.04em;
+            font-size: 11px;
+            color: #bdbdbd;
+            font-weight: 600;
+        }
+
+        tbody tr:hover {
+            background: #242424;
+        }
+
+        .match-row {
+            display: flex;
+            align-items: center;
+            gap: 20px;
+            padding: 16px;
+            border-bottom: 1px solid #2d2d2d;
+        }
+
+        .match-row:hover {
+            background: #242424;
+        }
+
+        .match-team {
+            flex: 1;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .team-logo {
+            width: 50px;
+            height: 50px;
+            min-width: 50px;
+            min-height: 50px;
+            max-width: 50px;
+            max-height: 50px;
+            object-fit: contain;
+            flex-shrink: 0;
+            align-self: center;
+            display: block;
+        }
+
+        .team-info {
+            flex: 1;
+        }
+
+        .team-name {
+            font-weight: 600;
+            margin-bottom: 4px;
+        }
+
+        .match-time {
+            font-size: 12px;
+            color: #b0b0b0;
+        }
+
+        .score-stack {
+            min-width: 220px;
+            text-align: center;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 6px;
+        }
+
+        .match-score {
+            text-align: center;
+            min-width: 80px;
+            font-size: 24px;
+            font-weight: 700;
+            color: #ffd24a;
+        }
+
+        .quarter-scores {
+            font-size: 12px;
+            color: #b0b0b0;
+            text-align: center;
+            min-height: 16px;
+        }
+
+        .loading-chip {
+            display: inline-block;
+            margin-left: 10px;
+            padding: 3px 8px;
+            border: 1px solid #2d2d2d;
+            border-radius: 999px;
+            font-size: 11px;
+            color: #9ca3af;
+        }
+
+        .team-btn {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            padding: 10px 12px;
+            background: #1e1e1e;
+            border: 1px solid #2d2d2d;
+            border-radius: 8px;
+            color: #f5f5f5;
+            font-size: 13px;
+            font-family: inherit;
+            cursor: pointer;
+            text-decoration: none;
+            transition: background 0.15s, border-color 0.15s;
+            width: 100%;
+            box-sizing: border-box;
+            text-align: left;
+        }
+
+        .team-btn:hover {
+            background: #2a2a2a;
+            border-color: #444;
+        }
+
+        .team-btn.active {
+            background: #2a2a2a;
+            border-color: #22c55e;
+            color: #22c55e;
+            font-weight: 600;
+        }
+
+        .team-btn.disabled {
+            cursor: not-allowed;
+            opacity: 0.75;
+        }
+
+        .week-nav {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+            padding: 12px;
+            border-bottom: 1px solid #2d2d2d;
+            background: #1a1a1a;
+        }
+
+        .week-btn {
+            padding: 6px 10px;
+            border: 1px solid #3a3a3a;
+            border-radius: 6px;
+            text-decoration: none;
+            color: #d0d0d0;
+            font-size: 12px;
+        }
+
+        .week-btn:hover {
+            border-color: #22c55e;
+            color: #22c55e;
+        }
+
+        .week-btn.active {
+            border-color: #22c55e;
+            color: #22c55e;
+            font-weight: 600;
+        }
+
+        .team-btn img {
+            width: 24px;
+            height: 24px;
+            min-width: 24px;
+            min-height: 24px;
+            max-width: 24px;
+            max-height: 24px;
+            object-fit: contain;
+            flex-shrink: 0;
+            display: block;
+        }
+
+        .standings-table {
+            width: 100%;
+        }
+
+        .standings-table th,
+        .standings-table td {
+            padding: 10px 8px;
+            font-size: 12px;
+        }
+
+        .standings-table td.team {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .standings-table .logo {
+            width: 24px;
+            height: 24px;
+            min-width: 24px;
+            min-height: 24px;
+            max-width: 24px;
+            max-height: 24px;
+            object-fit: contain;
+            flex-shrink: 0;
+            align-self: center;
+            display: block;
+        }
+
+        .standings-table .team-name {
+            font-weight: 500;
+            margin: 0;
+        }
+
+        .standings-section {
+            margin-bottom: 30px;
+        }
+
+        .standings-section h3 {
+            font-size: 14px;
+            margin-bottom: 10px;
+            color: #d9d9d9;
+            background: #262626;
+            padding: 8px 12px;
+            border-radius: 4px;
+        }
+
+        .rate-limit-warning {
+            background: #3d2d2d;
+            border: 1px solid #8b4444;
+            color: #ff9999;
+            padding: 12px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+            font-size: 13px;
+        }
+
+        .no-data {
+            text-align: center;
+            padding: 30px;
+            color: #999;
+            font-size: 14px;
+        }
+
+        .division-row {
+            background: rgba(45, 45, 45, 0.5);
+            font-weight: 600;
+        }
+
+        .conference-row {
+            background: rgba(60, 60, 60, 0.3);
+            font-weight: 600;
+        }
+
+        .tabs {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 15px;
+            border-bottom: 2px solid #2d2d2d;
+        }
+
+        .tab-btn {
+            padding: 10px 16px;
+            background: none;
+            border: none;
+            border-bottom: 2px solid transparent;
+            color: #b0b0b0;
+            cursor: pointer;
+            font-size: 14px;
+            font-weight: 500;
+            transition: color 0.2s, border-color 0.2s;
+        }
+
+        .tab-btn:hover {
+            color: #f5f5f5;
+        }
+
+        .tab-btn.active {
+            color: #22c55e;
+            border-bottom-color: #22c55e;
+        }
+
+        .tab-content {
+            display: none;
+        }
+
+        .tab-content.active {
+            display: block;
+        }
+
+        .all-standings-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 20px;
+        }
+
+        @media (max-width: 1400px) {
+            .page-grid {
+                grid-template-columns: 1fr;
+                grid-template-areas: "matches" "standings" "teams";
+            }
+
+            .all-standings-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
+</head>
+<body data-selected-week="{{ selected_week }}" data-season-type="{{ season_type }}">
+    <a href="/" class="home-button">← Home</a>
+
+    <h1>NFL - American Football</h1>
+
+    {% if api_rate_limited %}
+    <div class="rate-limit-warning">
+        ⚠️ API Rate Limit erreicht. Bitte warte {{ api_block_seconds_left }} Sekunden auf die nächste Aktualisierung.
+    </div>
+    {% endif %}
+
+    <div class="page-grid">
+        <!-- Team Selector -->
+        <div class="team-picker panel">
+            <div style="padding: 12px; background: #2a2a2a; font-weight: 600; font-size: 12px; text-transform: uppercase; color: #bdbdbd;">
+                Teams
+            </div>
+            <div style="padding: 8px;">
+                {% for team in all_teams %}
+                    <button type="button" class="team-btn disabled">
+                        {{ team.id }} - {{ team.name }}
+                    </button>
+                {% endfor %}
+            </div>
+        </div>
+
+        <!-- Matches -->
+        <div class="matches-wrap">
+            <div class="panel">
+                <div style="display:flex; gap:8px; padding:10px 12px 0; flex-wrap:wrap; align-items:center;">
+                    <a class="week-btn {% if season_type == 'reg' %}active{% endif %}" href="/american_football?type=reg&week=1" style="font-size:12px;">Regular Season</a>
+                    <a class="week-btn {% if season_type == 'post' %}active{% endif %}" href="/american_football?type=post&week=1" style="font-size:12px;">Playoffs</a>
+                </div>
+                <div class="week-nav">
+                    {% for week_num, week_label in available_weeks %}
+                        <a class="week-btn {% if week_num == selected_week %}active{% endif %}" href="/american_football?type={{ season_type }}&week={{ week_num }}">
+                            {{ week_label }}
+                        </a>
+                    {% endfor %}
+                </div>
+
+                {% if week_matches %}
+                    <div style="padding: 12px; background: #2a2a2a; font-weight: 600; font-size: 12px; text-transform: uppercase; color: #bdbdbd;">
+                        Spiele - {{ selected_week_label }}
+                        <span id="results-loading-chip" class="loading-chip">Ergebnisse laden...</span>
+                    </div>
+                    {% for match in week_matches %}
+                        <div class="match-row" data-game-id="{{ match.gameID }}">
+                            <div class="match-team">
+                                {% if match.homeTeamLogo %}
+                                    <img src="{{ match.homeTeamLogo }}" alt="{{ match.homeTeam }}" class="team-logo">
+                                {% else %}
+                                    <div style="width: 50px; height: 50px; background: #2d2d2d; border-radius: 4px;"></div>
+                                {% endif %}
+                                <div class="team-info">
+                                    <div class="team-name">{{ match.homeTeam }}</div>
+                                </div>
+                            </div>
+                            <div class="score-stack">
+                                <div class="match-score match-score-value">
+                                    {{ match.homeScore }}-{{ match.awayScore }}
+                                </div>
+                                {% if match.statusCode == '0' %}
+                                    <div class="match-time match-meta" style="font-size:11px; color:#9ca3af;">
+                                        {{ match.kickoff_date_de }}<br>{{ match.kickoff_time_de }} Uhr (DE)
+                                    </div>
+                                {% endif %}
+                                <div class="quarter-scores" data-quarters>
+                                    {% if match.quarters %}
+                                        {% for q in match.quarters %}
+                                            {{ q.label }}: {{ q.home }}-{{ q.away }}{% if not loop.last %} | {% endif %}
+                                        {% endfor %}
+                                    {% endif %}
+                                </div>
+                            </div>
+                            <div class="match-team" style="flex-direction: row-reverse;">
+                                {% if match.awayTeamLogo %}
+                                    <img src="{{ match.awayTeamLogo }}" alt="{{ match.awayTeam }}" class="team-logo">
+                                {% else %}
+                                    <div style="width: 50px; height: 50px; background: #2d2d2d; border-radius: 4px;"></div>
+                                {% endif %}
+                                <div class="team-info" style="text-align: right;">
+                                    <div class="team-name">{{ match.awayTeam }}</div>
+                                </div>
+                            </div>
+                        </div>
+                    {% endfor %}
+                {% else %}
+                    <div class="no-data">
+                        Keine Spiele für diese Woche gefunden.
+                    </div>
+                {% endif %}
+            </div>
+        </div>
+
+        <!-- Standings -->
+        <div class="standings-wrap">
+            <div class="panel" style="padding: 14px;">
+                <div style="font-weight: 600; font-size: 12px; text-transform: uppercase; color: #bdbdbd; margin-bottom: 15px;">
+                    Standings
+                </div>
+                
+                {% if standings_data %}
+                    <div class="tabs">
+                        <button class="tab-btn active" onclick="showTab(event, 'division')">Division</button>
+                        <button class="tab-btn" onclick="showTab(event, 'conference')">Conference</button>
+                        <button class="tab-btn" onclick="showTab(event, 'league')">League</button>
+                    </div>
+
+                    <!-- Division Tab -->
+                    <div id="division" class="tab-content active">
+                        {% for conf_key, conf_data in standings_data.items() %}
+                            {% for div_key, div_teams in conf_data.items() %}
+                                <div class="standings-section">
+                                    <h3>{{ conf_key }} - {{ div_key }}</h3>
+                                    <table class="standings-table panel">
+                                        <thead>
+                                            <tr>
+                                                <th style="width: 50%; text-align: left;">Team</th>
+                                                <th style="width: 12%; text-align: center;">W</th>
+                                                <th style="width: 12%; text-align: center;">L</th>
+                                                <th style="width: 12%; text-align: center;">D</th>
+                                                <th style="width: 14%; text-align: center;">PCT</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody>
+                                            {% for team in div_teams %}
+                                                <tr>
+                                                    <td class="team" style="text-align: left;">
+                                                        {% if team.logo %}
+                                                            <img src="{{ team.logo }}" alt="{{ team.name }}" class="logo">
+                                                        {% endif %}
+                                                        <span class="team-name">{{ team.name }}</span>
+                                                    </td>
+                                                    <td style="text-align: center;">{{ team.wins }}</td>
+                                                    <td style="text-align: center;">{{ team.losses }}</td>
+                                                    <td style="text-align: center;">{{ team.ties }}</td>
+                                                    <td style="text-align: center; color: #ffd24a; font-weight: 600;">
+                                                        {{ "%.3f"|format(team.winPct|float) }}
+                                                    </td>
+                                                </tr>
+                                            {% endfor %}
+                                        </tbody>
+                                    </table>
+                                </div>
+                            {% endfor %}
+                        {% endfor %}
+                    </div>
+
+                    <!-- Conference Tab -->
+                    <div id="conference" class="tab-content">
+                        {% for conf_key, conf_data in standings_data.items() %}
+                            <div class="standings-section">
+                                <h3>{{ conf_key }} Conference</h3>
+                                <table class="standings-table panel">
+                                    <thead>
+                                        <tr>
+                                            <th style="width: 50%; text-align: left;">Team</th>
+                                            <th style="width: 12%; text-align: center;">W</th>
+                                            <th style="width: 12%; text-align: center;">L</th>
+                                            <th style="width: 12%; text-align: center;">D</th>
+                                            <th style="width: 14%; text-align: center;">PCT</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        {% set conf_teams = [] %}
+                                        {% for div_key, div_teams in conf_data.items() %}
+                                            {% for team in div_teams %}
+                                                {% if conf_teams.append(team) %}{% endif %}
+                                            {% endfor %}
+                                        {% endfor %}
+                                        {% for team in conf_teams|sort(attribute='winPct', reverse=True) %}
+                                            <tr>
+                                                <td class="team" style="text-align: left;">
+                                                    {% if team.logo %}
+                                                        <img src="{{ team.logo }}" alt="{{ team.name }}" class="logo">
+                                                    {% endif %}
+                                                    <span class="team-name">{{ team.name }}</span>
+                                                </td>
+                                                <td style="text-align: center;">{{ team.wins }}</td>
+                                                <td style="text-align: center;">{{ team.losses }}</td>
+                                                <td style="text-align: center;">{{ team.ties }}</td>
+                                                <td style="text-align: center; color: #ffd24a; font-weight: 600;">
+                                                    {{ "%.3f"|format(team.winPct|float) }}
+                                                </td>
+                                            </tr>
+                                        {% endfor %}
+                                    </tbody>
+                                </table>
+                            </div>
+                        {% endfor %}
+                    </div>
+
+                    <!-- League Tab -->
+                    <div id="league" class="tab-content">
+                        <div class="standings-section">
+                            <h3>Complete League</h3>
+                            <table class="standings-table panel">
+                                <thead>
+                                    <tr>
+                                        <th style="width: 50%; text-align: left;">Team</th>
+                                        <th style="width: 12%; text-align: center;">W</th>
+                                        <th style="width: 12%; text-align: center;">L</th>
+                                        <th style="width: 12%; text-align: center;">D</th>
+                                        <th style="width: 14%; text-align: center;">PCT</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {% set all_teams = [] %}
+                                    {% for conf_key, conf_data in standings_data.items() %}
+                                        {% for div_key, div_teams in conf_data.items() %}
+                                            {% for team in div_teams %}
+                                                {% if all_teams.append(team) %}{% endif %}
+                                            {% endfor %}
+                                        {% endfor %}
+                                    {% endfor %}
+                                    {% for team in all_teams|sort(attribute='winPct', reverse=True) %}
+                                        <tr>
+                                            <td class="team" style="text-align: left;">
+                                                {% if team.logo %}
+                                                    <img src="{{ team.logo }}" alt="{{ team.name }}" class="logo">
+                                                {% endif %}
+                                                <span class="team-name">{{ team.name }}</span>
+                                            </td>
+                                            <td style="text-align: center;">{{ team.wins }}</td>
+                                            <td style="text-align: center;">{{ team.losses }}</td>
+                                            <td style="text-align: center;">{{ team.ties }}</td>
+                                            <td style="text-align: center; color: #ffd24a; font-weight: 600;">
+                                                {{ "%.3f"|format(team.winPct|float) }}
+                                            </td>
+                                        </tr>
+                                    {% endfor %}
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                {% else %}
+                    <div class="no-data">
+                        Keine Standings-Daten verfügbar.
+                    </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+
+    <script>
+        function showTab(event, tabName) {
+            event.preventDefault();
+            
+            // Hide all tabs
+            const contents = document.querySelectorAll('.tab-content');
+            contents.forEach(content => content.classList.remove('active'));
+            
+            // Remove active class from all buttons
+            const buttons = document.querySelectorAll('.tab-btn');
+            buttons.forEach(btn => btn.classList.remove('active'));
+            
+            // Show selected tab and mark button as active
+            document.getElementById(tabName).classList.add('active');
+            event.target.classList.add('active');
+        }
+
+        async function loadWeekResults() {
+            const week = parseInt(document.body.dataset.selectedWeek || '1', 10);
+            const seasonType = document.body.dataset.seasonType || 'reg';
+            const loadingChip = document.getElementById('results-loading-chip');
+
+            try {
+                const response = await fetch(`/american_football/week-results?week=${week}&type=${seasonType}`);
+                if (!response.ok) {
+                    throw new Error('Failed to load week results');
+                }
+
+                const payload = await response.json();
+                const matches = Array.isArray(payload.matches) ? payload.matches : [];
+
+                for (const match of matches) {
+                    const row = document.querySelector(`.match-row[data-game-id="${match.gameID}"]`);
+                    if (!row) continue;
+
+                    const scoreEl = row.querySelector('.match-score-value');
+                    if (scoreEl) {
+                        scoreEl.textContent = `${match.homeScore}-${match.awayScore}`;
+                    }
+
+                    const quarterEl = row.querySelector('[data-quarters]');
+                    if (quarterEl) {
+                        if (Array.isArray(match.quarters) && match.quarters.length > 0) {
+                            const txt = match.quarters
+                                .map(q => `${q.label}: ${q.home}-${q.away}`)
+                                .join(' | ');
+                            quarterEl.textContent = txt;
+                        } else {
+                            quarterEl.textContent = '';
+                        }
+                    }
+                }
+
+                if (loadingChip) {
+                    loadingChip.textContent = 'Ergebnisse aktualisiert';
+                    setTimeout(() => {
+                        loadingChip.style.display = 'none';
+                    }, 1200);
+                }
+            } catch (error) {
+                if (loadingChip) {
+                    loadingChip.textContent = 'Ergebnisse konnten nicht geladen werden';
+                }
+            }
+        }
+
+        window.addEventListener('DOMContentLoaded', loadWeekResults);
+    </script>
+</body>
+</html>
