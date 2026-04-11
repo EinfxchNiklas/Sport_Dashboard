@@ -8,7 +8,11 @@ from zoneinfo import ZoneInfo
 from dotenv import load_dotenv
 
 load_dotenv()
-TANK01_NFL_API_KEY = os.environ.get("TANK01_NFL_API_KEY")
+_API_KEYS = [k for k in [
+    os.environ.get("TANK01_NFL_API_KEY"),
+    os.environ.get("TANK01_NFL_API_KEY_2"),
+] if k]
+_active_key_index = 0
 RAPIDAPI_HOST = "tank01-nfl-live-in-game-real-time-statistics-nfl.p.rapidapi.com"
 
 _teams_cache = {
@@ -33,12 +37,27 @@ def _default_nfl_season(now_utc):
     return now_utc.year if now_utc.month >= 8 else now_utc.year - 1
 
 
-def _api_headers():
+def _api_headers(key=None):
     return {
-        "x-rapidapi-key": TANK01_NFL_API_KEY,
+        "x-rapidapi-key": key or (_API_KEYS[_active_key_index] if _API_KEYS else ""),
         "x-rapidapi-host": RAPIDAPI_HOST,
         "Content-Type": "application/json",
     }
+
+
+def _api_get(url, params=None, timeout=15):
+    """GET request with automatic key rotation on 429 (quota exhausted)."""
+    global _active_key_index
+    for attempt in range(len(_API_KEYS)):
+        response = requests.get(url, headers=_api_headers(), params=params, timeout=timeout)
+        if response.status_code != 429:
+            return response
+        # Current key hit quota – try next key if available
+        if _active_key_index < len(_API_KEYS) - 1:
+            _active_key_index += 1
+        else:
+            return response  # All keys exhausted
+    return response
 
 
 def _safe_int(value, default=0):
@@ -113,7 +132,7 @@ def get_team_logo_path(team_name):
 
 def fetch_nfl_teams():
     """Fetch team master data including standings fields."""
-    if not TANK01_NFL_API_KEY:
+    if not _API_KEYS:
         return [], False
 
     now_utc = datetime.now(timezone.utc)
@@ -122,9 +141,8 @@ def fetch_nfl_teams():
         return _teams_cache["data"], False
 
     try:
-        response = requests.get(
+        response = _api_get(
             f"https://{RAPIDAPI_HOST}/getNFLTeams",
-            headers=_api_headers(),
             timeout=15,
         )
 
@@ -151,9 +169,8 @@ def _fetch_nfl_boxscore(game_id):
         return cached["data"], False
 
     try:
-        response = requests.get(
+        response = _api_get(
             f"https://{RAPIDAPI_HOST}/getNFLBoxScore",
-            headers=_api_headers(),
             params={"gameID": game_id},
             timeout=15,
         )
@@ -197,7 +214,7 @@ def _extract_quarter_scores(line_score):
 
 def fetch_nfl_scores(season=None, week=1, season_type="reg"):
     """Fetch NFL games for a week without heavy per-game detail calls."""
-    if not TANK01_NFL_API_KEY:
+    if not _API_KEYS:
         return [], False
 
     now_utc = datetime.now(timezone.utc)
@@ -211,9 +228,8 @@ def fetch_nfl_scores(season=None, week=1, season_type="reg"):
         if cached is not None and (now_utc - cached["fetched_at"]).total_seconds() < CACHE_TTL_SECONDS:
             return cached["data"], False
 
-        response = requests.get(
+        response = _api_get(
             f"https://{RAPIDAPI_HOST}/getNFLGamesForWeek",
-            headers=_api_headers(),
             params={
                 "week": week,
                 "season": season,
