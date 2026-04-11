@@ -453,11 +453,11 @@ body.page-american .team-info-right {
 body.page-american .standings-content {
             padding: 14px;
         }
-body.page-american .standings-header-afc {
-            background: #3d2d2d;
+body.page-american .standings-section h3.standings-header-afc {
+            background: #3d2d2d !important;
         }
-body.page-american .standings-header-nfc {
-            background: #2d3d4d;
+body.page-american .standings-section h3.standings-header-nfc {
+            background: #2d3d4d !important;
         }
 body.page-american .col-team {
             width: 50%;
