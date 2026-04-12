@@ -103,12 +103,6 @@ Hinweis: Die folgenden Angaben sind nach bestem Wissen dokumentiert (Stand 12.04
   - Die API-Nutzung richtet sich nach RapidAPI- und Provider-spezifischen Bedingungen
   - Pricing, Limits, erlaubte Nutzungsarten und ggf. kommerzielle Rechte vor Einsatz prüfen
 
-## Wichtige Compliance-Hinweise
-
-- API-Keys niemals committen (`.env` bleibt lokal).
-- Marken- und Bildrechte (z. B. Liga-, Team-, Serien- und Logo-Rechte) beachten.
-- Bei öffentlichem Betrieb immer die aktuellen API-TOS/Lizenztexte prüfen, da sich Bedingungen ändern können.
-
 ## Bugs und Feature Requests
 
 Für Bugs und Feature-Wünsche bitte ein Issue erstellen:
