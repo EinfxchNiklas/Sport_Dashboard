@@ -89,6 +89,11 @@
                         Spiele - {{ selected_week_label }}
                         <span id="results-loading-chip" class="loading-chip">Ergebnisse laden...</span>
                     </div>
+                    <div class="match-header">
+                        <div class="match-team-label">Home</div>
+                        <div class="score-stack"></div>
+                        <div class="match-team-label match-team-label-away">Away</div>
+                    </div>
                     {% for match in week_matches %}
                         <div class="match-row" data-game-id="{{ match.gameID }}">
                             <div class="match-team">
