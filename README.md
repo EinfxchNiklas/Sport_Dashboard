@@ -1,6 +1,12 @@
-# Sport Dashboard
+# Überblick
 
-Öffentliches Sport-Dashboard für Fußball, Formel 1 und NFL.
+Dieses Projekt ist ein privates, nicht-kommerzielles Sport-Dashboard, das Daten aus mehreren externen APIs bündelt.
+
+Ziel ist eine zentrale Übersicht für:
+
+- Fußball (Bundesliga)
+- Formel 1
+- NFL
 
 ## Wichtiger Hinweis zur Nutzung dieses Repositories
 
@@ -18,27 +24,32 @@ Zusätzlich gelten die Nutzungsbedingungen der eingebundenen API-Anbieter (siehe
 ## Schnellstart (lokal)
 
 1. Repository klonen
+
 ```bash
 git clone https://github.com/EinfxchNiklas/Sport_Dashboard.git
 cd Sport_Dashboard
 ```
 
 2. Virtuelle Umgebung erstellen und aktivieren (Windows PowerShell)
+
 ```powershell
 python -m venv .venv
 .\.venv\Scripts\Activate.ps1
 ```
 
 3. Abhängigkeiten installieren
+
 ```bash
 pip install -r requirements.txt
 ```
 
 4. Umgebungsvariablen setzen
+
 - `.env.example` nach `.env` kopieren
 - API-Keys eintragen
 
 Beispiel:
+
 ```env
 FOOTBALL_DATA_API_KEY=dein_football_data_key
 TANK01_NFL_API_KEY=dein_tank01_key
@@ -47,11 +58,16 @@ PORT=5000
 ```
 
 5. Starten
+
 ```bash
 python app.py
 ```
 
 Danach im Browser: http://127.0.0.1:5000
+
+## API-Abhängigkeiten
+
+Die Funktionalität des Projekts hängt von externen APIs ab. Verfügbarkeit und Datenqualität liegen außerhalb meines Einflussbereichs.
 
 ## Verwendete APIs, Lizenz- und Nutzungsregeln
 
@@ -68,9 +84,6 @@ Hinweis: Die folgenden Angaben sind nach bestem Wissen dokumentiert (Stand 12.04
 - Rate Limits laut Doku (Policies):
   - Free Plan: 10 Requests pro Minute für registrierte Clients
   - Quelle: https://docs.football-data.org/general/v4/policies.html
-- Nutzungsregel:
-  - Free- und Paid-Modelle sind planabhängig
-  - Vor kommerzieller Nutzung oder höherem Volumen die aktuellen Anbieterbedingungen prüfen
 
 ### 2) OpenF1 (Formel 1)
 
@@ -100,7 +113,33 @@ Hinweis: Die folgenden Angaben sind nach bestem Wissen dokumentiert (Stand 12.04
   - `x-rapidapi-key` und `x-rapidapi-host` Header
 - Nutzungsregel:
   - Die API-Nutzung richtet sich nach RapidAPI- und Provider-spezifischen Bedingungen
-  - Pricing, Limits, erlaubte Nutzungsarten und ggf. kommerzielle Rechte vor Einsatz prüfen
+
+## Projektstruktur
+
+```text
+Sport_Dashboard/
+|-- app.py
+|-- Procfile
+|-- requirements.txt
+|-- .env.example
+|-- data_sources/
+|   |-- get_fussball_data.py
+|   |-- get_formula1_data.py
+|   `-- get_nfl_data.py
+|-- templates/
+|   |-- homepage.html
+|   |-- fussball.html
+|   |-- formula1.html
+|   `-- american_football.html
+`-- static/
+    |-- styles/
+    |   `-- sports_dashboard.css
+    `-- images/
+        |-- BL_Team_Logos/
+        |-- F1_Team_Logos/
+        |-- NFL_Team_Logos/
+        `-- Trophies/
+```
 
 ## Bugs und Feature Requests
 
@@ -109,8 +148,20 @@ Für Bugs und Feature-Wünsche bitte ein Issue erstellen:
 - https://github.com/EinfxchNiklas/Sport_Dashboard/issues
 
 Bitte am besten mit:
+
 - kurzer Beschreibung
 - Reproduktionsschritten
 - erwartetem vs. tatsächlichem Verhalten
 - Screenshots/Logs falls hilfreich
 
+## Hinweis zu Marken und Logos
+
+Dieses Projekt verwendet Team-, Liga- und Event-Logos ausschließlich zu Informations- und Darstellungszwecken.
+
+Alle Marken, Logos und Namen gehören den jeweiligen Rechteinhabern
+
+Es besteht keine Verbindung, Partnerschaft oder Sponsoring durch diese Organisationen.
+
+## Lizenz
+
+Dieses Projekt ist nicht als Open-Source im klassischen Sinne lizenziert. Beiträge sind nur über Pull Requests möglich, die vom Repository Owner geprüft und akzeptiert werden.
