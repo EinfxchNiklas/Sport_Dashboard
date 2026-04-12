@@ -42,7 +42,6 @@ Beispiel:
 ```env
 FOOTBALL_DATA_API_KEY=dein_football_data_key
 TANK01_NFL_API_KEY=dein_tank01_key
-TANK01_NFL_API_KEY_2=optional_zweiter_tank01_key
 DEBUG=False
 PORT=5000
 ```
@@ -108,3 +107,10 @@ Hinweis: Die folgenden Angaben sind nach bestem Wissen dokumentiert (Stand 12.04
 Für Bugs und Feature-Wünsche bitte ein Issue erstellen:
 
 - https://github.com/EinfxchNiklas/Sport_Dashboard/issues
+
+Bitte am besten mit:
+- kurzer Beschreibung
+- Reproduktionsschritten
+- erwartetem vs. tatsächlichem Verhalten
+- Screenshots/Logs falls hilfreich
+
