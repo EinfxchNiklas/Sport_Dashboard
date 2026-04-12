@@ -1,5 +1,6 @@
 from datetime import datetime, timezone
 import os
+import re
 from concurrent.futures import ThreadPoolExecutor, as_completed
 
 import requests
@@ -27,8 +28,69 @@ _standings_cache = {
     "data": {},
     "fetched_at": None,
 }
+_roster_cache = {}
 
 CACHE_TTL_SECONDS = 300  # 5 Minuten
+
+# Maps NFL position abbreviations to their unit group
+POSITION_UNIT_MAP = {
+    # Offense
+    "QB": "Offense", "RB": "Offense", "FB": "Offense", "WR": "Offense",
+    "TE": "Offense", "OT": "Offense", "OG": "Offense", "C": "Offense",
+    "OL": "Offense", "G": "Offense", "T": "Offense", "LT": "Offense",
+    "RT": "Offense", "LG": "Offense", "RG": "Offense",
+    # Defense
+    "DE": "Defense", "DT": "Defense", "NT": "Defense", "LB": "Defense",
+    "MLB": "Defense", "OLB": "Defense", "ILB": "Defense", "CB": "Defense",
+    "S": "Defense", "FS": "Defense", "SS": "Defense", "DB": "Defense",
+    "DL": "Defense",
+    # Special Teams
+    "K": "Special Teams", "P": "Special Teams", "LS": "Special Teams",
+    "KR": "Special Teams", "PR": "Special Teams",
+}
+
+# Display order for positions within each unit
+POSITION_ORDER = {
+    "Offense": ["QB", "RB", "FB", "WR", "TE", "LT", "LG", "C", "RG", "RT", "OT", "OG", "OL", "T", "G"],
+    "Defense": ["DE", "DT", "NT", "DL", "MLB", "ILB", "OLB", "LB", "CB", "FS", "SS", "S", "DB"],
+    "Special Teams": ["K", "P", "LS", "KR", "PR"],
+}
+
+
+def _classify_position(pos):
+    return POSITION_UNIT_MAP.get((pos or "").upper(), "Offense")
+
+
+def _parse_height_to_meters(height_str):
+    """Convert '6\'2"' or '6-2' to meter string."""
+    if not height_str:
+        return ""
+    m = re.match(r"(\d+)['\-](\d+)", str(height_str))
+    if m:
+        feet = int(m.group(1))
+        inches = int(m.group(2))
+        meters = (feet * 12 + inches) * 0.0254
+        return f"{meters:.2f}"
+    return ""
+
+
+def _parse_weight_to_kg(weight_str):
+    """Convert lbs string to kg string."""
+    try:
+        lbs = float(str(weight_str).replace("lbs", "").strip())
+        return f"{lbs * 0.453592:.1f}"
+    except (TypeError, ValueError):
+        return ""
+
+
+def _format_bday_german(bday_str):
+    """Convert MM/DD/YYYY to DD.MM.YYYY."""
+    if not bday_str:
+        return ""
+    parts = str(bday_str).split("/")
+    if len(parts) == 3:
+        return f"{parts[1].zfill(2)}.{parts[0].zfill(2)}.{parts[2]}"
+    return bday_str
 BERLIN_TZ = ZoneInfo("Europe/Berlin")
 
 
@@ -463,3 +525,55 @@ def get_division_standings(standings_data, conference, division):
 def get_complete_league_standings(standings_data):
     """Gets all teams in the league."""
     return format_standings_table(standings_data)
+
+
+def fetch_nfl_team_roster(team_abv):
+    """Fetch and parse the roster for a specific team."""
+    if not _API_KEYS:
+        return [], False
+
+    now_utc = datetime.now(timezone.utc)
+    cached = _roster_cache.get(team_abv)
+    if cached is not None and (now_utc - cached["fetched_at"]).total_seconds() < CACHE_TTL_SECONDS:
+        return cached["data"], False
+
+    try:
+        response = _api_get(
+            f"https://{RAPIDAPI_HOST}/getNFLTeamRoster",
+            params={"teamAbv": team_abv},
+            timeout=15,
+        )
+
+        if response.status_code == 429:
+            return [], True
+
+        response.raise_for_status()
+        payload = response.json()
+        body = payload.get("body", {}) if isinstance(payload, dict) else {}
+        roster_raw = body.get("roster", []) if isinstance(body, dict) else []
+        if not isinstance(roster_raw, list):
+            roster_raw = []
+
+        roster = []
+        for player in roster_raw:
+            if not isinstance(player, dict):
+                continue
+            pos = player.get("pos", "")
+            height_str = player.get("height", "")
+            roster.append({
+                "longName": player.get("longName", ""),
+                "age": player.get("age", ""),
+                "bDay": _format_bday_german(player.get("bDay", "")),
+                "height": height_str,
+                "height_m": _parse_height_to_meters(height_str),
+                "weight_kg": _parse_weight_to_kg(player.get("weight", "")),
+                "jerseyNum": player.get("jerseyNum", ""),
+                "school": player.get("school", ""),
+                "pos": pos,
+                "unit": _classify_position(pos),
+            })
+
+        _roster_cache[team_abv] = {"data": roster, "fetched_at": now_utc}
+        return roster, False
+    except requests.RequestException:
+        return [], False

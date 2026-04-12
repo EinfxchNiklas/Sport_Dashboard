@@ -1,4 +1,5 @@
 from flask import Flask, jsonify, render_template, request
+import re
 from concurrent.futures import ThreadPoolExecutor
 from datetime import datetime
 from data_sources.get_fussball_data import (
@@ -19,6 +20,9 @@ from data_sources.get_nfl_data import (
     get_complete_league_standings,
     get_conference_standings,
     get_division_standings,
+    fetch_nfl_team_roster,
+    get_team_logo_path,
+    POSITION_ORDER,
 )
 
 app = Flask(__name__)
@@ -155,6 +159,7 @@ def american_football():
         {
             'id': t.get('teamAbv', ''),
             'name': f"{t.get('teamCity', '').strip()} {t.get('teamName', '').strip()}".strip(),
+            'logo': get_team_logo_path(t.get('teamAbv', '')),
         }
         for t in teams
         if t.get('teamAbv')
@@ -216,6 +221,34 @@ def american_football_week_results():
             'api_rate_limited': scores_rate_limited or boxscores_rate_limited,
         }
     )
+
+@app.route('/american_football/roster/<team_abv>')
+def american_football_roster(team_abv):
+    if not re.match(r'^[A-Z0-9]{1,5}$', team_abv.upper()):
+        return jsonify({"error": "Invalid team abbreviation"}), 400
+
+    team_abv = team_abv.upper()
+    roster, rate_limited = fetch_nfl_team_roster(team_abv)
+
+    # Group by unit → position
+    grouped = {}
+    for player in roster:
+        unit = player["unit"]
+        pos = player["pos"]
+        grouped.setdefault(unit, {}).setdefault(pos, []).append(player)
+
+    # Sort players within each position by jersey number
+    for unit_data in grouped.values():
+        for pos_players in unit_data.values():
+            pos_players.sort(key=lambda p: int(p["jerseyNum"]) if str(p["jerseyNum"]).isdigit() else 99)
+
+    return jsonify({
+        "teamAbv": team_abv,
+        "grouped": grouped,
+        "positionOrder": POSITION_ORDER,
+        "rate_limited": rate_limited,
+    })
+
 
 if __name__ == '__main__':
     import os

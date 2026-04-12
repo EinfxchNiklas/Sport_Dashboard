@@ -479,6 +479,141 @@ body.page-american .pct-value {
             color: #ffd24a;
             font-weight: 600;
         }
+/* ── NFL Roster Modal ── */
+body.page-american .roster-close-btn {
+            background: none;
+            border: 1px solid #3a3a3a;
+            border-radius: 6px;
+            color: #aaa;
+            font-size: 13px;
+            font-family: inherit;
+            cursor: pointer;
+            padding: 6px 12px;
+            line-height: 1;
+            transition: color 0.15s, border-color 0.15s;
+        }
+body.page-american .roster-close-btn:hover {
+            color: #f5f5f5;
+            border-color: #666;
+        }
+body.page-american .roster-unit-tabs {
+            display: flex;
+            gap: 6px;
+            padding: 10px 16px;
+            border-bottom: 1px solid #2d2d2d;
+            background: #161616;
+            align-items: center;
+        }
+body.page-american .roster-unit-tabs .roster-close-btn {
+            margin-left: auto;
+        }
+body.page-american .roster-tab-btn {
+            padding: 8px 18px;
+            border: 1px solid #2d2d2d;
+            border-radius: 8px;
+            background: #1e1e1e;
+            color: #f5f5f5;
+            font-size: 13px;
+            font-family: inherit;
+            cursor: pointer;
+            transition: background 0.15s, border-color 0.15s, color 0.15s;
+        }
+body.page-american .roster-tab-btn:hover {
+            background: #2a2a2a;
+            border-color: #444;
+        }
+body.page-american .roster-tab-btn.active {
+            background: #2a2a2a;
+            border-color: #22c55e;
+            color: #22c55e;
+            font-weight: 600;
+        }
+body.page-american .roster-loading,
+body.page-american .roster-error,
+body.page-american .roster-empty {
+            padding: 24px;
+            text-align: center;
+            color: #9ca3af;
+            font-size: 14px;
+        }
+body.page-american .roster-content {
+            padding: 16px;
+            overflow-y: auto;
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+        }
+body.page-american .roster-position-group {
+            border: 1px solid #2d2d2d;
+            border-radius: 8px;
+            overflow: hidden;
+        }
+body.page-american .roster-position-header {
+            background: #252525;
+            padding: 8px 14px;
+            font-size: 13px;
+            font-weight: 700;
+            color: #f5f5f5;
+            letter-spacing: 0.04em;
+            text-transform: uppercase;
+        }
+body.page-american .roster-table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 13px;
+        }
+body.page-american .roster-table thead tr {
+            background: #1e1e1e;
+            border-bottom: 1px solid #2d2d2d;
+        }
+body.page-american .roster-table th {
+            padding: 7px 10px;
+            text-align: left;
+            color: #9ca3af;
+            font-weight: 600;
+            font-size: 11px;
+            text-transform: uppercase;
+            white-space: nowrap;
+        }
+body.page-american .roster-table td {
+            padding: 7px 10px;
+            border-bottom: 1px solid #222;
+            color: #e0e0e0;
+        }
+body.page-american .roster-table tbody tr:last-child td {
+            border-bottom: none;
+        }
+body.page-american .roster-table tbody tr:hover td {
+            background: #232323;
+        }
+body.page-american .roster-table .col-num {
+            width: 40px;
+            text-align: center;
+            color: #ffd24a;
+            font-weight: 600;
+        }
+body.page-american .roster-table .col-name {
+            font-weight: 600;
+            color: #f5f5f5;
+        }
+body.page-american .roster-table .col-age,
+body.page-american .roster-table .col-bday,
+body.page-american .roster-table .col-height,
+body.page-american .roster-table .col-weight {
+            white-space: nowrap;
+        }
+body.page-american .roster-table .col-college {
+            color: #9ca3af;
+            font-size: 12px;
+        }
+@media (max-width: 700px) {
+body.page-american .roster-table th:nth-child(4),
+body.page-american .roster-table td:nth-child(4),
+body.page-american .roster-table th:nth-child(7),
+body.page-american .roster-table td:nth-child(7) {
+                display: none;
+            }
+        }
 @media (max-width: 1400px) {
 
 body.page-american .season-picker {

@@ -37,11 +37,18 @@
         <!-- Team Selector -->
         <div class="team-picker panel">
             <div class="panel-header">
-                Teams
+                Team Roster
             </div>
             <div class="panel-body">
                 {% for team in all_teams %}
-                    <button type="button" class="team-btn disabled">
+                    <button type="button" class="team-btn"
+                            data-team-id="{{ team.id }}"
+                            data-team-name="{{ team.name }}"
+                            data-team-logo="{{ team.logo or '' }}"
+                            onclick="openRoster(this.dataset.teamId, this.dataset.teamName, this.dataset.teamLogo, this)">
+                        {% if team.logo %}
+                            <img src="{{ team.logo }}" alt="{{ team.name }}">
+                        {% endif %}
                         {{ team.id }} - {{ team.name }}
                     </button>
                 {% endfor %}
@@ -50,7 +57,21 @@
 
         <!-- Matches -->
         <div class="matches-wrap">
-            <div class="panel">
+
+            <!-- Roster view (hidden by default) -->
+            <div id="roster-panel" class="panel" style="display:none;">
+                <div class="roster-unit-tabs">
+                    <button class="roster-tab-btn active" data-unit="Offense" onclick="showRosterUnit(event, 'Offense')">Offense</button>
+                    <button class="roster-tab-btn" data-unit="Defense" onclick="showRosterUnit(event, 'Defense')">Defense</button>
+                    <button class="roster-tab-btn" data-unit="Special Teams" onclick="showRosterUnit(event, 'Special Teams')">Special Teams</button>
+                    <button type="button" class="roster-close-btn" onclick="closeRoster()">← Zurück zu Spielen</button>
+                </div>
+                <div id="roster-loading" class="roster-loading" style="display:none;">Kader wird geladen...</div>
+                <div id="roster-content" class="roster-content"></div>
+            </div>
+
+            <!-- Matches view (shown by default) -->
+            <div id="matches-panel" class="panel">
                 <div class="season-type-nav">
                     <a class="week-btn {% if season_type == 'reg' %}active{% endif %}" href="/american_football?season={{ selected_season }}&type=reg">Regular Season</a>
                     <a class="week-btn {% if season_type == 'post' %}active{% endif %}" href="/american_football?season={{ selected_season }}&type=post">Playoffs</a>
@@ -114,8 +135,8 @@
                         Keine Spiele für diese Woche gefunden.
                     </div>
                 {% endif %}
-            </div>
-        </div>
+            </div><!-- /matches-panel -->
+        </div><!-- /matches-wrap -->
 
         <!-- Standings -->
         <div class="standings-wrap">
@@ -342,6 +363,170 @@
         }
 
         window.addEventListener('DOMContentLoaded', loadWeekResults);
+
+        // ── Roster inline ──────────────────────────────────────────────────────
+        let _rosterData = null;
+        let _activeUnit = 'Offense';
+
+        async function openRoster(teamAbv, teamName, logoUrl, btn) {
+            // Mark active team button
+            document.querySelectorAll('.team-btn').forEach(b => b.classList.remove('active'));
+            if (btn) btn.classList.add('active');
+
+            // Swap panels
+            document.getElementById('matches-panel').style.display = 'none';
+            const rosterPanel = document.getElementById('roster-panel');
+            rosterPanel.style.display = 'block';
+
+            // Show loading
+            const loading = document.getElementById('roster-loading');
+            const content = document.getElementById('roster-content');
+            loading.style.display = 'block';
+            content.innerHTML = '';
+            _rosterData = null;
+            _activeUnit = 'Offense';
+
+            // Reset unit tabs
+            document.querySelectorAll('.roster-tab-btn').forEach(btn => {
+                btn.classList.toggle('active', btn.dataset.unit === 'Offense');
+            });
+
+            try {
+                const res = await fetch(`/american_football/roster/${encodeURIComponent(teamAbv)}`);
+                if (!res.ok) throw new Error('Roster fetch failed');
+                _rosterData = await res.json();
+            } catch (e) {
+                loading.style.display = 'none';
+                content.innerHTML = '<div class="roster-error">Kader konnte nicht geladen werden.</div>';
+                return;
+            }
+
+            loading.style.display = 'none';
+            renderRosterUnit(_activeUnit);
+        }
+
+        function closeRoster() {
+            document.getElementById('roster-panel').style.display = 'none';
+            document.getElementById('matches-panel').style.display = 'block';
+            document.querySelectorAll('.team-btn').forEach(btn => btn.classList.remove('active'));
+            _rosterData = null;
+        }
+
+        function showRosterUnit(event, unit) {
+            _activeUnit = unit;
+            document.querySelectorAll('.roster-tab-btn').forEach(btn => {
+                btn.classList.toggle('active', btn.dataset.unit === unit);
+            });
+            if (_rosterData) renderRosterUnit(unit);
+        }
+
+        const POSITION_NAMES = {
+            // Offense
+            'QB':  'Quarterback',
+            'RB':  'Running Back',
+            'FB':  'Fullback',
+            'WR':  'Wide Receiver',
+            'TE':  'Tight End',
+            'LT':  'Left Tackle',
+            'LG':  'Left Guard',
+            'C':   'Center',
+            'RG':  'Right Guard',
+            'RT':  'Right Tackle',
+            'OT':  'Offensive Tackle',
+            'OG':  'Offensive Guard',
+            'OL':  'Offensive Lineman',
+            'T':   'Tackle',
+            'G':   'Guard',
+            // Defense
+            'DE':  'Defensive End',
+            'DT':  'Defensive Tackle',
+            'NT':  'Nose Tackle',
+            'DL':  'Defensive Lineman',
+            'MLB': 'Middle Linebacker',
+            'ILB': 'Inside Linebacker',
+            'OLB': 'Outside Linebacker',
+            'LB':  'Linebacker',
+            'CB':  'Cornerback',
+            'FS':  'Free Safety',
+            'SS':  'Strong Safety',
+            'S':   'Safety',
+            'DB':  'Defensive Back',
+            // Special Teams
+            'K':   'Kicker',
+            'P':   'Punter',
+            'LS':  'Long Snapper',
+            'KR':  'Kick Returner',
+            'PR':  'Punt Returner',
+        };
+
+        function renderRosterUnit(unit) {
+            const content = document.getElementById('roster-content');
+            const grouped = (_rosterData && _rosterData.grouped) ? _rosterData.grouped[unit] : null;
+            const positionOrder = (_rosterData && _rosterData.positionOrder) ? _rosterData.positionOrder[unit] : [];
+
+            if (!grouped || Object.keys(grouped).length === 0) {
+                content.innerHTML = '<div class="roster-empty">Keine Spieler in dieser Einheit.</div>';
+                return;
+            }
+
+            // Sort positions by preferred order, then alphabetically for unknowns
+            const positions = Object.keys(grouped).sort((a, b) => {
+                const ai = positionOrder.indexOf(a);
+                const bi = positionOrder.indexOf(b);
+                if (ai === -1 && bi === -1) return a.localeCompare(b);
+                if (ai === -1) return 1;
+                if (bi === -1) return -1;
+                return ai - bi;
+            });
+
+            let html = '';
+            for (const pos of positions) {
+                const players = grouped[pos];
+                const fullName = POSITION_NAMES[pos] || '';
+                const posLabel = fullName ? `${pos} – ${fullName}` : pos;
+                html += `<div class="roster-position-group">
+                    <div class="roster-position-header">${posLabel}</div>
+                    <table class="roster-table">
+                        <thead>
+                            <tr>
+                                <th class="col-num">#</th>
+                                <th class="col-name">Name</th>
+                                <th class="col-age">Alter</th>
+                                <th class="col-bday">Geb.</th>
+                                <th class="col-height">Größe</th>
+                                <th class="col-weight">Gewicht</th>
+                                <th class="col-college">College</th>
+                            </tr>
+                        </thead>
+                        <tbody>`;
+                for (const p of players) {
+                    const heightDisplay = p.height && p.height_m
+                        ? `${p.height} / ${p.height_m}m`
+                        : (p.height || '–');
+                    const weightDisplay = p.weight_kg ? `${p.weight_kg} kg` : '–';
+                    html += `<tr>
+                        <td class="col-num">${p.jerseyNum || '–'}</td>
+                        <td class="col-name">${escapeHtml(p.longName) || '–'}</td>
+                        <td class="col-age">${p.age || '–'}</td>
+                        <td class="col-bday">${p.bDay || '–'}</td>
+                        <td class="col-height">${escapeHtml(heightDisplay)}</td>
+                        <td class="col-weight">${weightDisplay}</td>
+                        <td class="col-college">${escapeHtml(p.school) || '–'}</td>
+                    </tr>`;
+                }
+                html += `</tbody></table></div>`;
+            }
+            content.innerHTML = html;
+        }
+
+        function escapeHtml(str) {
+            if (!str) return '';
+            return String(str)
+                .replace(/&/g, '&amp;')
+                .replace(/</g, '&lt;')
+                .replace(/>/g, '&gt;')
+                .replace(/"/g, '&quot;');
+        }
     </script>
 </body>
 </html>
