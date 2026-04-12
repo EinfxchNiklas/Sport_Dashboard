@@ -57,6 +57,23 @@
 
         <!-- Matches -->
         <div class="matches-wrap">
+            <!-- Navigation Panel -->
+            <div id="nav-panel" class="panel">
+                <!-- Season Type Navigation -->
+                <div class="season-type-nav">
+                    <a class="week-btn {% if season_type == 'reg' %}active{% endif %}" href="/american_football?season={{ selected_season }}&type=reg">Regular Season</a>
+                    <a class="week-btn {% if season_type == 'post' %}active{% endif %}" href="/american_football?season={{ selected_season }}&type=post">Playoffs</a>
+                </div>
+
+                <!-- Week Navigation -->
+                <div class="week-nav">
+                    {% for week_num, week_label in available_weeks %}
+                        <a class="week-btn {% if week_num == selected_week %}active{% endif %}" href="/american_football?season={{ selected_season }}&type={{ season_type }}&week={{ week_num }}">
+                            {{ week_label }}
+                        </a>
+                    {% endfor %}
+                </div>
+            </div>
 
             <!-- Roster view (hidden by default) -->
             <div id="roster-panel" class="panel" style="display:none;">
@@ -72,17 +89,6 @@
 
             <!-- Matches view (shown by default) -->
             <div id="matches-panel" class="panel">
-                <div class="season-type-nav">
-                    <a class="week-btn {% if season_type == 'reg' %}active{% endif %}" href="/american_football?season={{ selected_season }}&type=reg">Regular Season</a>
-                    <a class="week-btn {% if season_type == 'post' %}active{% endif %}" href="/american_football?season={{ selected_season }}&type=post">Playoffs</a>
-                </div>
-                <div class="week-nav">
-                    {% for week_num, week_label in available_weeks %}
-                        <a class="week-btn {% if week_num == selected_week %}active{% endif %}" href="/american_football?season={{ selected_season }}&type={{ season_type }}&week={{ week_num }}">
-                            {{ week_label }}
-                        </a>
-                    {% endfor %}
-                </div>
 
                 {% if week_matches %}
                     <div class="panel-header">
@@ -379,6 +385,7 @@
             if (btn) btn.classList.add('active');
 
             // Swap panels
+            document.getElementById('nav-panel').style.display = 'none';
             document.getElementById('matches-panel').style.display = 'none';
             const rosterPanel = document.getElementById('roster-panel');
             rosterPanel.style.display = 'block';
@@ -411,6 +418,7 @@
         }
 
         function closeRoster() {
+            document.getElementById('nav-panel').style.display = 'block';
             document.getElementById('roster-panel').style.display = 'none';
             document.getElementById('matches-panel').style.display = 'block';
             document.querySelectorAll('.team-btn').forEach(btn => btn.classList.remove('active'));
