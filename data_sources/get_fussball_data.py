@@ -35,6 +35,9 @@ _bundesliga_table_cache = {
 }
 TABLE_CACHE_TTL_SECONDS = 300  # 5 Minuten
 
+_team_matches_cache = {}  # team_id -> {"data": ..., "fetched_at": ...}
+TEAM_MATCHES_CACHE_TTL_SECONDS = 60  # 1 Minute
+
 
 def _get_cached_bundesliga_table(now_utc=None):
     if now_utc is None:
@@ -94,6 +97,13 @@ def fetch_team_matches(team_id=4):
     api_key = FOOTBALL_DATA_API_KEY
     if not api_key:
         return [], False
+
+    now_utc = datetime.now(timezone.utc)
+    cached_entry = _team_matches_cache.get(team_id)
+    if cached_entry is not None:
+        cache_age = (now_utc - cached_entry["fetched_at"]).total_seconds()
+        if cache_age < TEAM_MATCHES_CACHE_TTL_SECONDS:
+            return cached_entry["data"], False
 
     base_url = "https://api.football-data.org/v4"
     competitions = "BL1,DFB,CL,EL,UECL"
@@ -175,7 +185,9 @@ def fetch_team_matches(team_id=4):
     past_matches = [m for m in season_matches if datetime.fromisoformat(m["matchDateTime"]) < now_utc]
     future_matches = [m for m in season_matches if datetime.fromisoformat(m["matchDateTime"]) >= now_utc]
 
-    return past_matches[-4:] + future_matches, False
+    result = past_matches[-4:] + future_matches
+    _team_matches_cache[team_id] = {"data": result, "fetched_at": now_utc}
+    return result, False
 
 
 def fetch_bundesliga_table():
