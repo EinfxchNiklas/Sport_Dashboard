@@ -1,39 +1,44 @@
 # Sport Dashboard
 
-Ein Flask-basiertes Dashboard für drei Sportbereiche:
-- Fußball (Bundesliga Tabelle + Teamspiele)
-- Formel 1 (Rennwochenenden + Session-Ergebnisse + Championship)
-- NFL (Wochen-Spiele, Standings, Team-Roster)
+Öffentliches Sport-Dashboard für Fußball, Formel 1 und NFL.
 
-## Lokales Setup
+## Wichtiger Hinweis zur Nutzung dieses Repositories
 
-### 1. Voraussetzungen
-- Python 3.10+ (empfohlen)
-- `pip`
-- Internetzugang für API-Calls
+Dieses Projekt wird öffentlich bereitgestellt, aber ausschließlich für private, nicht-kommerzielle Nutzung.
+Jegliche kommerzielle Verwendung ist ausdrücklich nicht gewünscht.
 
-### 2. Projekt klonen
+Zusätzlich gelten die Nutzungsbedingungen der eingebundenen API-Anbieter (siehe unten). Diese Regeln sind zwingend einzuhalten.
+
+## Was zeigt die Seite?
+
+- Fußball: Bundesliga-Tabelle und Spiele eines ausgewählten Teams
+- Formel 1: kommende und vergangene Rennwochenenden, Session-Ergebnisse, Championship-Stände
+- NFL: Wochenübersicht (Regular Season/Playoffs), Scores, Standings, Team-Roster
+
+## Schnellstart (lokal)
+
+1. Repository klonen
 ```bash
 git clone https://github.com/EinfxchNiklas/Sport_Dashboard.git
 cd Sport_Dashboard
 ```
 
-### 3. Virtuelle Umgebung erstellen und aktivieren
-Windows PowerShell:
+2. Virtuelle Umgebung erstellen und aktivieren (Windows PowerShell)
 ```powershell
 python -m venv .venv
 .\.venv\Scripts\Activate.ps1
 ```
 
-### 4. Abhängigkeiten installieren
+3. Abhängigkeiten installieren
 ```bash
 pip install -r requirements.txt
 ```
 
-### 5. `.env` anlegen
-Kopiere `.env.example` nach `.env` und setze deine Keys.
+4. Umgebungsvariablen setzen
+- `.env.example` nach `.env` kopieren
+- API-Keys eintragen
 
-Beispiel `.env`:
+Beispiel:
 ```env
 FOOTBALL_DATA_API_KEY=dein_football_data_key
 TANK01_NFL_API_KEY=dein_tank01_key
@@ -42,120 +47,70 @@ DEBUG=False
 PORT=5000
 ```
 
-### 6. App starten
+5. Starten
 ```bash
 python app.py
 ```
-Dann im Browser oeffnen: `http://127.0.0.1:5000`
 
-## Benötigte Umgebungsvariablen
+Danach im Browser: http://127.0.0.1:5000
 
-- `FOOTBALL_DATA_API_KEY`:
-  API Key für football-data.org (Fussballseite)
-- `TANK01_NFL_API_KEY`:
-  API Key für Tank01 NFL ueber RapidAPI
-- `TANK01_NFL_API_KEY_2` (optional):
-  Zweiter Key für Key-Rotation bei Rate-Limits
-- `DEBUG` (optional):
-  Flask Debug-Modus (`True`/`False`)
-- `PORT` (optional):
-  Server-Port (Default: `5000`)
+## Verwendete APIs, Lizenz- und Nutzungsregeln
 
-## Welche Seiten zeigen was an?
-
-- `/` (Homepage)
-  Einstieg in die drei Dashboards.
-
-- `/fussball`
-  Bundesliga Tabelle, Teamauswahl und letzte/nächste Spiele des ausgewählten Teams.
-
-- `/formula1`
-  Kommende Rennwochenenden, vergangene Rennwochenenden (on-demand geladen), Session-Ergebnisse und Fahrer-/Team-Championship.
-
-- `/american_football`
-  NFL Wochenansicht (Regular Season/Playoffs), Spielscores mit Boxscore-Anreicherung, Team-Roster und Standings (Division/Conference/League).
-
-## Verwendete APIs und Nutzungsregeln
+Hinweis: Die folgenden Angaben sind nach bestem Wissen dokumentiert (Stand 12.04.2026). Maßgeblich sind immer die aktuellen Originalbedingungen der Anbieter.
 
 ### 1) football-data.org (Fußball)
+
 - Website: https://www.football-data.org/
-- Doku: https://docs.football-data.org/
-- Im Projekt verwendete Endpunkte:
+- Dokumentation: https://docs.football-data.org/
+- Verwendete Endpunkte:
   - `GET /v4/teams/{team_id}/matches`
   - `GET /v4/competitions/BL1/standings`
-- Authentifizierung:
-  - Header `X-Auth-Token: <API_KEY>`
-- Bekannte Limits laut Doku (Stand 12.04.2026):
-  - Free Plan: 10 Requests/Minute für registrierte Clients
-  - Details: https://docs.football-data.org/general/v4/policies.html
-- Nutzung/Lizenz:
-  - Angebote sind planabhängig (free + paid)
-  - Bei kommerzieller Nutzung oder höherem Volumen Plan/Vertrag beim Anbieter prüfen
+- Authentifizierung: `X-Auth-Token` Header
+- Rate Limits laut Doku (Policies):
+  - Free Plan: 10 Requests pro Minute für registrierte Clients
+  - Quelle: https://docs.football-data.org/general/v4/policies.html
+- Nutzungsregel:
+  - Free- und Paid-Modelle sind planabhängig
+  - Vor kommerzieller Nutzung oder höherem Volumen die aktuellen Anbieterbedingungen prüfen
 
 ### 2) OpenF1 (Formel 1)
-- Website: https://openf1.org/
-- Doku: https://openf1.org/docs
-- Im Projekt verwendete Endpunkte:
-  - `meetings`, `sessions`, `drivers`, `session_result`, `championship_drivers`, `championship_teams`
-  - Basis: `https://api.openf1.org/v1`
-- Authentifizierung:
-  - Für historische Daten kein API Key nötig
-- Bekannte Limits laut OpenF1 (Stand der Recherche):
-  - Free: bis 3 req/s und 30 req/min
-- Wichtiger Lizenz-/Use-Case-Hinweis:
-  - OpenF1 beschreibt den Dienst als für persönliche, edukative und nicht-kommerzielle Nutzung
-  - Footer/FAQ nennen CC BY-NC-SA 4.0 und non-commercial Fokus
-  - Quellen: https://openf1.org/ und https://openf1.org/docs
 
-### 3) Tank01 NFL über RapidAPI (NFL)
+- Website: https://openf1.org/
+- Dokumentation: https://openf1.org/docs
+- Verwendete Endpunkte:
+  - `meetings`, `sessions`, `drivers`, `session_result`, `championship_drivers`, `championship_teams`
+- Authentifizierung:
+  - Historische Daten ohne API-Key
+- Public Limits laut OpenF1-Angaben:
+  - Free: bis zu 3 Requests/Sekunde und 30 Requests/Minute
+- Lizenz-/Nutzungsregel:
+  - OpenF1 kommuniziert einen klaren Fokus auf persönliche, edukative und nicht-kommerzielle Nutzung
+  - Für andere Use Cases (insbesondere kommerziell) soll OpenF1 direkt kontaktiert werden
+  - Quellen: https://openf1.org/, https://openf1.org/docs, https://openf1.org/contact
+
+### 3) Tank01 NFL über RapidAPI
+
 - API-Seite: https://rapidapi.com/tank01/api/tank01-nfl-live-in-game-real-time-statistics-nfl
 - RapidAPI Terms: https://rapidapi.com/terms
-- Im Projekt verwendete Endpunkte:
+- Verwendete Endpunkte:
   - `getNFLTeams`
   - `getNFLGamesForWeek`
   - `getNFLBoxScore`
   - `getNFLTeamRoster`
 - Authentifizierung:
-  - Header `x-rapidapi-key` und `x-rapidapi-host`
-- Nutzung/Lizenz:
-  - Plan- und provider-abhängig (RapidAPI Marketplace + API-Provider-Terms)
-  - Vor Produktiv- oder kommerzieller Nutzung unbedingt API-spezifische Pricing/Terms prüfen
+  - `x-rapidapi-key` und `x-rapidapi-host` Header
+- Nutzungsregel:
+  - Die API-Nutzung richtet sich nach RapidAPI- und Provider-spezifischen Bedingungen
+  - Pricing, Limits, erlaubte Nutzungsarten und ggf. kommerzielle Rechte vor Einsatz prüfen
 
-## Projektstruktur
+## Wichtige Compliance-Hinweise
 
-```text
-Sport_Dashboard/
-|-- app.py
-|-- Procfile
-|-- requirements.txt
-|-- .env.example
-|-- data_sources/
-|   |-- get_fussball_data.py
-|   |-- get_formula1_data.py
-|   `-- get_nfl_data.py
-|-- templates/
-|   |-- homepage.html
-|   |-- fussball.html
-|   |-- formula1.html
-|   `-- american_football.html
-`-- static/
-    |-- styles/
-    |   `-- sports_dashboard.css
-    `-- images/
-        |-- BL_Team_Logos/
-        |-- F1_Team_Logos/
-        |-- NFL_Team_Logos/
-        `-- Trophies/
-```
+- API-Keys niemals committen (`.env` bleibt lokal).
+- Marken- und Bildrechte (z. B. Liga-, Team-, Serien- und Logo-Rechte) beachten.
+- Bei öffentlichem Betrieb immer die aktuellen API-TOS/Lizenztexte prüfen, da sich Bedingungen ändern können.
 
 ## Bugs und Feature Requests
 
-Wenn du einen Bug findest oder ein Feature vorschlagen willst, erstelle bitte ein Issue im Repository:
+Für Bugs und Feature-Wünsche bitte ein Issue erstellen:
 
-- Issues: https://github.com/EinfxchNiklas/Sport_Dashboard/issues
-
-Bitte am besten mit:
-- kurzer Beschreibung
-- Reproduktionsschritten
-- erwartetem vs. tatsächlichem Verhalten
-- Screenshots/Logs falls hilfreich
+- https://github.com/EinfxchNiklas/Sport_Dashboard/issues
