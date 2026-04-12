@@ -114,7 +114,26 @@ Hinweis: Die folgenden Angaben sind nach bestem Wissen dokumentiert (Stand 12.04
 - Nutzungsregel:
   - Die API-Nutzung richtet sich nach RapidAPI- und Provider-spezifischen Bedingungen
 
+## Tech Stack
+
+- Backend: Python (Flask)
+- Frontend: HTML, CSS, JavaScript
+- APIs: football-data.org, OpenF1, Tank01 (RapidAPI)
+- Deployment: Render
+
+## Deployment
+
+Das Projekt ist für das Hosting auf Render vorbereitet.
+
+- Build Command: pip install -r requirements.txt
+- Start Command: python app.py
+- Environment Variables müssen in Render gesetzt werden
+
+Hinweis: Free-Tier kann zu Schlafzeiten führen.
+
 ## Projektstruktur
+
+Die folgende Struktur zeigt die Hauptbestandteile der Anwendung und dient der Orientierung im Code.
 
 ```text
 Sport_Dashboard/
@@ -141,6 +160,12 @@ Sport_Dashboard/
         `-- Trophies/
 ```
 
+## Einschränkungen
+
+- Abhängigkeit von externen API-Rate-Limits
+- Keine garantierte Echtzeitaktualisierung
+- Datenverfügbarkeit abhängig von Drittanbietern
+
 ## Bugs und Feature Requests
 
 Für Bugs und Feature-Wünsche bitte ein Issue erstellen:
@@ -164,4 +189,6 @@ Es besteht keine Verbindung, Partnerschaft oder Sponsoring durch diese Organisat
 
 ## Lizenz
 
-Dieses Projekt ist nicht als Open-Source im klassischen Sinne lizenziert. Beiträge sind nur über Pull Requests möglich, die vom Repository Owner geprüft und akzeptiert werden.
+Dieses Projekt ist nicht als Open Source lizenziert.
+
+Alle Rechte vorbehalten. Nutzung, Kopie oder Modifikation nur im Rahmen von ausdrücklich genehmigten Pull Requests.
