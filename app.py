@@ -1,4 +1,4 @@
-from flask import Flask, jsonify, render_template, request
+from flask import Flask, Response, jsonify, render_template, request
 import re
 from concurrent.futures import ThreadPoolExecutor
 from datetime import datetime
@@ -42,6 +42,18 @@ def _find_latest_available_nfl_week(season, season_type, max_week):
 @app.route('/')
 def homepage():
     return render_template('homepage.html')
+
+
+@app.route('/favicon.ico')
+def favicon():
+    # Avoid repeated 404s if no favicon file is configured yet.
+    return Response(status=204)
+
+
+@app.route('/.well-known/appspecific/com.chrome.devtools.json')
+def chrome_devtools_probe():
+    # Chrome DevTools may probe this path; returning 204 keeps logs clean.
+    return Response(status=204)
 
 @app.route('/fussball')
 def display_matches():

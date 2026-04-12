@@ -82,6 +82,10 @@ def _get_json(endpoint, params=None, retries=3):
                 time.sleep(wait_seconds)
                 raise requests.HTTPError("rate_limited", response=response)
 
+            # Do not retry hard client errors like 400/404.
+            if 400 <= response.status_code < 500:
+                return []
+
             response.raise_for_status()
             payload = response.json()
             # Only accept list payloads; error responses are dicts and should be treated as empty
@@ -667,27 +671,65 @@ def fetch_championship_standings(year=None):
             "session_label": None,
         }
 
-    latest_race = max(
+    sorted_race_sessions = sorted(
         race_sessions,
         key=lambda s: s.get("date_start") or "",
+        reverse=True,
     )
-    session_key = latest_race.get("session_key")
-    if not session_key:
+
+    # OpenF1 championship endpoints currently provide bulk snapshots and may not
+    # support session/year filters reliably. Fetch once and filter locally.
+    drivers_all = _get_json("championship_drivers")
+    teams_all = _get_json("championship_teams")
+
+    drivers_by_session = {}
+    for row in drivers_all:
+        if not isinstance(row, dict):
+            continue
+        session_key = row.get("session_key")
+        if not session_key:
+            continue
+        drivers_by_session.setdefault(session_key, []).append(row)
+
+    teams_by_session = {}
+    for row in teams_all:
+        if not isinstance(row, dict):
+            continue
+        session_key = row.get("session_key")
+        if not session_key:
+            continue
+        teams_by_session.setdefault(session_key, []).append(row)
+
+    latest_race = None
+    drivers_standings = []
+    teams_standings = []
+    drivers_payload = []
+
+    # Some race sessions can exist before championship snapshots are published.
+    # Walk backward until we find the newest session with standings data.
+    for candidate_session in sorted_race_sessions:
+        session_key = candidate_session.get("session_key")
+        if not session_key:
+            continue
+
+        candidate_drivers = drivers_by_session.get(session_key, [])
+        candidate_teams = teams_by_session.get(session_key, [])
+
+        if not candidate_drivers and not candidate_teams:
+            continue
+
+        latest_race = candidate_session
+        drivers_standings = candidate_drivers
+        teams_standings = candidate_teams
+        drivers_payload = _get_json("drivers", params={"session_key": session_key})
+        break
+
+    if latest_race is None:
         return {
             "drivers": [],
             "teams": [],
             "session_label": None,
         }
-
-    drivers_standings = _get_json(
-        "championship_drivers",
-        params={"session_key": session_key},
-    )
-    teams_standings = _get_json(
-        "championship_teams",
-        params={"session_key": session_key},
-    )
-    drivers_payload = _get_json("drivers", params={"session_key": session_key})
 
     driver_name_by_number = {}
     driver_team_by_number = {}
