@@ -179,13 +179,11 @@ Bitte am besten mit:
 - erwartetem vs. tatsächlichem Verhalten
 - Screenshots/Logs falls hilfreich
 
-## Hinweis zu Marken und Logos
+## Trademark and Logo Notice
 
-Dieses Projekt verwendet Team-, Liga- und Event-Logos ausschließlich zu Informations- und Darstellungszwecken.
-
-Alle Marken, Logos und Namen gehören den jeweiligen Rechteinhabern
-
-Es besteht keine Verbindung, Partnerschaft oder Sponsoring durch diese Organisationen.
+This project uses team, league, and event logos exclusively for informational and display purposes.
+All trademarks, logos, and names belong to their respective rights holders.
+There is no connection, partnership, or sponsorship by these organizations.
 
 ## Lizenz
 
