@@ -44,6 +44,11 @@ def homepage():
     return render_template('homepage.html')
 
 
+@app.route('/docs')
+def docs():
+    return render_template('docs.html')
+
+
 @app.route('/favicon.ico')
 def favicon():
     # Avoid repeated 404s if no favicon file is configured yet.

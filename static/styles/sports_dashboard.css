@@ -647,6 +647,322 @@ body.page-american .roster-table td:nth-child(7) {
                 display: none;
             }
         }
+
+/* ===== Home (Landingpage) ===== */
+body.page-home {
+        margin: 0;
+        height: 100vh;
+        overflow: hidden;
+        font-family: Arial, sans-serif;
+    }
+body.page-home * {
+        margin: 0;
+        padding: 0;
+        box-sizing: border-box;
+    }
+body.page-home .container {
+        display: flex;
+        height: 100vh;
+        width: 100vw;
+    }
+body.page-home .sport-section {
+        flex: 1;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        position: relative;
+        overflow: hidden;
+        cursor: pointer;
+        text-decoration: none;
+        transition: flex 0.5s cubic-bezier(0.4, 0, 0.2, 1);
+        background-repeat: no-repeat;
+        background-size: 100% 100%;
+        isolation: isolate;
+    }
+body.page-home .sport-section:hover {
+        flex: 1.18;
+    }
+body.page-home .trophy-layer {
+        position: absolute;
+        inset: 0;
+        z-index: 0;
+        pointer-events: none;
+        background-repeat: no-repeat;
+        background-position: center calc(58% - 70px);
+        background-size: auto 400px;
+        opacity: 0.23;
+        mix-blend-mode: screen;
+        filter: saturate(1.08) contrast(1.06);
+        transition: transform 0.45s ease, opacity 0.45s ease, filter 0.45s ease;
+    }
+body.page-home .sport-section:hover .trophy-layer {
+        opacity: 0.31;
+        transform: scale(1.03);
+        filter: saturate(1.16) contrast(1.1);
+    }
+body.page-home .trophy-fussball {
+        background-image: url('/static/images/Trophies/Bundesligaschale1.png');
+    }
+body.page-home .trophy-formula1 {
+        background-image: url('/static/images/Trophies/f1_trophy.png');
+    }
+body.page-home .trophy-american-football {
+        background-image: url('/static/images/Trophies/lombardi.png');
+    }
+body.page-home .sport-section:not(:last-child) {
+        border-right: 1px solid rgba(255, 255, 255, 0.18);
+    }
+body.page-home .fussball {
+        background:
+        radial-gradient(circle at 50% -15%, rgba(255, 215, 40, 0.74) 0%, rgba(255, 215, 40, 0.36) 40%, rgba(0, 0, 0, 0) 72%),
+        linear-gradient(to bottom, #3a300f 0%, #241d0b 52%, #050401 100%);
+    }
+body.page-home .formula1 {
+        background:
+        radial-gradient(circle at 50% -15%, rgba(235, 45, 45, 0.76) 0%, rgba(235, 45, 45, 0.34) 40%, rgba(0, 0, 0, 0) 72%),
+        linear-gradient(to bottom, #3a1212 0%, #240b0b 52%, #050101 100%);
+    }
+body.page-home .american-football {
+        background:
+        radial-gradient(circle at 50% -15%, rgba(54, 210, 105, 0.72) 0%, rgba(54, 210, 105, 0.32) 40%, rgba(0, 0, 0, 0) 72%),
+        linear-gradient(to bottom, #10301e 0%, #0a1e13 52%, #010603 100%);
+    }
+body.page-home .content {
+        position: relative;
+        z-index: 2;
+        text-align: center;
+        color: #ffffff;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        gap: 16px;
+        transition: transform 0.5s cubic-bezier(0.4, 0, 0.2, 1);
+    }
+body.page-home .sport-section:hover .content {
+        transform: scale(1.02) translateY(-2px);
+    }
+body.page-home .sport-name {
+        font-size: clamp(1.4rem, 2.4vw, 2.2rem);
+        font-weight: 800;
+        letter-spacing: 3px;
+        text-transform: uppercase;
+        text-shadow: 0 2px 12px rgba(0, 0, 0, 0.9);
+        white-space: nowrap;
+    }
+body.page-home .sport-subtitle {
+        font-size: 0.85rem;
+        letter-spacing: 2px;
+        text-transform: uppercase;
+        opacity: 0;
+        transform: translateY(12px);
+        transition: opacity 0.4s ease 0.05s, transform 0.4s ease 0.05s;
+        text-shadow: 0 1px 6px rgba(0, 0, 0, 0.8);
+        color: rgba(255, 255, 255, 0.85);
+    }
+body.page-home .sport-section:hover .sport-subtitle {
+        opacity: 1;
+        transform: translateY(0);
+    }
+body.page-home .arrow {
+        font-size: 1.4rem;
+        opacity: 0;
+        transform: translateY(8px);
+        transition: opacity 0.4s ease 0.1s, transform 0.4s ease 0.1s;
+    }
+body.page-home .sport-section:hover .arrow {
+        opacity: 0.7;
+        transform: translateY(0);
+    }
+body.page-home .sport-section::before {
+        content: '';
+        position: absolute;
+        inset: 0;
+        background: transparent;
+        transition: background 0.5s ease;
+        z-index: 1;
+        pointer-events: none;
+    }
+body.page-home .fussball:hover::before {
+        background: rgba(255, 214, 45, 0.12);
+    }
+body.page-home .formula1:hover::before {
+        background: rgba(235, 45, 45, 0.12);
+    }
+body.page-home .american-football:hover::before {
+        background: rgba(54, 210, 105, 0.12);
+    }
+body.page-home .docs-button {
+        position: fixed;
+        bottom: 24px;
+        right: 24px;
+        z-index: 999;
+        padding: 10px 16px;
+        border-radius: 8px;
+        background: rgba(255, 255, 255, 0.1);
+        border: 2px solid rgba(255, 255, 255, 0.3);
+        color: rgba(255, 255, 255, 0.8);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 14px;
+        font-weight: 700;
+        text-decoration: none;
+        transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        backdrop-filter: blur(10px);
+        letter-spacing: 1px;
+
+    }
+body.page-home .docs-button:hover {
+        background: rgba(255, 255, 255, 0.2);
+        border-color: rgba(255, 255, 255, 0.6);
+        color: #ffffff;
+        transform: translateY(-2px);
+        box-shadow: 0 8px 24px rgba(0, 0, 0, 0.3);
+        text-decoration: none;
+    }
+
+/* ===== Docs ===== */
+body.page-docs {
+        margin: 0;
+        font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
+        background-color: #141414;
+        color: #e0e0e0;
+        line-height: 1.6;
+    }
+body.page-docs * {
+        margin: 0;
+        padding: 0;
+        box-sizing: border-box;
+    }
+body.page-docs .container {
+        max-width: 1000px;
+        margin: 0 auto;
+        padding: 40px 20px;
+        padding-top: 80px;
+    }
+body.page-docs .home-button {
+        position: fixed;
+        top: 24px;
+        left: 24px;
+        z-index: 1000;
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+        padding: 8px 14px;
+        background: rgba(255, 255, 255, 0.08);
+        border: 1px solid rgba(255, 255, 255, 0.2);
+        border-radius: 6px;
+        color: #e0e0e0;
+        text-decoration: none;
+        font-size: 13px;
+        font-weight: 600;
+        transition: all 0.3s ease;
+    }
+body.page-docs .home-button:hover {
+        background: rgba(255, 255, 255, 0.08);
+        border-color: #ffffff;
+        color: #e0e0e0;
+        text-decoration: none;
+    }
+body.page-docs h1 {
+        font-size: 2.5rem;
+        color: #e0e0e0;
+        margin-bottom: 10px;
+        font-weight: 700;
+    }
+body.page-docs .subtitle {
+        font-size: 1.1rem;
+        color: #22c55e;
+        font-weight: 600;
+        margin-bottom: 30px;
+    }
+body.page-docs section {
+        margin-bottom: 45px;
+    }
+body.page-docs h2 {
+        font-size: 1.8rem;
+        color: #22c55e;
+        margin-bottom: 15px;
+        border-bottom: 2px solid rgba(34, 197, 94, 0.3);
+        padding-bottom: 10px;
+    }
+body.page-docs h3 {
+        font-size: 1.1rem;
+        color: #3b82f6;
+        margin-top: 20px;
+        margin-bottom: 10px;
+        font-weight: 600;
+    }
+body.page-docs p {
+        margin-bottom: 12px;
+        color: #b0b0b0;
+    }
+body.page-docs ul,
+body.page-docs ol {
+        margin-left: 20px;
+        margin-bottom: 15px;
+    }
+body.page-docs li {
+        margin-bottom: 8px;
+        color: #b0b0b0;
+    }
+body.page-docs a {
+        color: #3b82f6;
+        text-decoration: none;
+        transition: color 0.3s ease;
+    }
+body.page-docs a:hover {
+        color: #22c55e;
+        text-decoration: underline;
+    }
+body.page-docs .info-box {
+        background: rgba(34, 197, 94, 0.1);
+        border-left: 4px solid #22c55e;
+        padding: 15px;
+        margin: 20px 0;
+        border-radius: 4px;
+        color: #d0d0d0;
+    }
+body.page-docs .warning-box {
+        background: rgba(239, 68, 68, 0.1);
+        border-left: 4px solid #ef4444;
+        padding: 15px;
+        margin: 20px 0;
+        border-radius: 4px;
+        color: #d0d0d0;
+    }
+body.page-docs .license-box {
+        background: rgba(255, 255, 255, 0.05);
+        border: 1px solid rgba(255, 255, 255, 0.1);
+        padding: 20px;
+        margin: 20px 0;
+        border-radius: 4px;
+        color: #b0b0b0;
+        font-size: 0.95rem;
+    }
+body.page-docs .api-list {
+        display: grid;
+        gap: 15px;
+        margin: 20px 0;
+    }
+body.page-docs .api-item {
+        background: rgba(255, 255, 255, 0.05);
+        border-left: 4px solid #3b82f6;
+        padding: 12px;
+        border-radius: 4px;
+    }
+body.page-docs .api-item strong {
+        color: #22c55e;
+    }
+body.page-docs footer {
+        margin-top: 80px;
+        padding-top: 20px;
+        border-top: 1px solid rgba(255, 255, 255, 0.1);
+        text-align: center;
+        color: #666;
+        font-size: 0.9rem;
+    }
 @media (max-width: 1400px) {
 
 body.page-american .season-picker {
