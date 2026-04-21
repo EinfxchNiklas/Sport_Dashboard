@@ -267,6 +267,11 @@ def american_football_roster(team_abv):
     })
 
 
+@app.route('/impressum')
+def impressum():
+    return render_template('impressum.html')
+
+
 if __name__ == '__main__':
     import os
     debug_mode = os.environ.get('DEBUG')
