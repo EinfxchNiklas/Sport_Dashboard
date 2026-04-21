@@ -1,11 +1,15 @@
 import json
+import os
 import time
 from datetime import datetime
 
 import requests
+from dotenv import load_dotenv
 
 
-BASE_URL = "https://api.openf1.org/v1"
+load_dotenv()
+
+OPENF1_BASE_URL = os.environ.get("OPENF1_BASE_URL").rstrip("/")
 
 API_CACHE = {}
 DEFAULT_CACHE_TTL_SECONDS = 180
@@ -68,8 +72,9 @@ def _get_json(endpoint, params=None, retries=3):
             if elapsed < MIN_REQUEST_INTERVAL_SECONDS:
                 time.sleep(MIN_REQUEST_INTERVAL_SECONDS - elapsed)
 
+            resolved_endpoint = str(endpoint).strip("/")
             response = requests.get(
-                f"{BASE_URL}/{endpoint}",
+                f"{OPENF1_BASE_URL}/{resolved_endpoint}",
                 params=params,
                 timeout=15,
             )
