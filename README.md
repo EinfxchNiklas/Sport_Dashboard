@@ -55,6 +55,7 @@ FOOTBALL_DATA_API_KEY=dein_football_data_key
 TANK01_NFL_API_KEY=dein_tank01_key
 DEBUG=False
 PORT=5000
+OPENF1_BASE_URL=SET_Base_URL
 ```
 
 5. Starten
