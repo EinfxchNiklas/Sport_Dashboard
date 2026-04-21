@@ -1,0 +1,92 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dokumentation - Sport Dashboard</title>
+    <link rel="icon" href="{{ url_for('static', filename='images/favicon.svg') }}" type="image/svg+xml">
+    <link rel="stylesheet" href="{{ url_for('static', filename='styles/sports_dashboard.css') }}">
+</head>
+<body class="page-docs">
+    <a href="/" class="home-button">Zurück zur Homepage</a>
+
+    <div class="container">
+        <h1>Dokumentation</h1>
+        <div class="subtitle">Sport Dashboard</div>
+
+        <section>
+            <h2>Über das Projekt</h2>
+            <p>Das Sport Dashboard ist ein inoffizielles Fanprojekt, das Live-Daten und Informationen aus drei großen Sportligen bereitstellt. Es ermöglicht dir, Spielergebnisse, Tabellenstände und detaillierte Statistiken zu verfolgen.</p>
+            
+            <div class="info-box">
+                <strong>Inoffizielles Fanprojekt:</strong> Dieses Projekt ist nicht mit den jeweiligen Sportligen, Teams oder deren Organisationen verbunden. Es handelt sich um ein Hobby-Projekt, das Informationen aus öffentlich verfügbaren Quellen zusammenfasst.
+            </div>
+        </section>
+
+        <section>
+            <h2>Verfügbare Sportarten</h2>
+
+            <h3>Fußball (Bundesliga)</h3>
+            <p>Verfolge die deutsche Bundesliga mit aktuellen Spielergebnissen, Tabellenstände und Team-spezifischen Daten.</p>
+
+            <h3>Formel 1</h3>
+            <p>Die aktuelle Saison mit Rennkalender, Fahrermeisterschaft und Konstrukteurmeisterschaft.</p>
+
+            <h3>American Football (NFL)</h3>
+            <p>NFL-Daten mit wöchentlichen Spielergebnissen, Team-Rosters und Standings. Auch für vergangene Saisons verfügbar.</p>
+        </section>
+
+        <section>
+            <h2>Datenquellen</h2>
+            <p>Das Dashboard bezieht seine Daten von den folgenden APIs:</p>
+            
+            <div class="api-list">
+                <div class="api-item">
+                    <strong>Bundesliga (Fußball):</strong> <a href="https://www.football-data.org/" target="_blank">football-data.org</a>
+                </div>
+                <div class="api-item">
+                    <strong>Formel 1:</strong> <a href="https://openf1.org/" target="_blank">OpenF1 API</a>
+                </div>
+                <div class="api-item">
+                    <strong>NFL (American Football):</strong> <a href="https://rapidapi.com/tank01/api/Tank01%20NFL%20Live%20In-Game%20Real%20Time%20Statistics%20NFL" target="_blank">Tank01 NFL</a>
+                </div>
+            </div>
+        </section>
+
+        <section>
+            <h2>Technische Details</h2>
+            <p>Für technische Hintergrundinformationen, Details zur Implementierung und zur Architektur des Projekts besuche das <a href="https://github.com/EinfxchNiklas/Sport_Dashboard" target="_blank">Repository auf GitHub</a>. In der README-Datei findest du alle technischen Informationen.</p>
+        </section>
+
+        <section>
+            <h2>Rechtliche Hinweise</h2>
+
+            <h3>Logos und Markenrechte</h3>
+            <div class="warning-box">
+                <p>Dieses Projekt verwendet Team-, Liga- und Event-Logos ausschließlich zu Informations- und Darstellungszwecken.</p>
+                <p>Alle Marken, Logos und Namen gehören den jeweiligen Rechteinhabern.</p>
+                <p>Es besteht keine Verbindung, Partnerschaft oder Sponsoring durch diese Organisationen.</p>
+            </div>
+
+            <h3>Lizenz</h3>
+            <div class="license-box">
+                <p><strong>Copyright (c) 2026 Niklas [GitHub: EinfxchNiklas]</strong></p>
+                <p>All rights reserved.</p>
+                <p>This software and its source code are the exclusive property of the author.</p>
+                <p>No permission is granted to any person to use, copy, modify, merge, publish, distribute, sublicense, or sell copies of this software or any part of it, except through explicit contributions submitted via pull requests to this repository.</p>
+                <p style="margin-top: 10px; font-style: italic;">THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED.</p>
+            </div>
+
+            <h3>Kontakt</h3>
+            <div class="license-box">
+                <p>Bei Fragen oder Anregungen gerne an <a href="mailto:einfxchniklas@web.de">einfxchniklas@web.de</a> wenden.</p>
+            </div>
+        </section>
+
+        <footer>
+            <p>Sport Dashboard | Inoffizielles Fanprojekt</p>
+            <p>© 2026</p>
+        </footer>
+    </div>
+</body>
+</html>
