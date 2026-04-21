@@ -3,24 +3,48 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Impressum</title>
+    <title>Impressum - Sport Dashboard</title>
+    <link rel="icon" href="{{ url_for('static', filename='images/favicon.svg') }}" type="image/svg+xml">
     <link rel="stylesheet" href="{{ url_for('static', filename='styles/sports_dashboard.css') }}">
 </head>
-<body class="page-impressum">
-    <header>
+<body class="page-docs">
+    <a href="/" class="home-button">Zurück zur Homepage</a>
+    <div class="container">
         <h1>Impressum</h1>
-        <a href="/" class="home-button">Zurück zur Homepage</a>
-    </header>
-    <main>
-        <section class="contact-info">
+        <div class="subtitle">Sport Dashboard</div>
+
+        <section>
             <h2>Kontaktinformationen</h2>
-            <p><strong>Name:</strong> Niklas</p>
-            <p><strong>Email:</strong> <a href="mailto:info@sportdashboard.de">info@sportdashboard.de</a></p>
+            <div class="license-box">
+                <p><strong>Name:</strong> Niklas</p>
+                <p><strong>Email:</strong> <a href="mailto:einfxchniklas@web.de">einfxchniklas@web.de</a></p>
+            </div>
         </section>
-        <section class="legal-info">
+
+        <section>
             <h2>Rechtliche Hinweise</h2>
-            <p>Diese Seite ist ein inoffizielles Fanprojekt und dient ausschließlich zu Informationszwecken.</p>
+
+            <h3>Logos und Markenrechte</h3>
+            <div class="warning-box">
+                <p>Dieses Projekt verwendet Team-, Liga- und Event-Logos ausschließlich zu Informations- und Darstellungszwecken.</p>
+                <p>Alle Marken, Logos und Namen gehören den jeweiligen Rechteinhabern.</p>
+                <p>Es besteht keine Verbindung, Partnerschaft oder Sponsoring durch diese Organisationen.</p>
+            </div>
+
+            <h3>Lizenz</h3>
+            <div class="license-box">
+                <p><strong>Copyright (c) 2026 Niklas [GitHub: EinfxchNiklas]</strong></p>
+                <p>All rights reserved.</p>
+                <p>This software and its source code are the exclusive property of the author.</p>
+                <p>No permission is granted to any person to use, copy, modify, merge, publish, distribute, sublicense, or sell copies of this software or any part of it, except through explicit contributions submitted via pull requests to this repository.</p>
+                <p style="margin-top: 10px; font-style: italic;">THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED.</p>
+            </div>
         </section>
-    </main>
+
+        <footer>
+            <p>Sport Dashboard | Inoffizielles Fanprojekt</p>
+            <p>© 2026</p>
+        </footer>
+    </div>
 </body>
 </html>

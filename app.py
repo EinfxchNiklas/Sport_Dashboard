@@ -49,12 +49,6 @@ def docs():
     return render_template('docs.html')
 
 
-@app.route('/favicon.ico')
-def favicon():
-    # Avoid repeated 404s if no favicon file is configured yet.
-    return Response(status=204)
-
-
 @app.route('/.well-known/appspecific/com.chrome.devtools.json')
 def chrome_devtools_probe():
     # Chrome DevTools may probe this path; returning 204 keeps logs clean.
