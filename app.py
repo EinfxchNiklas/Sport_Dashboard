@@ -1,7 +1,10 @@
 from flask import Flask, Response, jsonify, render_template, request
+import os
 import re
+import time
 from concurrent.futures import ThreadPoolExecutor
 from datetime import datetime
+import requests
 from data_sources.get_fussball_data import (
     fetch_team_matches,
     fetch_bundesliga_table,
@@ -29,6 +32,103 @@ app = Flask(__name__)
 app.config['SEND_FILE_MAX_AGE_DEFAULT'] = 60 * 60 * 24 * 7  # 1 Woche
 
 
+def _probe_http_endpoint(name, url, headers=None, params=None, timeout=8):
+    """Perform a lightweight HTTP probe and return normalized health details."""
+    started = time.monotonic()
+    try:
+        response = requests.get(url, headers=headers, params=params, timeout=timeout)
+        duration_ms = int((time.monotonic() - started) * 1000)
+
+        if response.status_code == 429:
+            return {
+                'name': name,
+                'status': 'degraded',
+                'http_status': response.status_code,
+                'latency_ms': duration_ms,
+                'message': 'Rate limited by upstream API',
+            }
+
+        if 200 <= response.status_code < 400:
+            return {
+                'name': name,
+                'status': 'ok',
+                'http_status': response.status_code,
+                'latency_ms': duration_ms,
+            }
+
+        return {
+            'name': name,
+            'status': 'error',
+            'http_status': response.status_code,
+            'latency_ms': duration_ms,
+            'message': f'Unexpected status code {response.status_code}',
+        }
+    except requests.RequestException as exc:
+        return {
+            'name': name,
+            'status': 'error',
+            'http_status': None,
+            'latency_ms': int((time.monotonic() - started) * 1000),
+            'message': f'{exc.__class__.__name__}',
+        }
+
+
+def _check_website_health():
+    """Validate basic app routing footprint to represent website readiness."""
+    required_routes = {
+        '/',
+        '/fussball',
+        '/formula1',
+        '/american_football',
+    }
+    registered_routes = {rule.rule for rule in app.url_map.iter_rules()}
+    missing_routes = sorted(required_routes - registered_routes)
+
+    return {
+        'status': 'ok' if not missing_routes else 'error',
+        'route_count': len(registered_routes),
+        'missing_routes': missing_routes,
+    }
+
+
+def _check_football_data_api():
+    api_key = os.environ.get('FOOTBALL_DATA_API_KEY')
+    if not api_key:
+        return {
+            'name': 'football_data',
+            'status': 'misconfigured',
+            'http_status': None,
+            'latency_ms': None,
+            'message': 'Missing FOOTBALL_DATA_API_KEY',
+        }
+
+    return _probe_http_endpoint(
+        name='football_data',
+        url='https://api.football-data.org/v4/competitions/BL1',
+        headers={'X-Auth-Token': api_key},
+        timeout=8,
+    )
+
+
+def _check_openf1_api():
+    openf1_base_url = (os.environ.get('OPENF1_BASE_URL') or '').rstrip('/')
+    if not openf1_base_url:
+        return {
+            'name': 'openf1',
+            'status': 'misconfigured',
+            'http_status': None,
+            'latency_ms': None,
+            'message': 'Missing OPENF1_BASE_URL',
+        }
+
+    return _probe_http_endpoint(
+        name='openf1',
+        url=f'{openf1_base_url}/meetings',
+        params={'year': datetime.now().year},
+        timeout=8,
+    )
+
+
 def _find_latest_available_nfl_week(season, season_type, max_week):
     """Return latest week/round that has at least one game for the given season/type."""
     for week in range(max_week, 0, -1):
@@ -53,6 +153,45 @@ def docs():
 def chrome_devtools_probe():
     # Chrome DevTools may probe this path; returning 204 keeps logs clean.
     return Response(status=204)
+
+
+@app.route('/health', methods=['GET'])
+def healthcheck():
+    checked_at = datetime.utcnow().isoformat() + 'Z'
+    website = _check_website_health()
+
+    with ThreadPoolExecutor(max_workers=2) as executor:
+        football_future = executor.submit(_check_football_data_api)
+        openf1_future = executor.submit(_check_openf1_api)
+
+        api_checks = {
+            'football_data': football_future.result(),
+            'openf1': openf1_future.result(),
+        }
+
+    statuses = [website['status']] + [check['status'] for check in api_checks.values()]
+
+    if any(status in ('error', 'misconfigured') for status in statuses):
+        overall_status = 'down'
+        http_code = 503
+    elif any(status == 'degraded' for status in statuses):
+        overall_status = 'degraded'
+        http_code = 200
+    else:
+        overall_status = 'ok'
+        http_code = 200
+
+    if request.method == 'HEAD':
+        return Response(status=http_code)
+
+    return jsonify(
+        {
+            'status': overall_status,
+            'checked_at': checked_at,
+            'website': website,
+            'apis': api_checks,
+        }
+    ), http_code
 
 @app.route('/fussball')
 def display_matches():
@@ -267,6 +406,5 @@ def impressum():
 
 
 if __name__ == '__main__':
-    import os
     debug_mode = os.environ.get('DEBUG')
     app.run(debug=debug_mode, host='0.0.0.0', port=int(os.environ.get('PORT', 5000)), use_reloader=True)

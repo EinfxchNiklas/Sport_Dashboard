@@ -66,6 +66,38 @@ python app.py
 
 Danach im Browser: http://127.0.0.1:5000
 
+## Healthcheck (UptimeRobot)
+
+Für Monitoring kann der Endpunkt `/health` verwendet werden.
+
+- URL lokal: `http://127.0.0.1:5000/health`
+- HTTP `200`: Anwendung erreichbar (`ok` oder `degraded`)
+- HTTP `503`: Anwendung/API-Konfiguration fehlerhaft (`down`)
+
+Der Endpunkt prüft bei jedem Aufruf:
+
+- generellen Website-Status (wichtige Routen registriert)
+- football-data.org API
+- OpenF1 API
+
+Beispielantwort:
+
+```json
+{
+  "status": "ok",
+  "checked_at": "2026-04-21T12:34:56.789Z",
+  "website": {
+    "status": "ok",
+    "route_count": 12,
+    "missing_routes": []
+  },
+  "apis": {
+    "football_data": {"status": "ok", "http_status": 200, "latency_ms": 180},
+    "openf1": {"status": "ok", "http_status": 200, "latency_ms": 95}
+  }
+}
+```
+
 ## API-Abhängigkeiten
 
 Die Funktionalität des Projekts hängt von externen APIs ab. Verfügbarkeit und Datenqualität liegen außerhalb meines Einflussbereichs.
