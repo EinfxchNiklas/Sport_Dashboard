@@ -1760,4 +1760,44 @@ body.page-fussball td.center {
                 font-size: 12px;
             }
         }
+/* ===== Impressum ===== */
+body.page-impressum {
+    background-color: #141414;
+    color: #f5f5f5;
+    font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
+    padding: 30px;
+}
+
+body.page-impressum header {
+    text-align: center;
+    margin-bottom: 20px;
+}
+
+body.page-impressum h1 {
+    font-size: 2.5rem;
+    color: #22c55e;
+}
+
+body.page-impressum .contact-info, body.page-impressum .legal-info {
+    margin: 20px auto;
+    max-width: 800px;
+    background: #1e1e1e;
+    padding: 20px;
+    border-radius: 8px;
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+}
+
+body.page-impressum .contact-info h2, body.page-impressum .legal-info h2 {
+    color: #22c55e;
+    margin-bottom: 10px;
+}
+
+body.page-impressum a {
+    color: #3b82f6;
+    text-decoration: none;
+}
+
+body.page-impressum a:hover {
+    text-decoration: underline;
+}
 
