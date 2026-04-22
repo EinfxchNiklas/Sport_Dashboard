@@ -1,6 +1,7 @@
 from datetime import datetime, timezone
 import os
 import requests
+from pytz import timezone as pytz_timezone
 
 from dotenv import load_dotenv
 
@@ -153,6 +154,10 @@ def fetch_team_matches(team_id=4):
         home_team_name = match.get("homeTeam", {}).get("name", "Unbekannt")
         away_team_name = match.get("awayTeam", {}).get("name", "Unbekannt")
 
+        # Convert UTC time to local time
+        local_tz = pytz_timezone('Europe/Berlin')  # Adjust to the desired timezone
+        match_dt_local = match_dt.astimezone(local_tz)
+
         transformed_matches.append(
             {
                 "team1": {
@@ -164,7 +169,7 @@ def fetch_team_matches(team_id=4):
                     "logo": get_team_logo_path(away_team_name),
                 },
                 "matchDateTime": match_dt.isoformat(),
-                "formattedDateTime": match_dt.astimezone().strftime("%H:%M - %d.%m.%Y"),
+                "formattedDateTime": match_dt_local.strftime("%H:%M - %d.%m.%Y"),
                 # fussball.html expects index 1, so we provide a 2-item list.
                 "matchResults": [
                     {"pointsTeam1": home_score, "pointsTeam2": away_score},
