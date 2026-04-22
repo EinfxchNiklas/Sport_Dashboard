@@ -47,13 +47,14 @@ POSITION_UNIT_MAP = {
     # Special Teams
     "K": "Special Teams", "P": "Special Teams", "LS": "Special Teams",
     "KR": "Special Teams", "PR": "Special Teams",
+    "PK": "Special Teams",
 }
 
 # Display order for positions within each unit
 POSITION_ORDER = {
     "Offense": ["QB", "RB", "FB", "WR", "TE", "LT", "LG", "C", "RG", "RT", "OT", "OG", "OL", "T", "G"],
     "Defense": ["DE", "DT", "NT", "DL", "MLB", "ILB", "OLB", "LB", "CB", "FS", "SS", "S", "DB"],
-    "Special Teams": ["K", "P", "LS", "KR", "PR"],
+    "Special Teams": ["K", "P", "LS", "KR", "PR", "PK"],
 }
 
 
