@@ -2,7 +2,6 @@ from datetime import datetime, timezone
 import os
 import requests
 from pytz import timezone as pytz_timezone
-import locale
 
 from dotenv import load_dotenv
 
@@ -39,6 +38,8 @@ TABLE_CACHE_TTL_SECONDS = 300  # 5 Minuten
 
 _team_matches_cache = {}  # team_id -> {"data": ..., "fetched_at": ...}
 TEAM_MATCHES_CACHE_TTL_SECONDS = 60  # 1 Minute
+
+GERMAN_WEEKDAY_ABBR = ("Mo", "Di", "Mi", "Do", "Fr", "Sa", "So")
 
 
 def _get_cached_bundesliga_table(now_utc=None):
@@ -159,11 +160,8 @@ def fetch_team_matches(team_id=4):
         local_tz = pytz_timezone('Europe/Berlin')  # Adjust to the desired timezone
         match_dt_local = match_dt.astimezone(local_tz)
 
-        # Set locale to German for weekday abbreviations
-        locale.setlocale(locale.LC_TIME, "de_DE.UTF-8")
-
-        # Format the date and time with German weekday abbreviation
-        weekday_abbr = match_dt_local.strftime("%a")
+        # Locale-independent German weekday abbreviations for all environments.
+        weekday_abbr = GERMAN_WEEKDAY_ABBR[match_dt_local.weekday()]
         formatted_date_time = f"{weekday_abbr} {match_dt_local.strftime('%H:%M - %d.%m.%Y')}"
 
         transformed_matches.append(
