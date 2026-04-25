@@ -23,61 +23,70 @@
 
     <div class="page-shell">
         <!-- Season Selector -->
-        <div class="season-picker panel">
-            <div class="panel-header">
-                Saisons
-            </div>
-            <div class="panel-body panel-body-vertical">
-                {% for season_num, season_label in available_seasons %}
-                    <a class="season-btn-vertical {% if season_num == selected_season %}active{% endif %}" href="/american_football?season={{ season_num }}&type={{ season_type }}">
-                        {{ season_label }}{% if season_num == current_season %}<br><span class="current-season-note">(aktuell)</span>{% endif %}
-                    </a>
-                {% endfor %}
-            </div>
-        </div>
-
-        <div class="page-grid">
-
-        <!-- Team Selector -->
-        <div class="team-picker panel">
-            <div class="panel-header">
-                Team Roster
-            </div>
-            <div class="panel-body">
-                {% for team in all_teams %}
-                    <button type="button" class="team-btn"
-                            data-team-id="{{ team.id }}"
-                            data-team-name="{{ team.name }}"
-                            data-team-logo="{{ team.logo or '' }}"
-                            onclick="openRoster(this.dataset.teamId, this.dataset.teamName, this.dataset.teamLogo, this)">
-                        {% if team.logo %}
-                            <img src="{{ team.logo }}" alt="{{ team.name }}">
-                        {% endif %}
-                        {{ team.id }} - {{ team.name }}
-                    </button>
-                {% endfor %}
-            </div>
-        </div>
-
-        <!-- Matches -->
-        <div class="matches-wrap">
-            <!-- Navigation Panel -->
-            <div id="nav-panel" class="panel">
-                <!-- Season Type Navigation -->
-                <div class="season-type-nav">
-                    <a class="week-btn {% if season_type == 'reg' %}active{% endif %}" href="/american_football?season={{ selected_season }}&type=reg">Regular Season</a>
-                    <a class="week-btn {% if season_type == 'post' %}active{% endif %}" href="/american_football?season={{ selected_season }}&type=post">Playoffs</a>
+        <details class="mobile-collapsible" data-mobile-collapse-key="american-seasons" open>
+            <summary>Saisons</summary>
+            <div class="season-picker panel">
+                <div class="panel-header">
+                    Saisons
                 </div>
-
-                <!-- Week Navigation -->
-                <div class="week-nav">
-                    {% for week_num, week_label in available_weeks %}
-                        <a class="week-btn {% if week_num == selected_week %}active{% endif %}" href="/american_football?season={{ selected_season }}&type={{ season_type }}&week={{ week_num }}">
-                            {{ week_label }}
+                <div class="panel-body panel-body-vertical">
+                    {% for season_num, season_label in available_seasons %}
+                        <a class="season-btn-vertical {% if season_num == selected_season %}active{% endif %}" href="/american_football?season={{ season_num }}&type={{ season_type }}">
+                            {{ season_label }}{% if season_num == current_season %}<br><span class="current-season-note">(aktuell)</span>{% endif %}
                         </a>
                     {% endfor %}
                 </div>
             </div>
+        </details>
+
+        <div class="page-grid">
+
+        <!-- Team Selector -->
+        <details class="mobile-collapsible" data-mobile-collapse-key="american-teams" open>
+            <summary>Team-Auswahl</summary>
+            <div class="team-picker panel">
+                <div class="panel-header">
+                    Team Roster
+                </div>
+                <div class="panel-body">
+                    {% for team in all_teams %}
+                        <button type="button" class="team-btn"
+                                data-team-id="{{ team.id }}"
+                                data-team-name="{{ team.name }}"
+                                data-team-logo="{{ team.logo or '' }}"
+                                onclick="openRoster(this.dataset.teamId, this.dataset.teamName, this.dataset.teamLogo, this)">
+                            {% if team.logo %}
+                                <img src="{{ team.logo }}" alt="{{ team.name }}">
+                            {% endif %}
+                            {{ team.id }} - {{ team.name }}
+                        </button>
+                    {% endfor %}
+                </div>
+            </div>
+        </details>
+
+        <!-- Matches -->
+        <div class="matches-wrap">
+            <!-- Navigation Panel -->
+            <details class="mobile-collapsible" data-mobile-collapse-key="american-nav" open>
+                <summary>Spieltag-Auswahl</summary>
+                <div id="nav-panel" class="panel">
+                    <!-- Season Type Navigation -->
+                    <div class="season-type-nav">
+                        <a class="week-btn {% if season_type == 'reg' %}active{% endif %}" href="/american_football?season={{ selected_season }}&type=reg">Regular Season</a>
+                        <a class="week-btn {% if season_type == 'post' %}active{% endif %}" href="/american_football?season={{ selected_season }}&type=post">Playoffs</a>
+                    </div>
+
+                    <!-- Week Navigation -->
+                    <div class="week-nav">
+                        {% for week_num, week_label in available_weeks %}
+                            <a class="week-btn {% if week_num == selected_week %}active{% endif %}" href="/american_football?season={{ selected_season }}&type={{ season_type }}&week={{ week_num }}">
+                                {{ week_label }}
+                            </a>
+                        {% endfor %}
+                    </div>
+                </div>
+            </details>
 
             <!-- Roster view (hidden by default) -->
             <div id="roster-panel" class="panel" style="display:none;">
@@ -318,6 +327,53 @@
     </footer>
 
     <script>
+        (function () {
+            var mobileQuery = window.matchMedia('(max-width: 700px)');
+            var collapsibles = document.querySelectorAll('[data-mobile-collapse-key]');
+
+            function storageKey(element) {
+                return 'mobileCollapse:' + element.dataset.mobileCollapseKey;
+            }
+
+            function applyMobileCollapseState() {
+                collapsibles.forEach(function (element) {
+                    if (!mobileQuery.matches) {
+                        element.open = true;
+                        return;
+                    }
+
+                    var stored = window.localStorage.getItem(storageKey(element));
+                    element.open = stored === '1';
+                });
+            }
+
+            collapsibles.forEach(function (element) {
+                element.addEventListener('toggle', function () {
+                    if (!mobileQuery.matches) {
+                        return;
+                    }
+                    window.localStorage.setItem(storageKey(element), element.open ? '1' : '0');
+                });
+
+                element.querySelectorAll('a[href], button[data-team-id]').forEach(function (control) {
+                    control.addEventListener('click', function () {
+                        if (!mobileQuery.matches) {
+                            return;
+                        }
+                        window.localStorage.setItem(storageKey(element), '0');
+                    });
+                });
+            });
+
+            if (typeof mobileQuery.addEventListener === 'function') {
+                mobileQuery.addEventListener('change', applyMobileCollapseState);
+            } else if (typeof mobileQuery.addListener === 'function') {
+                mobileQuery.addListener(applyMobileCollapseState);
+            }
+
+            applyMobileCollapseState();
+        })();
+
         function showTab(event, tabName) {
             event.preventDefault();
             

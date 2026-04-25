@@ -29,17 +29,20 @@
     <p class="subtitle"></p>
 
     <div class="page-grid">
-        <nav class="team-picker">
-            {% for team in standings %}
-            <a href="/fussball?team={{ team.teamId }}"
-               class="team-btn{% if team.teamId == selected_team_id %} active{% endif %}">
-                {% if team.logo %}
-                    <img src="{{ team.logo }}" alt="{{ team.teamName }}" />
-                {% endif %}
-                <span>{{ team.teamName }}</span>
-            </a>
-            {% endfor %}
-        </nav>
+        <details class="mobile-collapsible" data-mobile-collapse-key="fussball-teams" open>
+            <summary>Team-Auswahl</summary>
+            <nav class="team-picker">
+                {% for team in standings %}
+                <a href="/fussball?team={{ team.teamId }}"
+                   class="team-btn{% if team.teamId == selected_team_id %} active{% endif %}">
+                    {% if team.logo %}
+                        <img src="{{ team.logo }}" alt="{{ team.teamName }}" />
+                    {% endif %}
+                    <span>{{ team.teamName }}</span>
+                </a>
+                {% endfor %}
+            </nav>
+        </details>
 
         <aside class="panel standings-wrap">
             <h2 class="panel-title">Bundesliga Tabelle</h2>
@@ -171,6 +174,59 @@
         })();
     </script>
     {% endif %}
+
+    <script>
+        (function () {
+            var mobileQuery = window.matchMedia('(max-width: 700px)');
+            var collapsibles = document.querySelectorAll('[data-mobile-collapse-key]');
+
+            if (!collapsibles.length) {
+                return;
+            }
+
+            function storageKey(element) {
+                return 'mobileCollapse:' + element.dataset.mobileCollapseKey;
+            }
+
+            function applyState() {
+                collapsibles.forEach(function (element) {
+                    if (!mobileQuery.matches) {
+                        element.open = true;
+                        return;
+                    }
+
+                    var stored = window.localStorage.getItem(storageKey(element));
+                    element.open = stored === '1';
+                });
+            }
+
+            collapsibles.forEach(function (element) {
+                element.addEventListener('toggle', function () {
+                    if (!mobileQuery.matches) {
+                        return;
+                    }
+                    window.localStorage.setItem(storageKey(element), element.open ? '1' : '0');
+                });
+
+                element.querySelectorAll('a[href]').forEach(function (link) {
+                    link.addEventListener('click', function () {
+                        if (!mobileQuery.matches) {
+                            return;
+                        }
+                        window.localStorage.setItem(storageKey(element), '0');
+                    });
+                });
+            });
+
+            if (typeof mobileQuery.addEventListener === 'function') {
+                mobileQuery.addEventListener('change', applyState);
+            } else if (typeof mobileQuery.addListener === 'function') {
+                mobileQuery.addListener(applyState);
+            }
+
+            applyState();
+        })();
+    </script>
 
     <footer>
         <p><a href="/impressum">Impressum</a> | <a href="/datenschutz">Datenschutz</a> | <a href="/docs">Docs</a></p>

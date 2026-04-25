@@ -14,6 +14,17 @@
     damit es keine Überschneidungen zwischen den Seiten gibt.
 */
 
+body.page-american .mobile-collapsible,
+body.page-fussball .mobile-collapsible {
+            margin: 0;
+            border: none;
+        }
+
+body.page-american .mobile-collapsible > summary,
+body.page-fussball .mobile-collapsible > summary {
+            display: none;
+        }
+
 /* ===== NFL (american_football) ===== */
 body.page-american {
             margin: 0;
@@ -643,9 +654,179 @@ body.page-american .roster-table .col-college {
 @media (max-width: 700px) {
 body.page-american .roster-table th:nth-child(4),
 body.page-american .roster-table td:nth-child(4),
+body.page-american .roster-table th:nth-child(5),
+body.page-american .roster-table td:nth-child(5),
 body.page-american .roster-table th:nth-child(7),
 body.page-american .roster-table td:nth-child(7) {
                 display: none;
+            }
+
+body.page-american {
+                padding: 14px;
+            }
+body.page-american h1 {
+                margin-top: 56px;
+                margin-bottom: 10px;
+            }
+body.page-american .mobile-collapsible {
+                border: 1px solid #2d2d2d;
+                border-radius: 10px;
+                background: #1b1b1b;
+                overflow: hidden;
+            }
+body.page-american .mobile-collapsible[data-mobile-collapse-key="american-seasons"],
+body.page-american .mobile-collapsible[data-mobile-collapse-key="american-teams"] {
+                margin-bottom: 14px;
+            }
+body.page-american .mobile-collapsible > summary {
+                display: block;
+                list-style: none;
+                cursor: pointer;
+                padding: 10px 12px;
+                font-size: 12px;
+                font-weight: 700;
+                letter-spacing: 0.04em;
+                text-transform: uppercase;
+                color: #d0d0d0;
+                background: #252525;
+            }
+body.page-american .mobile-collapsible > summary::-webkit-details-marker {
+                display: none;
+            }
+body.page-american .mobile-collapsible > summary::after {
+                content: "Anzeigen";
+                float: right;
+                color: #9ca3af;
+                font-weight: 600;
+                letter-spacing: 0;
+                text-transform: none;
+            }
+body.page-american .mobile-collapsible[open] > summary::after {
+                content: "Ausblenden";
+            }
+body.page-american .mobile-collapsible .panel {
+                border: none;
+                border-radius: 0;
+            }
+body.page-american .mobile-collapsible .panel-header {
+                display: none;
+            }
+body.page-american .season-picker,
+body.page-american .team-picker {
+                position: static;
+                width: 100%;
+            }
+body.page-american .season-picker .panel-body-vertical,
+body.page-american .team-picker .panel-body,
+body.page-american .week-nav {
+                max-height: 42vh;
+                overflow-y: auto;
+                display: flex;
+                flex-direction: column;
+                gap: 8px;
+            }
+body.page-american .team-btn {
+                margin-bottom: 0;
+            }
+body.page-american .matches-wrap {
+                gap: 14px;
+            }
+body.page-american .page-grid {
+                grid-template-columns: 1fr;
+                grid-template-areas: "matches" "standings" "teams";
+                gap: 14px;
+            }
+body.page-american .match-header {
+                display: none;
+            }
+body.page-american .match-row {
+                display: flex;
+                flex-direction: row;
+                gap: 10px;
+                padding: 12px;
+                flex-wrap: wrap;
+                align-items: center;
+            }
+body.page-american .match-team,
+body.page-american .match-team-away {
+                flex-direction: row;
+                align-items: center;
+                gap: 10px;
+                flex: 1;
+                min-width: 0;
+            }
+body.page-american .team-info-right {
+                text-align: left;
+            }
+body.page-american .team-logo,
+body.page-american .team-logo-fallback {
+                width: 34px;
+                height: 34px;
+                min-width: 34px;
+                min-height: 34px;
+                max-width: 34px;
+                max-height: 34px;
+            }
+body.page-american .score-stack {
+                width: auto;
+                min-width: 80px;
+                padding: 8px 4px;
+                gap: 4px;
+                flex: 0 0 auto;
+            }
+body.page-american .match-score {
+                font-size: 20px;
+            }
+body.page-american .quarter-scores {
+                font-size: 11px;
+                line-height: 1.35;
+                white-space: normal;
+                overflow-wrap: anywhere;
+            }
+body.page-american .standings-content {
+                padding: 10px;
+            }
+body.page-american .standings-table {
+                table-layout: fixed;
+            }
+body.page-american .standings-table th,
+body.page-american .standings-table td {
+                padding: 8px 6px;
+                font-size: 11px;
+            }
+body.page-american .standings-table th:nth-child(4),
+body.page-american .standings-table td:nth-child(4) {
+                display: none;
+            }
+body.page-american .standings-table .team-name {
+                font-size: 11px;
+                overflow-wrap: anywhere;
+            }
+body.page-american .roster-unit-tabs {
+                flex-wrap: wrap;
+                padding: 10px;
+            }
+body.page-american .roster-unit-tabs .roster-close-btn {
+                margin-left: 0;
+                width: 100%;
+            }
+body.page-american .roster-tab-btn {
+                flex: 1 1 calc(50% - 4px);
+                text-align: center;
+                padding: 8px 10px;
+                font-size: 12px;
+            }
+body.page-american .roster-content {
+                padding: 10px;
+                gap: 12px;
+            }
+body.page-american .roster-table th,
+body.page-american .roster-table td {
+                padding: 6px 6px;
+                font-size: 11px;
+            }
+body.page-american .roster-table .col-name {
+                overflow-wrap: anywhere;
             }
         }
 
@@ -691,7 +872,7 @@ body.page-home .trophy-layer {
         pointer-events: none;
         background-repeat: no-repeat;
         background-position: center calc(58% - 70px);
-        background-size: auto 400px;
+    background-size: auto clamp(230px, 33vw, 410px);
         opacity: 0.23;
         mix-blend-mode: screen;
         filter: saturate(1.08) contrast(1.06);
@@ -847,6 +1028,79 @@ body.page-home .impressum-button:hover {
         box-shadow: none;
         text-decoration: none;
     }
+
+@media (max-width: 1200px) {
+body.page-home .sport-name {
+        font-size: clamp(1.2rem, 2.1vw, 1.7rem);
+        letter-spacing: 1.6px;
+        white-space: normal;
+        padding: 0 10px;
+    }
+body.page-home .sport-subtitle {
+        font-size: 0.78rem;
+        letter-spacing: 1.2px;
+        white-space: normal;
+        padding: 0 12px;
+        text-align: center;
+    }
+body.page-home .trophy-layer {
+    background-size: auto clamp(190px, 27vw, 290px);
+        background-position: center calc(56% - 42px);
+        opacity: 0.2;
+    }
+}
+
+@media (max-width: 900px) {
+body.page-home {
+        overflow: auto;
+        height: auto;
+    }
+body.page-home .container {
+        flex-direction: column;
+        width: 100%;
+        min-height: 100vh;
+        height: auto;
+    }
+body.page-home .sport-section {
+        min-height: 33.34vh;
+        flex: 1 1 auto;
+        transition: transform 0.3s ease, filter 0.3s ease;
+    }
+body.page-home .sport-section:not(:last-child) {
+        border-right: none;
+        border-bottom: 1px solid rgba(255, 255, 255, 0.18);
+    }
+body.page-home .sport-section:hover {
+        flex: 1 1 auto;
+    }
+body.page-home .sport-name {
+        font-size: clamp(1.25rem, 4.8vw, 1.8rem);
+        letter-spacing: 1.2px;
+    }
+body.page-home .sport-subtitle,
+body.page-home .arrow {
+        opacity: 1;
+        transform: translateY(0);
+    }
+body.page-home .sport-subtitle {
+        font-size: clamp(0.72rem, 2.8vw, 0.9rem);
+    }
+body.page-home .arrow {
+        font-size: 1rem;
+        opacity: 0.6;
+    }
+body.page-home .trophy-layer {
+    background-size: auto clamp(140px, 24vh, 220px);
+        background-position: center 40%;
+        opacity: 0.18;
+    }
+body.page-home .docs-button,
+body.page-home .impressum-button {
+        bottom: 12px;
+        padding: 8px 12px;
+        font-size: 12px;
+    }
+}
 
 /* ===== Docs ===== */
 body.page-docs {
@@ -1773,6 +2027,46 @@ body.page-fussball .api-lock-home:hover {
 body.page-fussball {
                 padding: 14px;
             }
+body.page-fussball .page-title {
+                margin-top: 52px;
+            }
+body.page-fussball .mobile-collapsible {
+                border: 1px solid #2d2d2d;
+                border-radius: 10px;
+                background: #1b1b1b;
+                overflow: hidden;
+            }
+body.page-fussball .mobile-collapsible > summary {
+                display: block;
+                list-style: none;
+                cursor: pointer;
+                padding: 10px 12px;
+                font-size: 12px;
+                font-weight: 700;
+                letter-spacing: 0.04em;
+                text-transform: uppercase;
+                color: #d0d0d0;
+                background: #252525;
+            }
+body.page-fussball .mobile-collapsible > summary::-webkit-details-marker {
+                display: none;
+            }
+body.page-fussball .mobile-collapsible > summary::after {
+                content: "Anzeigen";
+                float: right;
+                color: #9ca3af;
+                font-weight: 600;
+                letter-spacing: 0;
+                text-transform: none;
+            }
+body.page-fussball .mobile-collapsible[open] > summary::after {
+                content: "Ausblenden";
+            }
+body.page-fussball .mobile-collapsible .team-picker {
+                padding: 10px;
+                max-height: 42vh;
+                overflow-y: auto;
+            }
 body.page-fussball .page-grid {
                 grid-template-columns: 1fr;
                 grid-template-areas:
@@ -1781,12 +2075,54 @@ body.page-fussball .page-grid {
                     "standings";
                 gap: 14px;
             }
+body.page-fussball .table-wrap table,
+body.page-fussball .standings-wrap table {
+                table-layout: fixed;
+            }
 body.page-fussball th, body.page-fussball td {
                 padding: 10px 8px;
                 font-size: 13px;
             }
+body.page-fussball .table-wrap th,
+body.page-fussball .table-wrap td {
+                padding: 8px 6px;
+                font-size: 12px;
+            }
 body.page-fussball td.center {
                 font-size: 12px;
+            }
+body.page-fussball .team-cell {
+                gap: 6px;
+            }
+body.page-fussball .table-wrap .team-logo {
+                width: 24px;
+                height: 24px;
+            }
+body.page-fussball .table-wrap .team-cell span {
+                font-size: 11px;
+                line-height: 1.25;
+                overflow-wrap: anywhere;
+            }
+body.page-fussball .table-wrap td.center .date-time {
+                font-size: 11px;
+                line-height: 1.3;
+            }
+body.page-fussball .standings-wrap th:nth-child(3),
+body.page-fussball .standings-wrap td:nth-child(3) {
+                display: none;
+            }
+body.page-fussball .standings-wrap th,
+body.page-fussball .standings-wrap td {
+                padding: 8px 6px;
+                font-size: 11px;
+            }
+body.page-fussball .standings-wrap .team-inline span {
+                overflow-wrap: anywhere;
+                font-size: 11px;
+            }
+body.page-fussball .standings-wrap .team-logo {
+                width: 20px;
+                height: 20px;
             }
         }
 
@@ -1817,8 +2153,19 @@ body.page-fussball footer {
     padding-right: 30px;
 }
 
+@media (max-width: 760px) {
+
+body.page-formula1 footer {
+        margin-left: -16px;
+        margin-right: -16px;
+        padding-left: 16px;
+        padding-right: 16px;
+    }
+}
+
 @media (max-width: 700px) {
 
+body.page-american footer,
 body.page-fussball footer {
         margin-left: -14px;
         margin-right: -14px;
@@ -1901,5 +2248,21 @@ body.page-impressum a {
 
 body.page-impressum a:hover {
     text-decoration: underline;
+}
+
+@media (max-width: 760px) {
+body.page-docs .home-button,
+body.page-impressum .home-button {
+        background: #1f1f1f;
+        border-color: #4b4b4b;
+        color: #f5f5f5;
+    }
+
+body.page-docs .home-button:hover,
+body.page-impressum .home-button:hover {
+        background: #262626;
+        border-color: #6a6a6a;
+        color: #ffffff;
+    }
 }
 
