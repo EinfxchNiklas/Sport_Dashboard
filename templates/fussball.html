@@ -6,6 +6,9 @@
     <title>{{ selected_team_name }} – Spiele</title>
         <link rel="icon" href="{{ url_for('static', filename='images/favicon.svg') }}" type="image/svg+xml">
     <link rel="stylesheet" href="/static/styles/sports_dashboard.css">
+    {% if umami_enabled %}
+    <script defer src="{{ umami_script_url }}" data-website-id="{{ umami_website_id }}"></script>
+    {% endif %}
 </head>
 <body class="page-fussball">
     {% if api_rate_limited %}

@@ -30,6 +30,20 @@ from data_sources.get_nfl_data import (
 
 app = Flask(__name__)
 app.config['SEND_FILE_MAX_AGE_DEFAULT'] = 60 * 60 * 24 * 7  # 1 Woche
+app.config['UMAMI_SCRIPT_URL'] = (os.environ.get('UMAMI_SCRIPT_URL') or '').strip()
+app.config['UMAMI_WEBSITE_ID'] = (os.environ.get('UMAMI_WEBSITE_ID') or '').strip()
+
+
+@app.context_processor
+def inject_analytics_config():
+    script_url = app.config.get('UMAMI_SCRIPT_URL', '')
+    website_id = app.config.get('UMAMI_WEBSITE_ID', '')
+    enabled = bool(script_url and website_id)
+    return {
+        'umami_enabled': enabled,
+        'umami_script_url': script_url,
+        'umami_website_id': website_id,
+    }
 
 
 def _probe_http_endpoint(name, url, headers=None, params=None, timeout=8):
