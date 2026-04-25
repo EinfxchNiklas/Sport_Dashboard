@@ -6,6 +6,9 @@
     <title>Sport Dashboard</title>
     <link rel="icon" href="{{ url_for('static', filename='images/favicon.svg') }}" type="image/svg+xml">
     <link rel="stylesheet" href="{{ url_for('static', filename='styles/sports_dashboard.css') }}?v=20260414">
+    {% if umami_enabled %}
+    <script defer src="{{ umami_script_url }}" data-website-id="{{ umami_website_id }}"></script>
+    {% endif %}
 </head>
 <body class="page-home">
     <a href="/docs" class="docs-button" title="Dokumentation">Docs</a>
