@@ -12,6 +12,7 @@ load_dotenv()
 _API_KEYS = [k for k in [
     os.environ.get("TANK01_NFL_API_KEY"),
     os.environ.get("TANK01_NFL_API_KEY_2"),
+    os.environ.get("TANK01_NFL_API_KEY_3"),
 ] if k]
 _active_key_index = 0
 RAPIDAPI_HOST = "tank01-nfl-live-in-game-real-time-statistics-nfl.p.rapidapi.com"
