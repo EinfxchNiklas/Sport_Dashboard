@@ -163,6 +163,11 @@ def docs():
     return render_template('docs.html')
 
 
+@app.route('/datenschutz')
+def datenschutz():
+    return render_template('datenschutz.html')
+
+
 @app.route('/.well-known/appspecific/com.chrome.devtools.json')
 def chrome_devtools_probe():
     # Chrome DevTools may probe this path; returning 204 keeps logs clean.
