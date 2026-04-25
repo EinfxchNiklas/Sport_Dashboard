@@ -1,0 +1,60 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Datenschutz - Sport Dashboard</title>
+    <link rel="icon" href="{{ url_for('static', filename='images/favicon.svg') }}" type="image/svg+xml">
+    <link rel="stylesheet" href="{{ url_for('static', filename='styles/sports_dashboard.css') }}">
+    {% if umami_enabled %}
+    <script defer src="{{ umami_script_url }}" data-website-id="{{ umami_website_id }}"></script>
+    {% endif %}
+</head>
+<body class="page-docs">
+    <a href="/" class="home-button">Zurück zur Homepage</a>
+    <div class="container">
+        <h1>Datenschutzerklärung</h1>
+        <div class="subtitle">Sport Dashboard</div>
+
+        <section>
+            <h2>Verantwortliche Stelle</h2>
+            <div class="license-box">
+                <p>Verantwortlich für diese Website ist Niklas.</p>
+                <p>Kontakt: <a href="mailto:einfxchniklas@web.de">einfxchniklas@web.de</a></p>
+            </div>
+        </section>
+
+        <section>
+            <h2>Allgemeine Hinweise</h2>
+            <p>Der Schutz deiner personenbezogenen Daten wird ernst genommen. Personenbezogene Daten werden nur in dem Umfang verarbeitet, der für den Betrieb dieser Website sowie für die Bereitstellung der angezeigten Inhalte und Funktionen erforderlich ist.</p>
+        </section>
+
+        <section>
+            <h2>Webanalyse mit Umami Cloud</h2>
+            <div class="info-box">
+                <p>Diese Website verwendet Umami Cloud zur statistischen Auswertung von Seitenaufrufen und der Nutzung einzelner Seiten.</p>
+                <p>Nach aktuellem Setup wurde bei Umami die europäische Region ausgewählt. Weitere Informationen des Anbieters finden sich in der <a href="https://umami.is/privacy" target="_blank" rel="noopener noreferrer">Privacy Policy</a>, im <a href="https://umami.is/dpa" target="_blank" rel="noopener noreferrer">Data Processing Agreement (DPA)</a> sowie in der Liste der <a href="https://umami.is/subprocessors" target="_blank" rel="noopener noreferrer">Subprocessors</a>.</p>
+                <p>Die Verarbeitung dient der technischen Auswertung, Reichweitenmessung und Verbesserung des Angebots.</p>
+            </div>
+
+            <h3>Welche Daten verarbeitet werden können</h3>
+            <p>Je nach Nutzung und Konfiguration können insbesondere Seitenaufrufe, Referrer, technische Browser- und Geräteinformationen sowie ungefähre Standortinformationen verarbeitet werden.</p>
+
+            <h3>Hinweis zu Drittlandbezug</h3>
+            <p>Auch bei Auswahl einer europäischen Region können laut den öffentlich bereitgestellten Unterlagen von Umami Subprozessoren außerhalb der EU bzw. des EWR beteiligt sein. Umami verweist für solche Fälle auf vertragliche Schutzmechanismen wie das DPA und Standard Contractual Clauses.</p>
+        </section>
+
+        <section>
+            <h2>Deine Rechte</h2>
+            <p>Du hast im Rahmen der geltenden Datenschutzgesetze insbesondere ein Recht auf Auskunft, Berichtigung, Löschung, Einschränkung der Verarbeitung sowie gegebenenfalls Widerspruch gegen bestimmte Verarbeitungen.</p>
+            <p>Bei datenschutzbezogenen Anfragen kannst du dich an <a href="mailto:einfxchniklas@web.de">einfxchniklas@web.de</a> wenden.</p>
+        </section>
+
+        <footer>
+            <p><a href="/impressum">Impressum</a> | <a href="/datenschutz">Datenschutz</a> | <a href="/docs">Docs</a></p>
+            <p>Sport Dashboard | Inoffizielles Fanprojekt</p>
+            <p>© 2026</p>
+        </footer>
+    </div>
+</body>
+</html>

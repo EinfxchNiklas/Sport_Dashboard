@@ -1,1 +1,1 @@
-web: gunicorn app:app --access-logfile - --logger-class gunicorn_logger.HumanOnlyGunicornLogger
+web: gunicorn app:app --access-logfile -

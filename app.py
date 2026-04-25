@@ -1,4 +1,5 @@
 from flask import Flask, Response, jsonify, render_template, request
+import logging
 import os
 import re
 import time
@@ -32,6 +33,42 @@ app = Flask(__name__)
 app.config['SEND_FILE_MAX_AGE_DEFAULT'] = 60 * 60 * 24 * 7  # 1 Woche
 app.config['UMAMI_SCRIPT_URL'] = (os.environ.get('UMAMI_SCRIPT_URL') or '').strip()
 app.config['UMAMI_WEBSITE_ID'] = (os.environ.get('UMAMI_WEBSITE_ID') or '').strip()
+
+
+class _HumanTrafficLogFilter(logging.Filter):
+    EXCLUDED_PATH_SNIPPETS = (
+        ' /health ',
+        '/.well-known/appspecific/com.chrome.devtools.json',
+    )
+
+    EXCLUDED_BOT_SNIPPETS = (
+        'uptimerobot',
+        'kube-probe',
+        'pingdom',
+        'statuscake',
+        'healthcheck',
+    )
+
+    def filter(self, record):
+        message = record.getMessage().lower()
+
+        if any(path in message for path in self.EXCLUDED_PATH_SNIPPETS):
+            return False
+
+        if any(bot in message for bot in self.EXCLUDED_BOT_SNIPPETS):
+            return False
+
+        return True
+
+
+def _configure_runtime_log_filters():
+    log_filter = _HumanTrafficLogFilter()
+    for logger_name in ('werkzeug', 'gunicorn.access'):
+        logger = logging.getLogger(logger_name)
+        logger.addFilter(log_filter)
+
+
+_configure_runtime_log_filters()
 
 
 @app.context_processor
@@ -161,6 +198,11 @@ def homepage():
 @app.route('/docs')
 def docs():
     return render_template('docs.html')
+
+
+@app.route('/datenschutz')
+def datenschutz():
+    return render_template('datenschutz.html')
 
 
 @app.route('/.well-known/appspecific/com.chrome.devtools.json')
