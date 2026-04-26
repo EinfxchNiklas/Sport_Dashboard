@@ -6,6 +6,7 @@
     <title>Formel 1 - Rennwochenenden</title>
         <link rel="icon" href="{{ url_for('static', filename='images/favicon.svg') }}" type="image/svg+xml">
     <link rel="stylesheet" href="/static/styles/sports_dashboard.css">
+    <link rel="stylesheet" href="/static/styles/sports_dashboard.mobile.css">
     {% if umami_enabled %}
     <script defer src="{{ umami_script_url }}" data-website-id="{{ umami_website_id }}"></script>
     {% endif %}
@@ -16,6 +17,12 @@
     <main class="page">
         <h1 class="page-title">Formula 1 Race Weekends</h1>
         <p ></p>
+
+        <!-- Mobile Tabs for Races vs Championship -->
+        <div class="mobile-content-tabs">
+            <button type="button" class="active" onclick="switchMobileTab(event, 'races')">Rennen</button>
+            <button type="button" onclick="switchMobileTab(event, 'championship')">Championship</button>
+        </div>
 
         <div class="content-grid">
             <section>
@@ -527,6 +534,24 @@
                     });
                 });
             });
+        }
+
+        function switchMobileTab(event, tab) {
+            event.preventDefault();
+            const section = document.querySelector('div.content-grid section:first-child');
+            const aside = document.querySelector('div.content-grid aside.championship-panel');
+            const buttons = document.querySelectorAll('.mobile-content-tabs button');
+            
+            buttons.forEach(btn => btn.classList.remove('active'));
+            event.target.classList.add('active');
+            
+            if (tab === 'races') {
+                if (section) section.style.display = 'block';
+                if (aside) aside.style.display = 'none';
+            } else if (tab === 'championship') {
+                if (section) section.style.display = 'none';
+                if (aside) aside.style.display = 'block';
+            }
         }
     </script>
 </body>
