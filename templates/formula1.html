@@ -536,21 +536,26 @@
             });
         }
 
+        const f1PageTitle = document.querySelector('h1.page-title') ? document.querySelector('h1.page-title').textContent : '';
+
         function switchMobileTab(event, tab) {
             event.preventDefault();
             const section = document.querySelector('div.content-grid section:first-child');
             const aside = document.querySelector('div.content-grid aside.championship-panel');
             const buttons = document.querySelectorAll('.mobile-content-tabs button');
-            
+            const pageTitle = document.querySelector('h1.page-title');
+
             buttons.forEach(btn => btn.classList.remove('active'));
             event.target.classList.add('active');
-            
+
             if (tab === 'races') {
                 if (section) section.style.display = 'block';
                 if (aside) aside.style.display = 'none';
+                if (pageTitle) pageTitle.textContent = f1PageTitle;
             } else if (tab === 'championship') {
                 if (section) section.style.display = 'none';
                 if (aside) aside.style.display = 'block';
+                if (pageTitle) pageTitle.textContent = 'Formula 1 Championship';
             }
         }
     </script>

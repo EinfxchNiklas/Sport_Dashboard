@@ -28,6 +28,7 @@ body.page-american .roster-table col.col-weight {
 body.page-american .roster-selected-team {
                 padding: 9px 12px;
                 font-size: 12px;
+                gap: 10px;
             }
 body.page-american .roster-selected-team-logo {
                 width: 20px;
@@ -204,6 +205,10 @@ body.page-american .roster-table td {
                 padding: 6px 6px;
                 font-size: 11px;
             }
+body.page-american .roster-table {
+                width: 100%;
+                table-layout: fixed;
+            }
 body.page-american .roster-table .col-name {
                 overflow-wrap: anywhere;
             }
@@ -269,11 +274,11 @@ body.page-home {
 body.page-home .container {
         flex-direction: column;
         width: 100%;
-        min-height: 100vh;
+        min-height: 100svh;
         height: auto;
     }
 body.page-home .sport-section {
-        min-height: 33.34vh;
+        min-height: 33.33vh;
         flex: 1 1 auto;
         transition: transform 0.3s ease, filter 0.3s ease;
     }
@@ -349,7 +354,7 @@ body.page-american .all-standings-grid {
 @media (max-width: 760px) {
 
 body.page-formula1 {
-                padding: 16px;
+                padding: 16px 16px 0;
                 min-height: 100dvh;
                 box-sizing: border-box;
                 display: flex;
@@ -357,6 +362,7 @@ body.page-formula1 {
             }
 body.page-formula1 .page {
                 margin-top: 52px;
+                padding-bottom: 24px;
             }
 body.page-formula1 .weekend-header {
                 grid-template-columns: 1fr;
@@ -583,6 +589,7 @@ body.page-fussball .standings-wrap.active {
 @media (max-width: 760px) {
 
 body.page-formula1 footer {
+    margin-top: auto;
         margin-left: -16px;
         margin-right: -16px;
         padding-left: 16px;
@@ -593,14 +600,12 @@ body.page-formula1 footer {
 @media (max-width: 700px) {
 
 body.page-american footer,
-body.page-formula1 footer,
 body.page-fussball footer {
         margin-left: -14px;
         margin-right: -14px;
         padding: 18px 14px;
     }
 body.page-american footer,
-body.page-formula1 footer,
 body.page-fussball footer {
         margin-top: auto;
     }
