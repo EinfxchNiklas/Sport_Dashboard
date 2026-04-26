@@ -6,6 +6,7 @@
     <title>{{ selected_team_name }} – Spiele</title>
         <link rel="icon" href="{{ url_for('static', filename='images/favicon.svg') }}" type="image/svg+xml">
     <link rel="stylesheet" href="/static/styles/sports_dashboard.css">
+    <link rel="stylesheet" href="/static/styles/sports_dashboard.mobile.css">
     {% if umami_enabled %}
     <script defer src="{{ umami_script_url }}" data-website-id="{{ umami_website_id }}"></script>
     {% endif %}
@@ -27,6 +28,12 @@
     <a href="/" class="home-button">← Home</a>
     <h1 class="page-title">{{ selected_team_name }} – Spiele</h1>
     <p class="subtitle"></p>
+
+    <!-- Mobile Tabs for Matches vs Standings -->
+    <div class="mobile-content-tabs">
+        <button type="button" class="active" onclick="switchMobileTab(event, 'matches')">Spiele</button>
+        <button type="button" onclick="switchMobileTab(event, 'standings')">Tabelle</button>
+    </div>
 
     <div class="page-grid">
         <details class="mobile-collapsible" data-mobile-collapse-key="fussball-teams" open>
@@ -226,6 +233,30 @@
 
             applyState();
         })();
+
+        function switchMobileTab(event, tab) {
+            event.preventDefault();
+            const pageGrid = document.querySelector('.page-grid');
+            const tableWrap = document.querySelector('.table-wrap');
+            const standingsWrap = document.querySelector('.standings-wrap');
+            const teamsPicker = document.querySelector('[data-mobile-collapse-key="fussball-teams"]');
+            const buttons = document.querySelectorAll('.mobile-content-tabs button');
+            
+            buttons.forEach(btn => btn.classList.remove('active'));
+            event.target.classList.add('active');
+            
+            if (tab === 'matches') {
+                if (pageGrid) pageGrid.classList.remove('standings-only');
+                tableWrap.style.display = '';
+                standingsWrap.style.display = 'none';
+                if (teamsPicker) teamsPicker.style.display = '';
+            } else if (tab === 'standings') {
+                if (pageGrid) pageGrid.classList.add('standings-only');
+                tableWrap.style.display = 'none';
+                standingsWrap.style.display = 'block';
+                if (teamsPicker) teamsPicker.style.display = 'none';
+            }
+        }
     </script>
 
     <footer>

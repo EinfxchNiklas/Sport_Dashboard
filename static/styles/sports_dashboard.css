@@ -1,4 +1,4 @@
-﻿/* Sport Dashboard Styles */
+/* Sport Dashboard Styles */
 /*
     Inhaltsverzeichnis
     1) Common
@@ -549,6 +549,29 @@ body.page-american .roster-unit-tabs {
             background: #161616;
             align-items: center;
         }
+body.page-american .roster-selected-team {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            padding: 10px 16px;
+            border-bottom: 1px solid #2d2d2d;
+            background: #1a1a1a;
+            font-size: 13px;
+            color: #f5f5f5;
+            font-weight: 600;
+        }
+body.page-american .roster-selected-team-logo {
+            width: 22px;
+            height: 22px;
+            object-fit: contain;
+            flex-shrink: 0;
+        }
+body.page-american .roster-selected-team-name {
+            min-width: 0;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+        }
 body.page-american .roster-unit-tabs .roster-close-btn {
             margin-left: auto;
         }
@@ -605,7 +628,29 @@ body.page-american .roster-position-header {
 body.page-american .roster-table {
             width: 100%;
             border-collapse: collapse;
+            table-layout: fixed;
             font-size: 13px;
+        }
+body.page-american .roster-table col.col-num {
+            width: 7%;
+        }
+body.page-american .roster-table col.col-name {
+            width: 31%;
+        }
+body.page-american .roster-table col.col-age {
+            width: 8%;
+        }
+body.page-american .roster-table col.col-bday {
+            width: 14%;
+        }
+body.page-american .roster-table col.col-height {
+            width: 16%;
+        }
+body.page-american .roster-table col.col-weight {
+            width: 12%;
+        }
+body.page-american .roster-table col.col-college {
+            width: 12%;
         }
 body.page-american .roster-table thead tr {
             background: #1e1e1e;
@@ -632,7 +677,6 @@ body.page-american .roster-table tbody tr:hover td {
             background: #232323;
         }
 body.page-american .roster-table .col-num {
-            width: 40px;
             text-align: center;
             color: #ffd24a;
             font-weight: 600;
@@ -657,12 +701,39 @@ body.page-american .roster-table td:nth-child(4),
 body.page-american .roster-table th:nth-child(5),
 body.page-american .roster-table td:nth-child(5),
 body.page-american .roster-table th:nth-child(7),
-body.page-american .roster-table td:nth-child(7) {
+body.page-american .roster-table td:nth-child(7),
+body.page-american .roster-table col:nth-child(4),
+body.page-american .roster-table col:nth-child(5),
+body.page-american .roster-table col:nth-child(7) {
                 display: none;
+            }
+body.page-american .roster-table col.col-num {
+                width: 12%;
+            }
+body.page-american .roster-table col.col-name {
+                width: 56%;
+            }
+body.page-american .roster-table col.col-age {
+                width: 12%;
+            }
+body.page-american .roster-table col.col-weight {
+                width: 20%;
+            }
+body.page-american .roster-selected-team {
+                padding: 9px 12px;
+                font-size: 12px;
+            }
+body.page-american .roster-selected-team-logo {
+                width: 20px;
+                height: 20px;
             }
 
 body.page-american {
                 padding: 14px;
+                min-height: 100dvh;
+                box-sizing: border-box;
+                display: flex;
+                flex-direction: column;
             }
 body.page-american h1 {
                 margin-top: 56px;
@@ -803,15 +874,17 @@ body.page-american .standings-table .team-name {
                 overflow-wrap: anywhere;
             }
 body.page-american .roster-unit-tabs {
-                flex-wrap: wrap;
+                flex-wrap: nowrap;
                 padding: 10px;
             }
 body.page-american .roster-unit-tabs .roster-close-btn {
                 margin-left: 0;
                 width: 100%;
+                display: none;
             }
 body.page-american .roster-tab-btn {
-                flex: 1 1 calc(50% - 4px);
+                flex: 1 1 0;
+                min-width: 0;
                 text-align: center;
                 padding: 8px 10px;
                 font-size: 12px;
@@ -827,6 +900,41 @@ body.page-american .roster-table td {
             }
 body.page-american .roster-table .col-name {
                 overflow-wrap: anywhere;
+            }
+        }
+
+/* Mobile tabs for Matches vs Standings */
+body.page-american .mobile-content-tabs {
+            display: none;
+        }
+@media (max-width: 700px) {
+body.page-american .mobile-content-tabs {
+                display: flex;
+                gap: 0;
+                margin-bottom: 14px;
+                border-radius: 8px;
+                overflow: hidden;
+            }
+body.page-american .mobile-content-tabs button {
+                flex: 1;
+                padding: 12px;
+                background: #2a2a2a;
+                border: none;
+                color: #b0b0b0;
+                font-weight: 600;
+                font-size: 13px;
+                cursor: pointer;
+                transition: background 0.2s, color 0.2s;
+            }
+body.page-american .mobile-content-tabs button.active {
+                background: #22c55e;
+                color: #111;
+            }
+body.page-american .standings-wrap {
+                display: none;
+            }
+body.page-american .standings-wrap.active {
+                display: block;
             }
         }
 
@@ -1109,6 +1217,7 @@ body.page-docs {
         background-color: #141414;
         color: #e0e0e0;
         line-height: 1.6;
+    overflow-x: clip;
     }
 body.page-docs * {
         margin: 0;
@@ -1117,6 +1226,7 @@ body.page-docs * {
     }
 body.page-docs .container {
         max-width: 1000px;
+        width: min(100%, 1000px);
         margin: 0 auto;
         padding: 40px 20px;
         padding-top: 80px;
@@ -1150,6 +1260,8 @@ body.page-docs h1 {
         color: #e0e0e0;
         margin-bottom: 10px;
         font-weight: 700;
+    overflow-wrap: anywhere;
+    word-break: break-word;
     }
 body.page-docs .subtitle {
         font-size: 1.1rem;
@@ -1166,6 +1278,8 @@ body.page-docs h2 {
         margin-bottom: 15px;
         border-bottom: 2px solid rgba(34, 197, 94, 0.3);
         padding-bottom: 10px;
+    overflow-wrap: anywhere;
+    word-break: break-word;
     }
 body.page-docs h3 {
         font-size: 1.1rem;
@@ -1191,11 +1305,29 @@ body.page-docs a {
         color: #3b82f6;
         text-decoration: none;
         transition: color 0.3s ease;
+        overflow-wrap: anywhere;
+        word-break: break-word;
     }
 body.page-docs a:hover {
         color: #22c55e;
         text-decoration: underline;
     }
+@media (max-width: 760px) {
+
+body.page-docs .container {
+        padding: 72px 14px 24px;
+    }
+body.page-docs h1 {
+    font-size: clamp(2rem, 6.8vw, 2.35rem);
+        line-height: 1.25;
+    }
+body.page-docs .home-button {
+        left: 12px;
+        width: auto;
+        right: auto;
+        max-width: none;
+    }
+}
 body.page-docs .info-box {
         background: rgba(34, 197, 94, 0.1);
         border-left: 4px solid #22c55e;
@@ -1712,6 +1844,9 @@ body.page-formula1 .practice-no-data {
             font-size: 0.88rem;
             margin: 8px 0 0;
         }
+body.page-formula1 .mobile-content-tabs {
+            display: none;
+        }
 @media (max-width: 760px) {
 
 body.page-formula1 {
@@ -1733,11 +1868,51 @@ body.page-formula1 .content-grid {
 body.page-formula1 .championship-panel {
                 position: static;
             }
+/* Mobile tabs for Races vs Championship */
+body.page-formula1 .mobile-content-tabs {
+                display: flex;
+                gap: 0;
+                margin-bottom: 14px;
+                border: 1px solid #3a4658;
+                border-radius: 8px;
+                overflow: hidden;
+            }
+body.page-formula1 .mobile-content-tabs button {
+                flex: 1;
+                padding: 12px;
+                background: #1f2631;
+                border: none;
+                color: #d9e2f0;
+                font-weight: 600;
+                font-size: 13px;
+                cursor: pointer;
+                transition: background 0.2s, color 0.2s;
+            }
+body.page-formula1 .mobile-content-tabs button.active {
+                background: var(--accent-soft);
+                color: #ffd5d5;
+            }
+body.page-formula1 .content-grid > section {
+                display: block;
+            }
+body.page-formula1 .content-grid > section .weekends-view {
+                display: none !important;
+            }
+body.page-formula1 .content-grid > section .weekends-view.active {
+                display: block !important;
+            }
+body.page-formula1 .content-grid aside {
+                display: none;
+            }
+body.page-formula1 .content-grid aside.active {
+                display: block;
+            }
         }
 
 /* ===== Fussball ===== */
 body.page-fussball {
             margin: 0;
+            min-height: 100dvh;
             background-color: #141414;
             color: #f5f5f5;
             font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
@@ -1891,6 +2066,9 @@ body.page-fussball .standings-wrap .team-logo {
             width: 26px;
             height: 26px;
         }
+body.page-fussball .mobile-content-tabs {
+            display: none;
+        }
 body.page-fussball .standings-wrap th, body.page-fussball .standings-wrap td {
             padding: 10px 8px;
             font-size: 13px;
@@ -2026,6 +2204,10 @@ body.page-fussball .api-lock-home:hover {
 
 body.page-fussball {
                 padding: 14px;
+                min-height: 100dvh;
+                box-sizing: border-box;
+                display: flex;
+                flex-direction: column;
             }
 body.page-fussball .page-title {
                 margin-top: 52px;
@@ -2074,10 +2256,22 @@ body.page-fussball .page-grid {
                     "matches"
                     "standings";
                 gap: 14px;
+                box-sizing: border-box;
+                min-height: auto;
+            }
+body.page-fussball .page-grid.standings-only {
+                grid-template-columns: 1fr;
+                grid-template-areas: "standings";
+                gap: 0;
+                margin-bottom: 14px;
             }
 body.page-fussball .table-wrap table,
 body.page-fussball .standings-wrap table {
                 table-layout: fixed;
+            }
+body.page-fussball .standings-wrap,
+body.page-fussball .standings-wrap table {
+                width: 100%;
             }
 body.page-fussball th, body.page-fussball td {
                 padding: 10px 8px;
@@ -2116,13 +2310,61 @@ body.page-fussball .standings-wrap td {
                 padding: 8px 6px;
                 font-size: 11px;
             }
+body.page-fussball .standings-wrap th:first-child,
+body.page-fussball .standings-wrap td.pos {
+                width: 34px;
+                padding-left: 4px;
+                padding-right: 4px;
+            }
+body.page-fussball .standings-wrap th:nth-child(4),
+body.page-fussball .standings-wrap td:nth-child(4) {
+                width: 40px;
+                padding-left: 4px;
+                padding-right: 4px;
+            }
+body.page-fussball .standings-wrap th:last-child,
+body.page-fussball .standings-wrap td.points {
+                width: 44px;
+                padding-left: 4px;
+                padding-right: 4px;
+            }
 body.page-fussball .standings-wrap .team-inline span {
-                overflow-wrap: anywhere;
+                overflow-wrap: normal;
+                word-break: normal;
                 font-size: 11px;
             }
 body.page-fussball .standings-wrap .team-logo {
                 width: 20px;
                 height: 20px;
+            }
+/* Mobile tabs for Matches vs Standings */
+body.page-fussball .mobile-content-tabs {
+                display: flex;
+                gap: 0;
+                margin-bottom: 14px;
+                border-radius: 8px;
+                overflow: hidden;
+            }
+body.page-fussball .mobile-content-tabs button {
+                flex: 1;
+                padding: 12px;
+                background: #2a2a2a;
+                border: none;
+                color: #b0b0b0;
+                font-weight: 600;
+                font-size: 13px;
+                cursor: pointer;
+                transition: background 0.2s, color 0.2s;
+            }
+body.page-fussball .mobile-content-tabs button.active {
+                background: #ffd24a;
+                color: #111;
+            }
+body.page-fussball .standings-wrap {
+                display: none;
+            }
+body.page-fussball .standings-wrap.active {
+                display: block;
             }
         }
 
@@ -2166,11 +2408,15 @@ body.page-formula1 footer {
 @media (max-width: 700px) {
 
 body.page-american footer,
+body.page-formula1 footer,
 body.page-fussball footer {
         margin-left: -14px;
         margin-right: -14px;
-        padding-left: 14px;
-        padding-right: 14px;
+        padding: 18px 14px;
+    }
+body.page-american footer,
+body.page-fussball footer {
+        margin-top: auto;
     }
 }
 
@@ -2265,4 +2511,3 @@ body.page-impressum .home-button:hover {
         color: #ffffff;
     }
 }
-

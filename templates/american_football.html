@@ -6,6 +6,7 @@
     <title>NFL - American Football</title>
         <link rel="icon" href="{{ url_for('static', filename='images/favicon.svg') }}" type="image/svg+xml">
     <link rel="stylesheet" href="/static/styles/sports_dashboard.css">
+    <link rel="stylesheet" href="/static/styles/sports_dashboard.mobile.css">
     {% if umami_enabled %}
     <script defer src="{{ umami_script_url }}" data-website-id="{{ umami_website_id }}"></script>
     {% endif %}
@@ -22,6 +23,13 @@
     {% endif %}
 
     <div class="page-shell">
+        <!-- Mobile Tabs for Matches vs Standings -->
+        <div class="mobile-content-tabs">
+            <button type="button" class="active" onclick="switchMobileTab(event, 'matches')">Spiele</button>
+            <button type="button" onclick="switchMobileTab(event, 'standings')">Standings</button>
+            <button type="button" onclick="switchMobileTab(event, 'roster')">Roster</button>
+        </div>
+
         <!-- Season Selector -->
         <details class="mobile-collapsible" data-mobile-collapse-key="american-seasons" open>
             <summary>Saisons</summary>
@@ -90,10 +98,11 @@
 
             <!-- Roster view (hidden by default) -->
             <div id="roster-panel" class="panel" style="display:none;">
+                <div id="roster-selected-team" class="roster-selected-team" aria-live="polite"></div>
                 <div class="roster-unit-tabs">
                     <button class="roster-tab-btn active" data-unit="Offense" onclick="showRosterUnit(event, 'Offense')">Offense</button>
                     <button class="roster-tab-btn" data-unit="Defense" onclick="showRosterUnit(event, 'Defense')">Defense</button>
-                    <button class="roster-tab-btn" data-unit="Special Teams" onclick="showRosterUnit(event, 'Special Teams')">Special Teams</button>
+                    <button class="roster-tab-btn" data-unit="Special Teams" onclick="showRosterUnit(event, 'Special Teams')">Special</button>
                     <button type="button" class="roster-close-btn" onclick="closeRoster()">← Zurück zu Spielen</button>
                 </div>
                 <div id="roster-loading" class="roster-loading" style="display:none;">Kader wird geladen...</div>
@@ -440,7 +449,99 @@
             }
         }
 
+        function switchMobileTab(event, tab) {
+            event.preventDefault();
+            const matchesWrap = document.querySelector('.matches-wrap');
+            const standingsWrap = document.querySelector('.standings-wrap');
+            const seasonsPicker = document.querySelector('[data-mobile-collapse-key="american-seasons"]');
+            const teamsPicker = document.querySelector('[data-mobile-collapse-key="american-teams"]');
+            const navPicker = document.querySelector('[data-mobile-collapse-key="american-nav"]');
+            const navPanel = document.getElementById('nav-panel');
+            const matchesPanel = document.getElementById('matches-panel');
+            const rosterPanel = document.getElementById('roster-panel');
+            const buttons = document.querySelectorAll('.mobile-content-tabs button');
+
+            if (!switchMobileTab._teamsHome && teamsPicker) {
+                switchMobileTab._teamsHome = {
+                    parent: teamsPicker.parentNode,
+                    next: teamsPicker.nextSibling,
+                };
+            }
+            
+            buttons.forEach(btn => btn.classList.remove('active'));
+            event.target.classList.add('active');
+            
+            if (tab === 'matches') {
+                if (teamsPicker && switchMobileTab._teamsHome && teamsPicker.parentNode !== switchMobileTab._teamsHome.parent) {
+                    switchMobileTab._teamsHome.parent.insertBefore(teamsPicker, switchMobileTab._teamsHome.next);
+                }
+                matchesWrap.style.display = '';
+                standingsWrap.classList.remove('active');
+                if (seasonsPicker) seasonsPicker.style.display = '';
+                if (teamsPicker) teamsPicker.style.display = 'none';
+                if (navPicker) navPicker.style.display = '';
+                if (navPanel) navPanel.style.display = 'block';
+                if (matchesPanel) matchesPanel.style.display = 'block';
+                if (rosterPanel) rosterPanel.style.display = 'none';
+            } else if (tab === 'roster') {
+                if (teamsPicker && matchesWrap && teamsPicker.parentNode !== matchesWrap) {
+                    matchesWrap.insertBefore(teamsPicker, matchesWrap.firstChild);
+                }
+                matchesWrap.style.display = '';
+                standingsWrap.classList.remove('active');
+                if (seasonsPicker) seasonsPicker.style.display = 'none';
+                if (teamsPicker) teamsPicker.style.display = '';
+                if (navPicker) navPicker.style.display = 'none';
+                if (navPanel) navPanel.style.display = 'none';
+                if (matchesPanel) matchesPanel.style.display = 'none';
+                if (rosterPanel) rosterPanel.style.display = 'none';
+
+                const activeTeamBtn = document.querySelector('.team-btn.active');
+                const firstTeamBtn = document.querySelector('.team-btn');
+                const teamBtn = activeTeamBtn || firstTeamBtn;
+
+                if (teamBtn) {
+                    openRoster(teamBtn.dataset.teamId, teamBtn.dataset.teamName, teamBtn.dataset.teamLogo || '', teamBtn);
+                }
+            } else if (tab === 'standings') {
+                if (teamsPicker && switchMobileTab._teamsHome && teamsPicker.parentNode !== switchMobileTab._teamsHome.parent) {
+                    switchMobileTab._teamsHome.parent.insertBefore(teamsPicker, switchMobileTab._teamsHome.next);
+                }
+                matchesWrap.style.display = 'none';
+                standingsWrap.classList.add('active');
+                if (seasonsPicker) seasonsPicker.style.display = 'none';
+                if (teamsPicker) teamsPicker.style.display = 'none';
+                if (navPicker) navPicker.style.display = 'none';
+                if (navPanel) navPanel.style.display = 'none';
+                if (matchesPanel) matchesPanel.style.display = 'none';
+                if (rosterPanel) rosterPanel.style.display = 'none';
+            }
+        }
+
+        function applyInitialMobileTabState() {
+            if (!window.matchMedia('(max-width: 700px)').matches) {
+                return;
+            }
+
+            const activeTabButton = document.querySelector('.mobile-content-tabs button.active') ||
+                document.querySelector('.mobile-content-tabs button[onclick*="matches"]');
+
+            if (!activeTabButton) {
+                return;
+            }
+
+            const onclickAttr = activeTabButton.getAttribute('onclick') || '';
+            const tab = onclickAttr.includes("'standings'")
+                ? 'standings'
+                : onclickAttr.includes("'roster'")
+                    ? 'roster'
+                    : 'matches';
+
+            switchMobileTab({ preventDefault: function () {}, target: activeTabButton }, tab);
+        }
+
         window.addEventListener('DOMContentLoaded', loadWeekResults);
+        window.addEventListener('DOMContentLoaded', applyInitialMobileTabState);
 
         // ── Roster inline ──────────────────────────────────────────────────────
         let _rosterData = null;
@@ -450,6 +551,25 @@
             // Mark active team button
             document.querySelectorAll('.team-btn').forEach(b => b.classList.remove('active'));
             if (btn) btn.classList.add('active');
+
+            if (window.matchMedia('(max-width: 700px)').matches) {
+                const teamsCollapse = document.querySelector('[data-mobile-collapse-key="american-teams"]');
+                if (teamsCollapse) {
+                    teamsCollapse.open = false;
+                    window.localStorage.setItem('mobileCollapse:american-teams', '0');
+                }
+            }
+
+            const selectedTeamEl = document.getElementById('roster-selected-team');
+            if (selectedTeamEl) {
+                const safeName = escapeHtml(teamName || teamAbv || 'Unbekanntes Team');
+                const safeAbv = escapeHtml(teamAbv || '');
+                const safeLogo = escapeHtml(logoUrl || '');
+
+                selectedTeamEl.innerHTML = safeLogo
+                    ? `<img src="${safeLogo}" alt="${safeName}" class="roster-selected-team-logo"><span class="roster-selected-team-name">${safeAbv} - ${safeName}</span>`
+                    : `<span class="roster-selected-team-name">${safeAbv} - ${safeName}</span>`;
+            }
 
             // Swap panels
             document.getElementById('nav-panel').style.display = 'none';
@@ -485,10 +605,19 @@
         }
 
         function closeRoster() {
-            document.getElementById('nav-panel').style.display = 'block';
-            document.getElementById('roster-panel').style.display = 'none';
-            document.getElementById('matches-panel').style.display = 'block';
+            const matchesTabButton = document.querySelector('.mobile-content-tabs button[onclick*="matches"]');
+            const selectedTeamEl = document.getElementById('roster-selected-team');
+
+            if (matchesTabButton && window.matchMedia('(max-width: 700px)').matches) {
+                switchMobileTab({ preventDefault: function () {}, target: matchesTabButton }, 'matches');
+            } else {
+                document.getElementById('nav-panel').style.display = 'block';
+                document.getElementById('roster-panel').style.display = 'none';
+                document.getElementById('matches-panel').style.display = 'block';
+            }
+
             document.querySelectorAll('.team-btn').forEach(btn => btn.classList.remove('active'));
+            if (selectedTeamEl) selectedTeamEl.innerHTML = '';
             _rosterData = null;
         }
 
@@ -567,6 +696,15 @@
                 html += `<div class="roster-position-group">
                     <div class="roster-position-header">${posLabel}</div>
                     <table class="roster-table">
+                        <colgroup>
+                            <col class="col-num">
+                            <col class="col-name">
+                            <col class="col-age">
+                            <col class="col-bday">
+                            <col class="col-height">
+                            <col class="col-weight">
+                            <col class="col-college">
+                        </colgroup>
                         <thead>
                             <tr>
                                 <th class="col-num">#</th>
