@@ -2,6 +2,7 @@ import json
 import os
 import time
 from datetime import datetime
+from zoneinfo import ZoneInfo
 
 import requests
 from dotenv import load_dotenv
@@ -10,6 +11,7 @@ from dotenv import load_dotenv
 load_dotenv()
 
 OPENF1_BASE_URL = os.environ.get("OPENF1_BASE_URL").rstrip("/")
+BERLIN_TZ = ZoneInfo("Europe/Berlin")
 
 API_CACHE = {}
 DEFAULT_CACHE_TTL_SECONDS = 180
@@ -535,7 +537,7 @@ def fetch_formula1_weekends(
     if not meetings_payload:
         return []
 
-    now = datetime.now().astimezone()
+    now = datetime.now(BERLIN_TZ)
 
     # Filter only the two specific canceled race weekends by meeting_key.
     excluded_meeting_keys = {"1282", "1283"}
@@ -559,8 +561,8 @@ def fetch_formula1_weekends(
             "session_name": session.get("session_name", "Session"),
             "date_start": session.get("date_start"),
             "session_key": session.get("session_key"),
-            "formatted_date": start_dt.astimezone().strftime("%d.%m.%Y") if start_dt else "TBA",
-            "formatted_time": start_dt.astimezone().strftime("%H:%M") if start_dt else "--:--",
+            "formatted_date": start_dt.astimezone(BERLIN_TZ).strftime("%d.%m.%Y") if start_dt else "TBA",
+            "formatted_time": start_dt.astimezone(BERLIN_TZ).strftime("%H:%M") if start_dt else "--:--",
         }
 
         if include_session_results and is_past_session:
@@ -591,7 +593,7 @@ def fetch_formula1_weekends(
                 "year": meeting.get("year"),
                 "date_start": meeting.get("date_start"),
                 "formatted_weekend": (
-                    meeting_start.astimezone().strftime("%d.%m.%Y")
+                    meeting_start.astimezone(BERLIN_TZ).strftime("%d.%m.%Y")
                     if meeting_start
                     else "TBA"
                 ),
@@ -657,7 +659,7 @@ def fetch_championship_standings(year=None):
         if isinstance(m, dict) and m.get("meeting_key")
     }
 
-    now = datetime.now().astimezone()
+    now = datetime.now(BERLIN_TZ)
     race_sessions = []
     for session in sessions_payload:
         if session.get("session_type") != "Race":
