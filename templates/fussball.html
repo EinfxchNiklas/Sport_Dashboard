@@ -59,7 +59,7 @@
                         <th>Pl.</th>
                         <th>Team</th>
                         <th>Sp.</th>
-                        <th>TD</th>
+                        <th>TD.</th>
                         <th>Pkt.</th>
                     </tr>
                 </thead>
@@ -234,6 +234,8 @@
             applyState();
         })();
 
+        const teamPageTitle = document.querySelector('h1.page-title') ? document.querySelector('h1.page-title').textContent : '';
+
         function switchMobileTab(event, tab) {
             event.preventDefault();
             const pageGrid = document.querySelector('.page-grid');
@@ -241,6 +243,7 @@
             const standingsWrap = document.querySelector('.standings-wrap');
             const teamsPicker = document.querySelector('[data-mobile-collapse-key="fussball-teams"]');
             const buttons = document.querySelectorAll('.mobile-content-tabs button');
+            const pageTitle = document.querySelector('h1.page-title');
             
             buttons.forEach(btn => btn.classList.remove('active'));
             event.target.classList.add('active');
@@ -250,11 +253,13 @@
                 tableWrap.style.display = '';
                 standingsWrap.style.display = 'none';
                 if (teamsPicker) teamsPicker.style.display = '';
+                if (pageTitle) pageTitle.textContent = teamPageTitle;
             } else if (tab === 'standings') {
                 if (pageGrid) pageGrid.classList.add('standings-only');
                 tableWrap.style.display = 'none';
                 standingsWrap.style.display = 'block';
                 if (teamsPicker) teamsPicker.style.display = 'none';
+                if (pageTitle) pageTitle.textContent = 'Bundesliga Tabelle';
             }
         }
     </script>
