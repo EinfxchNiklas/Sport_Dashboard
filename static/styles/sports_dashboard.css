@@ -814,15 +814,6 @@ body.page-home .sport-section::before {
         z-index: 1;
         pointer-events: none;
     }
-body.page-home .fussball:hover::before {
-        background: rgba(255, 214, 45, 0.12);
-    }
-body.page-home .formula1:hover::before {
-        background: rgba(235, 45, 45, 0.12);
-    }
-body.page-home .american-football:hover::before {
-        background: rgba(54, 210, 105, 0.12);
-    }
 body.page-home .docs-button {
         position: fixed;
         bottom: 24px;
