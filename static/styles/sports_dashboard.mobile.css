@@ -172,12 +172,8 @@ body.page-american .standings-table td {
                 padding: 8px 6px;
                 font-size: 11px;
             }
-body.page-american .standings-table th:nth-child(4),
-body.page-american .standings-table td:nth-child(4) {
-                display: none;
-            }
 body.page-american .standings-table .team-name {
-                font-size: 11px;
+                font-size: 13px;
                 overflow-wrap: anywhere;
             }
 body.page-american .roster-unit-tabs {
@@ -382,24 +378,23 @@ body.page-formula1 .mobile-content-tabs {
                 display: flex;
                 gap: 0;
                 margin-bottom: 14px;
-                border: 1px solid #3a4658;
                 border-radius: 8px;
                 overflow: hidden;
             }
 body.page-formula1 .mobile-content-tabs button {
                 flex: 1;
                 padding: 12px;
-                background: #1f2631;
+                background: #2a2a2a;
                 border: none;
-                color: #d9e2f0;
+                color: #b0b0b0;
                 font-weight: 600;
                 font-size: 13px;
                 cursor: pointer;
                 transition: background 0.2s, color 0.2s;
             }
 body.page-formula1 .mobile-content-tabs button.active {
-                background: var(--accent-soft);
-                color: #ffd5d5;
+                background: var(--accent);
+                color: #111;
             }
 body.page-formula1 .content-grid > section {
                 display: block;
@@ -415,6 +410,22 @@ body.page-formula1 .content-grid aside {
             }
 body.page-formula1 .content-grid aside.active {
                 display: block;
+            }
+body.page-formula1 .weekend-filter {
+                gap: 8px;
+                max-width: none;
+            }
+body.page-formula1 .weekend-filter-btn {
+                padding: 10px 8px;
+                font-size: 13px;
+            }
+body.page-formula1 .champ-switch {
+                gap: 8px;
+                margin-bottom: 12px;
+            }
+body.page-formula1 .champ-switch-btn {
+                padding: 10px 8px;
+                font-size: 13px;
             }
         }
 

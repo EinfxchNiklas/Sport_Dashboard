@@ -1049,7 +1049,7 @@ body.page-formula1 .home-button {
             align-items: center;
             gap: 6px;
             padding: 8px 12px;
-            background: #171b22;
+            background: #1e1e1e;
             border: 1px solid var(--line);
             border-radius: 8px;
             color: var(--text);
@@ -1086,25 +1086,31 @@ body.page-formula1 .subtitle {
 body.page-formula1 .weekend-filter {
             display: flex;
             width: 100%;
-            border: 1px solid #3a4658;
-            border-radius: 8px;
-            overflow: hidden;
+            gap: 8px;
             margin-bottom: 14px;
             max-width: 540px;
         }
 body.page-formula1 .weekend-filter-btn {
-            border: none;
-            background: #1f2631;
-            color: #d9e2f0;
-            padding: 10px 12px;
+            border: 1px solid var(--line);
+            border-radius: 8px;
+            background: var(--panel);
+            color: var(--text);
+            padding: 10px 14px;
             font-size: 0.92rem;
             font-weight: 600;
             cursor: pointer;
             flex: 1;
+            transition: background 0.15s, border-color 0.15s, color 0.15s;
+        }
+body.page-formula1 .weekend-filter-btn:hover {
+            background: var(--panel);
+            border-color: var(--accent);
+            color: var(--accent);
         }
 body.page-formula1 .weekend-filter-btn.active {
-            background: var(--accent-soft);
-            color: #ffd5d5;
+            background: var(--panel);
+            border-color: var(--accent);
+            color: var(--accent);
         }
 body.page-formula1 .weekends {
             display: grid;
@@ -1119,7 +1125,7 @@ body.page-formula1 .weekend {
         }
 body.page-formula1 .weekend:hover {
             transform: translateY(-2px);
-            border-color: #465163;
+            border-color: var(--accent);
         }
 body.page-formula1 .weekend-header {
             width: 100%;
@@ -1322,25 +1328,27 @@ body.page-formula1 .championship-subtitle {
         }
 body.page-formula1 .champ-switch {
             display: flex;
-            width: 100%;
-            border: 1px solid #3a4658;
-            border-radius: 8px;
-            overflow: hidden;
-            margin-bottom: 12px;
+            gap: 10px;
+            margin-bottom: 15px;
+            border-bottom: 2px solid var(--line);
         }
 body.page-formula1 .champ-switch-btn {
+            padding: 10px 16px;
+            background: none;
             border: none;
-            background: #1f2631;
-            color: #d9e2f0;
-            padding: 10px 12px;
-            font-size: 0.92rem;
-            font-weight: 600;
+            border-bottom: 2px solid transparent;
+            color: var(--muted);
             cursor: pointer;
-            flex: 1;
+            font-size: 14px;
+            font-weight: 500;
+            transition: color 0.2s, border-color 0.2s;
+        }
+body.page-formula1 .champ-switch-btn:hover {
+            color: var(--text);
         }
 body.page-formula1 .champ-switch-btn.active {
-            background: var(--accent-soft);
-            color: #ffd5d5;
+            color: var(--accent);
+            border-bottom-color: var(--accent);
         }
 body.page-formula1 .champ-table {
             width: 100%;
