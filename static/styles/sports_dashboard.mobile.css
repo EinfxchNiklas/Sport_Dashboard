@@ -172,12 +172,8 @@ body.page-american .standings-table td {
                 padding: 8px 6px;
                 font-size: 11px;
             }
-body.page-american .standings-table th:nth-child(4),
-body.page-american .standings-table td:nth-child(4) {
-                display: none;
-            }
 body.page-american .standings-table .team-name {
-                font-size: 11px;
+                font-size: 13px;
                 overflow-wrap: anywhere;
             }
 body.page-american .roster-unit-tabs {
