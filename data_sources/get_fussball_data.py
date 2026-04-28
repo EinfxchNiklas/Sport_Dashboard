@@ -114,19 +114,22 @@ def fetch_team_matches(team_id=4):
     headers = {"X-Auth-Token": api_key}
     params = {"competitions": competitions, "limit": 60}
 
+    debug_url = f"{base_url}/teams/{team_id}/matches"
+    print(f"[DEBUG fetch_team_matches] REQUEST  url={debug_url} params={params} api_key_set={bool(api_key)}", flush=True)
     try:
         response = requests.get(
-            f"{base_url}/teams/{team_id}/matches",
+            debug_url,
             headers=headers,
             params=params,
             timeout=15,
         )
-        
+        print(f"[DEBUG fetch_team_matches] RESPONSE status={response.status_code} body_preview={response.text[:500]!r}", flush=True)
         if response.status_code == 429:
             return [], True
         
         response.raise_for_status()
-    except requests.RequestException:
+    except requests.RequestException as exc:
+        print(f"[DEBUG fetch_team_matches] EXCEPTION {type(exc).__name__}: {exc}", flush=True)
         return [], False
 
     payload = response.json()
@@ -218,18 +221,21 @@ def fetch_bundesliga_table():
     base_url = "https://api.football-data.org/v4"
     headers = {"X-Auth-Token": api_key}
 
+    debug_url = f"{base_url}/competitions/BL1/standings"
+    print(f"[DEBUG fetch_bundesliga_table] REQUEST  url={debug_url} api_key_set={bool(api_key)}", flush=True)
     try:
         response = requests.get(
-            f"{base_url}/competitions/BL1/standings",
+            debug_url,
             headers=headers,
             timeout=15,
         )
-        
+        print(f"[DEBUG fetch_bundesliga_table] RESPONSE status={response.status_code} body_preview={response.text[:500]!r}", flush=True)
         if response.status_code == 429:
             return [], True
         
         response.raise_for_status()
-    except requests.RequestException:
+    except requests.RequestException as exc:
+        print(f"[DEBUG fetch_bundesliga_table] EXCEPTION {type(exc).__name__}: {exc}", flush=True)
         return [], False
 
     payload = response.json()
