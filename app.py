@@ -221,7 +221,7 @@ def healthcheck():
         openf1_future = executor.submit(_check_openf1_api)
 
         api_checks = {
-            'football_data': football_future.result(),
+            #'football_data': football_future.result(),
             'openf1': openf1_future.result(),
         }
 
