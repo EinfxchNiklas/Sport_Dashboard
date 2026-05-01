@@ -216,23 +216,9 @@ def healthcheck():
     checked_at = datetime.utcnow().isoformat() + 'Z'
     website = _check_website_health()
 
-    with ThreadPoolExecutor(max_workers=2) as executor:
-        football_future = executor.submit(_check_football_data_api)
-        openf1_future = executor.submit(_check_openf1_api)
-
-        api_checks = {
-            #'football_data': football_future.result(),
-            'openf1': openf1_future.result(),
-        }
-
-    statuses = [website['status']] + [check['status'] for check in api_checks.values()]
-
-    if any(status in ('error', 'misconfigured') for status in statuses):
+    if website['status'] == 'error':
         overall_status = 'down'
         http_code = 503
-    elif any(status == 'degraded' for status in statuses):
-        overall_status = 'degraded'
-        http_code = 200
     else:
         overall_status = 'ok'
         http_code = 200
@@ -245,7 +231,6 @@ def healthcheck():
             'status': overall_status,
             'checked_at': checked_at,
             'website': website,
-            'apis': api_checks,
         }
     ), http_code
 
