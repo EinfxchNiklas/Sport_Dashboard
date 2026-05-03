@@ -7,6 +7,8 @@ from dotenv import load_dotenv
 
 load_dotenv()
 FOOTBALL_DATA_API_KEY = os.environ.get('FOOTBALL_DATA_API_KEY')
+FOOTBALL_PROXY_URL = (os.environ.get('FOOTBALL_PROXY_URL') or '').rstrip('/')
+FOOTBALL_PROXY_TOKEN = os.environ.get('FOOTBALL_PROXY_TOKEN')
 
 # Mapping von Team-Namen zu lokalen Bild-Dateinamen (im static/images/ Ordner)
 TEAM_LOGO_MAPPING = {
@@ -40,6 +42,40 @@ _team_matches_cache = {}  # team_id -> {"data": ..., "fetched_at": ...}
 TEAM_MATCHES_CACHE_TTL_SECONDS = 60  # 1 Minute
 
 GERMAN_WEEKDAY_ABBR = ("Mo", "Di", "Mi", "Do", "Fr", "Sa", "So")
+
+
+def _get_proxy_headers():
+    headers = {}
+    if FOOTBALL_PROXY_TOKEN:
+        headers['Authorization'] = f'Bearer {FOOTBALL_PROXY_TOKEN}'
+    return headers
+
+
+def _fetch_football_api_json(path, *, params=None):
+    if FOOTBALL_PROXY_URL:
+        response = requests.get(
+            f"{FOOTBALL_PROXY_URL}{path}",
+            headers=_get_proxy_headers(),
+            params=params,
+            timeout=15,
+        )
+    else:
+        api_key = FOOTBALL_DATA_API_KEY
+        if not api_key:
+            return None, False
+
+        response = requests.get(
+            f"https://api.football-data.org/v4{path}",
+            headers={"X-Auth-Token": api_key},
+            params=params,
+            timeout=15,
+        )
+
+    if response.status_code == 429:
+        return None, True
+
+    response.raise_for_status()
+    return response.json(), False
 
 
 def _get_cached_bundesliga_table(now_utc=None):
@@ -97,8 +133,7 @@ def fetch_team_matches(team_id=4):
     a tuple: (matches_list, is_rate_limited)
     Returns empty list and rate_limited flag if API error occurs.
     """
-    api_key = FOOTBALL_DATA_API_KEY
-    if not api_key:
+    if not FOOTBALL_PROXY_URL and not FOOTBALL_DATA_API_KEY:
         return [], False
 
     now_utc = datetime.now(timezone.utc)
@@ -108,28 +143,23 @@ def fetch_team_matches(team_id=4):
         if cache_age < TEAM_MATCHES_CACHE_TTL_SECONDS:
             return cached_entry["data"], False
 
-    base_url = "https://api.football-data.org/v4"
     competitions = "BL1,DFB,CL,EL,UECL"
-
-    headers = {"X-Auth-Token": api_key}
     params = {"competitions": competitions, "limit": 60}
 
     try:
-        response = requests.get(
-            f"{base_url}/teams/{team_id}/matches",
-            headers=headers,
+        payload, is_rate_limited = _fetch_football_api_json(
+            f"/teams/{team_id}/matches",
             params=params,
-            timeout=15,
         )
-        
-        if response.status_code == 429:
-            return [], True
-        
-        response.raise_for_status()
     except requests.RequestException:
         return [], False
 
-    payload = response.json()
+    if is_rate_limited:
+        return [], True
+
+    if payload is None:
+        return [], False
+
     raw_matches = payload.get("matches", [])
     now_utc = datetime.now(timezone.utc)
 
@@ -206,8 +236,7 @@ def fetch_bundesliga_table():
     Fetches Bundesliga standings from football-data.org and returns
     a tuple: (standings_list, is_rate_limited)
     """
-    api_key = FOOTBALL_DATA_API_KEY
-    if not api_key:
+    if not FOOTBALL_PROXY_URL and not FOOTBALL_DATA_API_KEY:
         return [], False
 
     now_utc = datetime.now(timezone.utc)
@@ -215,24 +244,19 @@ def fetch_bundesliga_table():
     if cached_table is not None:
         return cached_table, False
 
-    base_url = "https://api.football-data.org/v4"
-    headers = {"X-Auth-Token": api_key}
-
     try:
-        response = requests.get(
-            f"{base_url}/competitions/BL1/standings",
-            headers=headers,
-            timeout=15,
+        payload, is_rate_limited = _fetch_football_api_json(
+            "/competitions/BL1/standings",
         )
-        
-        if response.status_code == 429:
-            return [], True
-        
-        response.raise_for_status()
     except requests.RequestException:
         return [], False
 
-    payload = response.json()
+    if is_rate_limited:
+        return [], True
+
+    if payload is None:
+        return [], False
+
     standings = payload.get("standings", [])
     if not standings:
         return [], False
