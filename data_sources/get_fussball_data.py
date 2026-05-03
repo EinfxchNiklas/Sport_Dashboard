@@ -1,4 +1,5 @@
 from datetime import datetime, timezone
+import logging
 import os
 import requests
 from pytz import timezone as pytz_timezone
@@ -42,6 +43,7 @@ _team_matches_cache = {}  # team_id -> {"data": ..., "fetched_at": ...}
 TEAM_MATCHES_CACHE_TTL_SECONDS = 60  # 1 Minute
 
 GERMAN_WEEKDAY_ABBR = ("Mo", "Di", "Mi", "Do", "Fr", "Sa", "So")
+LOGGER = logging.getLogger(__name__)
 
 
 def _get_proxy_headers():
@@ -52,6 +54,8 @@ def _get_proxy_headers():
 
 
 def _fetch_football_api_json(path, *, params=None):
+    source_label = "proxy" if FOOTBALL_PROXY_URL else "direct"
+
     if FOOTBALL_PROXY_URL:
         response = requests.get(
             f"{FOOTBALL_PROXY_URL}{path}",
@@ -73,6 +77,16 @@ def _fetch_football_api_json(path, *, params=None):
 
     if response.status_code == 429:
         return None, True
+
+    if response.status_code >= 400:
+        response_text_preview = response.text[:240] if response.text else ""
+        LOGGER.warning(
+            "Football API request failed (source=%s, path=%s, status=%s, body_preview=%s)",
+            source_label,
+            path,
+            response.status_code,
+            response_text_preview,
+        )
 
     response.raise_for_status()
     return response.json(), False
@@ -151,7 +165,13 @@ def fetch_team_matches(team_id=4):
             f"/teams/{team_id}/matches",
             params=params,
         )
-    except requests.RequestException:
+    except requests.RequestException as exc:
+        LOGGER.warning(
+            "Failed to fetch team matches (team_id=%s, source=%s): %s",
+            team_id,
+            "proxy" if FOOTBALL_PROXY_URL else "direct",
+            exc,
+        )
         return [], False
 
     if is_rate_limited:
@@ -248,7 +268,12 @@ def fetch_bundesliga_table():
         payload, is_rate_limited = _fetch_football_api_json(
             "/competitions/BL1/standings",
         )
-    except requests.RequestException:
+    except requests.RequestException as exc:
+        LOGGER.warning(
+            "Failed to fetch Bundesliga table (source=%s): %s",
+            "proxy" if FOOTBALL_PROXY_URL else "direct",
+            exc,
+        )
         return [], False
 
     if is_rate_limited:
