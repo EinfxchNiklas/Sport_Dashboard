@@ -98,11 +98,21 @@ def _get_json(endpoint, params=None, retries=3):
             # Only accept list payloads; error responses are dicts and should be treated as empty
             data = payload if isinstance(payload, list) else []
             ttl = ENDPOINT_CACHE_TTL_SECONDS.get(endpoint, DEFAULT_CACHE_TTL_SECONDS)
-            API_CACHE[cache_key] = {
-                "expires_at": time.monotonic() + ttl,
-                "data": data,
-            }
-            return data
+            if data:
+                # Got real data → cache normally
+                API_CACHE[cache_key] = {
+                    "expires_at": time.monotonic() + ttl,
+                    "data": data,
+                }
+                return data
+            else:
+                # API returned empty list (e.g. during a live session).
+                # Keep stale data alive for 60 s so the UI stays populated,
+                # then retry after that window.
+                if cached_entry:
+                    cached_entry["expires_at"] = time.monotonic() + 60
+                    return cached_entry["data"]
+                return []
         except requests.exceptions.RequestException as e:
             if attempt == max(retries, 5) - 1:
                 if cached_entry:
