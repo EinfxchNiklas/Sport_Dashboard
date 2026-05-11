@@ -83,47 +83,6 @@ def inject_analytics_config():
     }
 
 
-def _probe_http_endpoint(name, url, headers=None, params=None, timeout=8):
-    """Perform a lightweight HTTP probe and return normalized health details."""
-    started = time.monotonic()
-    try:
-        response = requests.get(url, headers=headers, params=params, timeout=timeout)
-        duration_ms = int((time.monotonic() - started) * 1000)
-
-        if response.status_code == 429:
-            return {
-                'name': name,
-                'status': 'degraded',
-                'http_status': response.status_code,
-                'latency_ms': duration_ms,
-                'message': 'Rate limited by upstream API',
-            }
-
-        if 200 <= response.status_code < 400:
-            return {
-                'name': name,
-                'status': 'ok',
-                'http_status': response.status_code,
-                'latency_ms': duration_ms,
-            }
-
-        return {
-            'name': name,
-            'status': 'error',
-            'http_status': response.status_code,
-            'latency_ms': duration_ms,
-            'message': f'Unexpected status code {response.status_code}',
-        }
-    except requests.RequestException as exc:
-        return {
-            'name': name,
-            'status': 'error',
-            'http_status': None,
-            'latency_ms': int((time.monotonic() - started) * 1000),
-            'message': f'{exc.__class__.__name__}',
-        }
-
-
 def _check_website_health():
     """Validate basic app routing footprint to represent website readiness."""
     required_routes = {
@@ -141,43 +100,6 @@ def _check_website_health():
         'missing_routes': missing_routes,
     }
 
-
-def _check_football_data_api():
-    api_key = os.environ.get('FOOTBALL_DATA_API_KEY')
-    if not api_key:
-        return {
-            'name': 'football_data',
-            'status': 'misconfigured',
-            'http_status': None,
-            'latency_ms': None,
-            'message': 'Missing FOOTBALL_DATA_API_KEY',
-        }
-
-    return _probe_http_endpoint(
-        name='football_data',
-        url='https://api.football-data.org/v4/competitions/BL1',
-        headers={'X-Auth-Token': api_key},
-        timeout=8,
-    )
-
-
-def _check_openf1_api():
-    openf1_base_url = (os.environ.get('OPENF1_BASE_URL') or '').rstrip('/')
-    if not openf1_base_url:
-        return {
-            'name': 'openf1',
-            'status': 'misconfigured',
-            'http_status': None,
-            'latency_ms': None,
-            'message': 'Missing OPENF1_BASE_URL',
-        }
-
-    return _probe_http_endpoint(
-        name='openf1',
-        url=f'{openf1_base_url}/meetings',
-        params={'year': datetime.now().year},
-        timeout=8,
-    )
 
 
 def _find_latest_available_nfl_week(season, season_type, max_week):
@@ -216,23 +138,9 @@ def healthcheck():
     checked_at = datetime.utcnow().isoformat() + 'Z'
     website = _check_website_health()
 
-    with ThreadPoolExecutor(max_workers=2) as executor:
-        football_future = executor.submit(_check_football_data_api)
-        openf1_future = executor.submit(_check_openf1_api)
-
-        api_checks = {
-            'football_data': football_future.result(),
-            'openf1': openf1_future.result(),
-        }
-
-    statuses = [website['status']] + [check['status'] for check in api_checks.values()]
-
-    if any(status in ('error', 'misconfigured') for status in statuses):
+    if website['status'] == 'error':
         overall_status = 'down'
         http_code = 503
-    elif any(status == 'degraded' for status in statuses):
-        overall_status = 'degraded'
-        http_code = 200
     else:
         overall_status = 'ok'
         http_code = 200
@@ -245,12 +153,12 @@ def healthcheck():
             'status': overall_status,
             'checked_at': checked_at,
             'website': website,
-            'apis': api_checks,
         }
     ), http_code
 
 @app.route('/fussball')
 def display_matches():
+    return render_template('fussball_unavailable.html')
     team_id = request.args.get('team', 4, type=int)
     
     standings, standings_rate_limited = fetch_bundesliga_table()
