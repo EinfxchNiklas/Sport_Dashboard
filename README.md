@@ -51,7 +51,7 @@ pip install -r requirements.txt
 Beispiel:
 
 ```env
-FOOTBALL_DATA_API_KEY=dein_football_data_key
+OPENLIGADB_BASE_URL=SET_Base_URL
 TANK01_NFL_API_KEY=dein_tank01_key
 DEBUG=False
 PORT=5000
@@ -71,14 +71,12 @@ Danach im Browser: http://127.0.0.1:5000
 Für Monitoring kann der Endpunkt `/health` verwendet werden.
 
 - URL lokal: `http://127.0.0.1:5000/health`
-- HTTP `200`: Anwendung erreichbar (`ok` oder `degraded`)
-- HTTP `503`: Anwendung/API-Konfiguration fehlerhaft (`down`)
+- HTTP `200`: Anwendung erreichbar (`ok`)
+- HTTP `503`: Anwendung nicht korrekt gestartet (`down`)
 
 Der Endpunkt prüft bei jedem Aufruf:
 
 - generellen Website-Status (wichtige Routen registriert)
-- football-data.org API
-- OpenF1 API
 
 Beispielantwort:
 
@@ -90,10 +88,6 @@ Beispielantwort:
     "status": "ok",
     "route_count": 12,
     "missing_routes": []
-  },
-  "apis": {
-    "football_data": {"status": "ok", "http_status": 200, "latency_ms": 180},
-    "openf1": {"status": "ok", "http_status": 200, "latency_ms": 95}
   }
 }
 ```
@@ -106,17 +100,17 @@ Die Funktionalität des Projekts hängt von externen APIs ab. Verfügbarkeit und
 
 Hinweis: Die folgenden Angaben sind nach bestem Wissen dokumentiert (Stand 12.04.2026). Maßgeblich sind immer die aktuellen Originalbedingungen der Anbieter.
 
-### 1) football-data.org (Fußball)
+### 1) OpenLigaDB (Fußball)
 
-- Website: https://www.football-data.org/
-- Dokumentation: https://docs.football-data.org/
+- Website: https://www.openligadb.de/
+- API-Dokumentation & Swagger: https://api.openligadb.de/
 - Verwendete Endpunkte:
-  - `GET /v4/teams/{team_id}/matches`
-  - `GET /v4/competitions/BL1/standings`
-- Authentifizierung: `X-Auth-Token` Header
-- Rate Limits laut Doku (Policies):
-  - Free Plan: 10 Requests pro Minute für registrierte Clients
-  - Quelle: https://docs.football-data.org/general/v4/policies.html
+  - `GET /getmatchdata/{shortcut}/{season}` – Spiele eines Wettbewerbs
+  - `GET /getbltable/{shortcut}/{season}` – Bundesliga-Tabelle
+- Authentifizierung: keine – vollständig öffentliche API, kein API-Key erforderlich
+- Rate Limits: keine offiziellen Limits dokumentiert; Community-betriebene API
+- Lizenz: Apache-2.0 (siehe https://github.com/OpenLigaDB/OpenLigaDB-Samples)
+- Abgedeckte Wettbewerbe: 1. Bundesliga (`bl1`), DFB-Pokal (`dfb`), Champions League (`ucl`)
 
 ### 2) OpenF1 (Formel 1)
 
@@ -151,7 +145,7 @@ Hinweis: Die folgenden Angaben sind nach bestem Wissen dokumentiert (Stand 12.04
 
 - Backend: Python (Flask)
 - Frontend: HTML, CSS, JavaScript
-- APIs: football-data.org, OpenF1, Tank01 (RapidAPI)
+- APIs: OpenLigaDB, OpenF1, Tank01 (RapidAPI)
 - Deployment: Render
 
 ## Deployment

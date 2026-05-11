@@ -1,12 +1,11 @@
+from concurrent.futures import ThreadPoolExecutor
 from datetime import datetime, timezone
 import os
 import requests
 from pytz import timezone as pytz_timezone
-
 from dotenv import load_dotenv
 
 load_dotenv()
-FOOTBALL_DATA_API_KEY = os.environ.get('FOOTBALL_DATA_API_KEY')
 
 # Mapping von Team-Namen zu lokalen Bild-Dateinamen (im static/images/ Ordner)
 TEAM_LOGO_MAPPING = {
@@ -15,7 +14,7 @@ TEAM_LOGO_MAPPING = {
     "1. FC Köln": "Köln.png",
     "RB Leipzig": "Leipzig.png",
     "VfB Stuttgart": "Stuttgart.png",
-    "TSG 1899 Hoffenheim": "Hoffenheim.png",
+    "TSG Hoffenheim": "Hoffenheim.png",
     "Bayer 04 Leverkusen": "Leverkusen.png",
     "Eintracht Frankfurt": "Frankfurt.png",
     "SC Freiburg": "Freiburg.png",
@@ -25,7 +24,7 @@ TEAM_LOGO_MAPPING = {
     "Hamburger SV": "HSV.png",
     "Borussia Mönchengladbach": "Borussia_Mönchengladbach.png",
     "SV Werder Bremen": "Werder.png",
-    "FC St. Pauli 1910": "Pauli.png",
+    "FC St. Pauli": "Pauli.png",
     "VfL Wolfsburg": "Wolfsburg.png",
     "1. FC Heidenheim 1846": "Heidenheim.png",
 }
@@ -40,6 +39,19 @@ _team_matches_cache = {}  # team_id -> {"data": ..., "fetched_at": ...}
 TEAM_MATCHES_CACHE_TTL_SECONDS = 60  # 1 Minute
 
 GERMAN_WEEKDAY_ABBR = ("Mo", "Di", "Mi", "Do", "Fr", "Sa", "So")
+
+_OPENLIGADB_BASE = os.environ.get("OPENLIGADB_BASE_URL").rstrip("/")
+
+# Wettbewerbe, in denen deutsche Bundesliga-Clubs teilnehmen können.
+# Jeder Shortcut wird pro Saison separat abgefragt; Spiele werden nach matchID dedupliziert.
+_COMPETITION_SHORTCUTS = ["bl1", "dfb", "ucl"]
+
+
+def _current_season_year(now_utc=None):
+    """Gibt das Startjahr der aktuellen Saison zurück (Saison beginnt im Juli)."""
+    if now_utc is None:
+        now_utc = datetime.now(timezone.utc)
+    return now_utc.year if now_utc.month >= 8 else now_utc.year - 1
 
 
 def _get_cached_bundesliga_table(now_utc=None):
@@ -66,15 +78,10 @@ def _set_cached_bundesliga_table(table_data, now_utc=None):
 
 
 def get_team_logo_path(team_name):
-    """
-    Returns the URL path to a team logo if it exists locally.
-    Returns None if no logo is found.
-    """
     if team_name not in TEAM_LOGO_MAPPING:
         return None
-    
+
     filename = TEAM_LOGO_MAPPING[team_name]
-    # Prüfen, ob die Datei tatsächlich existiert
     image_path = os.path.join(
         os.path.dirname(__file__),
         "..",
@@ -83,24 +90,65 @@ def get_team_logo_path(team_name):
         "BL_Team_Logos",
         filename,
     )
-    
+
     if os.path.exists(image_path):
-        # Rückgabe als URL-Pfad für das Template
         return f"/static/images/BL_Team_Logos/{filename}"
-    
+
     return None
 
 
-def fetch_team_matches(team_id=4):
+def _parse_match_datetime(match):
     """
-    Fetches matches for any Bundesliga team from football-data.org and returns
-    a tuple: (matches_list, is_rate_limited)
-    Returns empty list and rate_limited flag if API error occurs.
+    Parst das Spieldatum aus einem OpenLigaDB-Match-Objekt.
+    Bevorzugt das UTC-Feld; fällt auf das lokale Datumsfeld (Europe/Berlin) zurück.
+    Gibt immer ein timezone-aware datetime in UTC zurück, oder None bei Fehler.
     """
-    api_key = FOOTBALL_DATA_API_KEY
-    if not api_key:
-        return [], False
+    local_tz = pytz_timezone('Europe/Berlin')
 
+    dt_str = match.get("matchDateTimeUTC")
+    if dt_str:
+        try:
+            if dt_str.endswith("Z"):
+                return datetime.fromisoformat(dt_str.replace("Z", "+00:00"))
+            return datetime.fromisoformat(dt_str).replace(tzinfo=timezone.utc)
+        except ValueError:
+            pass
+
+    dt_str = match.get("matchDateTime")
+    if dt_str:
+        try:
+            naive_dt = datetime.fromisoformat(dt_str)
+            return local_tz.localize(naive_dt).astimezone(timezone.utc)
+        except (ValueError, AttributeError):
+            pass
+
+    return None
+
+
+def _fetch_competition_matches(shortcut, season):
+    """
+    Ruft alle Spiele eines Wettbewerbs von OpenLigaDB ab.
+    Gibt eine Liste von Match-Dicts zurück, oder [] bei Fehler / nicht verfügbar.
+    """
+    try:
+        resp = requests.get(
+            f"{_OPENLIGADB_BASE}/getmatchdata/{shortcut}/{season}",
+            timeout=15,
+        )
+        if resp.status_code != 200:
+            return []
+        return resp.json()
+    except requests.RequestException:
+        return []
+
+
+def fetch_team_matches(team_id=7):
+    """
+    Ruft alle Spiele eines Vereins aus mehreren Wettbewerben von OpenLigaDB ab.
+    team_id entspricht der teamInfoId von OpenLigaDB (Standard: 7 = Borussia Dortmund).
+    Gibt ein Tuple (matches_list, is_rate_limited) zurück.
+    is_rate_limited ist bei OpenLigaDB immer False.
+    """
     now_utc = datetime.now(timezone.utc)
     cached_entry = _team_matches_cache.get(team_id)
     if cached_entry is not None:
@@ -108,80 +156,85 @@ def fetch_team_matches(team_id=4):
         if cache_age < TEAM_MATCHES_CACHE_TTL_SECONDS:
             return cached_entry["data"], False
 
-    base_url = "https://api.football-data.org/v4"
-    competitions = "BL1,DFB,CL,EL,UECL"
+    season = _current_season_year(now_utc)
+    local_tz = pytz_timezone('Europe/Berlin')
 
-    headers = {"X-Auth-Token": api_key}
-    params = {"competitions": competitions, "limit": 60}
+    # Alle Wettbewerbe parallel abrufen
+    with ThreadPoolExecutor(max_workers=len(_COMPETITION_SHORTCUTS)) as executor:
+        futures = {
+            shortcut: executor.submit(_fetch_competition_matches, shortcut, season)
+            for shortcut in _COMPETITION_SHORTCUTS
+        }
+        competition_results = {k: f.result() for k, f in futures.items()}
 
-    try:
-        response = requests.get(
-            f"{base_url}/teams/{team_id}/matches",
-            headers=headers,
-            params=params,
-            timeout=15,
-        )
-        
-        if response.status_code == 429:
-            return [], True
-        
-        response.raise_for_status()
-    except requests.RequestException:
-        return [], False
+    # Zusammenführen und nach matchID deduplizieren, dann nach Team filtern
+    seen_match_ids = set()
+    raw_team_matches = []
+    for matches in competition_results.values():
+        for m in matches:
+            mid = m.get("matchID")
+            if mid is None or mid in seen_match_ids:
+                continue
+            seen_match_ids.add(mid)
+            if (m.get("team1", {}).get("teamId") == team_id
+                    or m.get("team2", {}).get("teamId") == team_id):
+                raw_team_matches.append(m)
 
-    payload = response.json()
-    raw_matches = payload.get("matches", [])
-    now_utc = datetime.now(timezone.utc)
-
-    # In European football, the season usually starts in July.
-    current_season_start_year = now_utc.year if now_utc.month >= 7 else now_utc.year - 1
-
+    # Transformieren
     transformed_matches = []
-    for match in raw_matches:
-        utc_date = match.get("utcDate")
-        if not utc_date:
+    for match in raw_team_matches:
+        match_dt = _parse_match_datetime(match)
+        if match_dt is None:
             continue
 
-        try:
-            match_dt = datetime.fromisoformat(utc_date.replace("Z", "+00:00"))
-        except ValueError:
-            continue
-
-        full_time = match.get("score", {}).get("fullTime", {})
-        home_score = full_time.get("home") if full_time.get("home") is not None else "-"
-        away_score = full_time.get("away") if full_time.get("away") is not None else "-"
-        season_start = match.get("season", {}).get("startDate", "")
-        season_start_year = int(season_start[:4]) if len(season_start) >= 4 and season_start[:4].isdigit() else None
-
-        home_team_name = match.get("homeTeam", {}).get("name", "Unbekannt")
-        away_team_name = match.get("awayTeam", {}).get("name", "Unbekannt")
-
-        # Convert UTC time to local time
-        local_tz = pytz_timezone('Europe/Berlin')  # Adjust to the desired timezone
         match_dt_local = match_dt.astimezone(local_tz)
-
-        # Locale-independent German weekday abbreviations for all environments.
         weekday_abbr = GERMAN_WEEKDAY_ABBR[match_dt_local.weekday()]
         formatted_date_time = f"{weekday_abbr} {match_dt_local.strftime('%H:%M - %d.%m.%Y')}"
+
+        match_results = match.get("matchResults", [])
+        # Endergebnis: resultTypeID == 2; Fallback auf höchste resultOrderID
+        final_result = next(
+            (r for r in match_results if r.get("resultTypeID") == 2), None
+        )
+        if final_result is None and match_results:
+            final_result = max(match_results, key=lambda r: r.get("resultOrderID", 0))
+
+        if final_result:
+            home_score = final_result.get("pointsTeam1", "-")
+            away_score = final_result.get("pointsTeam2", "-")
+        else:
+            home_score = "-"
+            away_score = "-"
+
+        home_team_name = match.get("team1", {}).get("teamName", "Unbekannt")
+        away_team_name = match.get("team2", {}).get("teamName", "Unbekannt")
+        status = "FINISHED" if match.get("matchIsFinished") else "SCHEDULED"
+
+        try:
+            season_start_year = int(match.get("leagueSeason", ""))
+        except (ValueError, TypeError):
+            season_start_year = None
 
         transformed_matches.append(
             {
                 "team1": {
                     "teamName": home_team_name,
-                    "logo": get_team_logo_path(home_team_name),
+                    "logo": (get_team_logo_path(home_team_name)
+                             or match.get("team1", {}).get("teamIconUrl")),
                 },
                 "team2": {
                     "teamName": away_team_name,
-                    "logo": get_team_logo_path(away_team_name),
+                    "logo": (get_team_logo_path(away_team_name)
+                             or match.get("team2", {}).get("teamIconUrl")),
                 },
                 "matchDateTime": match_dt.isoformat(),
                 "formattedDateTime": formatted_date_time,
-                # fussball.html expects index 1, so we provide a 2-item list.
+                # fussball.html erwartet Index 1 → 2-elementige Liste
                 "matchResults": [
                     {"pointsTeam1": home_score, "pointsTeam2": away_score},
                     {"pointsTeam1": home_score, "pointsTeam2": away_score},
                 ],
-                "status": match.get("status"),
+                "status": status,
                 "seasonStartYear": season_start_year,
             }
         )
@@ -190,7 +243,7 @@ def fetch_team_matches(team_id=4):
 
     season_matches = [
         m for m in transformed_matches
-        if m.get("seasonStartYear") == current_season_start_year
+        if m.get("seasonStartYear") == season
     ]
 
     past_matches = [m for m in season_matches if datetime.fromisoformat(m["matchDateTime"]) < now_utc]
@@ -203,63 +256,46 @@ def fetch_team_matches(team_id=4):
 
 def fetch_bundesliga_table():
     """
-    Fetches Bundesliga standings from football-data.org and returns
-    a tuple: (standings_list, is_rate_limited)
+    Ruft die Bundesliga-Tabelle von OpenLigaDB ab.
+    Gibt ein Tuple (standings_list, is_rate_limited) zurück.
     """
-    api_key = FOOTBALL_DATA_API_KEY
-    if not api_key:
-        return [], False
-
     now_utc = datetime.now(timezone.utc)
     cached_table = _get_cached_bundesliga_table(now_utc)
     if cached_table is not None:
         return cached_table, False
 
-    base_url = "https://api.football-data.org/v4"
-    headers = {"X-Auth-Token": api_key}
+    season = _current_season_year(now_utc)
 
     try:
-        response = requests.get(
-            f"{base_url}/competitions/BL1/standings",
-            headers=headers,
+        resp = requests.get(
+            f"{_OPENLIGADB_BASE}/getbltable/bl1/{season}",
             timeout=15,
         )
-        
-        if response.status_code == 429:
-            return [], True
-        
-        response.raise_for_status()
+        resp.raise_for_status()
     except requests.RequestException:
         return [], False
 
-    payload = response.json()
-    standings = payload.get("standings", [])
-    if not standings:
-        return [], False
-
-    table = standings[0].get("table", [])
+    rows = resp.json()
     transformed_table = []
-
-    for row in table:
-        team = row.get("team", {})
-        team_name = team.get("name", "Unbekannt")
+    for idx, row in enumerate(rows):
+        team_name = row.get("teamName", "Unbekannt")
         transformed_table.append(
             {
-                "position": row.get("position", "-"),
-                "teamId": team.get("id"),
+                "position": idx + 1,
+                "teamId": row.get("teamInfoId"),
                 "teamName": team_name,
-                "logo": get_team_logo_path(team_name) or team.get("crest"),
-                "playedGames": row.get("playedGames", 0),
-                "goalDifference": row.get("goalDifference", 0),
+                "logo": get_team_logo_path(team_name) or row.get("teamIconUrl"),
+                "playedGames": row.get("matches", 0),
+                "goalDifference": row.get("goalDiff", 0),
                 "points": row.get("points", 0),
             }
         )
 
     _set_cached_bundesliga_table(transformed_table, now_utc)
-
     return transformed_table, False
 
-# Keep legacy alias
+
+# Legacy-Alias
 fetch_bvb_matches = fetch_team_matches
 
 if __name__ == "__main__":

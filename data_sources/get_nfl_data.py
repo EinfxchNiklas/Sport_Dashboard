@@ -219,8 +219,9 @@ def fetch_nfl_teams():
         if not isinstance(teams, list):
             teams = []
 
-        _teams_cache["data"] = teams
-        _teams_cache["fetched_at"] = now_utc
+        if teams:
+            _teams_cache["data"] = teams
+            _teams_cache["fetched_at"] = now_utc
         return teams, False
     except requests.RequestException:
         return [], False
@@ -248,7 +249,8 @@ def _fetch_nfl_boxscore(game_id):
         if not isinstance(box, dict):
             box = {}
 
-        _boxscore_cache[game_id] = {"data": box, "fetched_at": now_utc}
+        if box:
+            _boxscore_cache[game_id] = {"data": box, "fetched_at": now_utc}
         return box, False
     except requests.RequestException:
         return {}, False
@@ -344,10 +346,11 @@ def fetch_nfl_scores(season=None, week=1, season_type="reg"):
                 }
             )
 
-        _games_cache["entries"][cache_key] = {
-            "data": transformed,
-            "fetched_at": now_utc,
-        }
+        if transformed:
+            _games_cache["entries"][cache_key] = {
+                "data": transformed,
+                "fetched_at": now_utc,
+            }
         return transformed, False
     except requests.RequestException:
         return [], False
@@ -575,7 +578,8 @@ def fetch_nfl_team_roster(team_abv):
                 "unit": _classify_position(pos),
             })
 
-        _roster_cache[team_abv] = {"data": roster, "fetched_at": now_utc}
+        if roster:
+            _roster_cache[team_abv] = {"data": roster, "fetched_at": now_utc}
         return roster, False
     except requests.RequestException:
         return [], False
