@@ -158,8 +158,7 @@ def healthcheck():
 
 @app.route('/fussball')
 def display_matches():
-    return render_template('fussball_unavailable.html')
-    team_id = request.args.get('team', 4, type=int)
+    team_id = request.args.get('team', 7, type=int)
     
     standings, standings_rate_limited = fetch_bundesliga_table()
     matches, matches_rate_limited = fetch_team_matches(team_id)
