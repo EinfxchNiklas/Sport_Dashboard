@@ -51,7 +51,7 @@ pip install -r requirements.txt
 Beispiel:
 
 ```env
-OPENLIGADB_BASE_URL=https://api.openligadb.de
+OPENLIGADB_BASE_URL=SET_Base_URL
 TANK01_NFL_API_KEY=dein_tank01_key
 DEBUG=False
 PORT=5000
