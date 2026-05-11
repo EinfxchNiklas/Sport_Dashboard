@@ -94,6 +94,7 @@
             <table>
                 <thead>
                     <tr>
+                        <th class="competition-logo-col"></th>
                         <th>Heim</th>
                         <th>Ergebnis / Termin</th>
                         <th>Gast</th>
@@ -102,6 +103,11 @@
                 <tbody>
                     {% for match in matches %}
                     <tr>
+                        <td class="competition-logo-cell">
+                            {% if match.competitionLogo %}
+                                <img src="{{ match.competitionLogo }}" alt="Wettbewerb" class="competition-logo" />
+                            {% endif %}
+                        </td>
                         <td class="team-home">
                             <div class="team-cell home">
                                 {% if match.team1.logo %}

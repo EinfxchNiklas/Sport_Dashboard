@@ -46,6 +46,13 @@ _OPENLIGADB_BASE = os.environ.get("OPENLIGADB_BASE_URL").rstrip("/")
 # Jeder Shortcut wird pro Saison separat abgefragt; Spiele werden nach matchID dedupliziert.
 _COMPETITION_SHORTCUTS = ["bl1", "dfb", "ucl"]
 
+# Mapping von Wettbewerbs-Shortcut zu lokalem Logo
+_COMPETITION_LOGO_MAPPING = {
+    "bl1": "/static/images/Competition_Logo/Bundesliga.png",
+    "dfb": "/static/images/Competition_Logo/DFB_pokal.png",
+    "ucl": "/static/images/Competition_Logo/champions_league_silber.png",
+}
+
 
 def _current_season_year(now_utc=None):
     """Gibt das Startjahr der aktuellen Saison zurück (Saison beginnt im Juli)."""
@@ -170,7 +177,7 @@ def fetch_team_matches(team_id=7):
     # Zusammenführen und nach matchID deduplizieren, dann nach Team filtern
     seen_match_ids = set()
     raw_team_matches = []
-    for matches in competition_results.values():
+    for shortcut, matches in competition_results.items():
         for m in matches:
             mid = m.get("matchID")
             if mid is None or mid in seen_match_ids:
@@ -178,11 +185,11 @@ def fetch_team_matches(team_id=7):
             seen_match_ids.add(mid)
             if (m.get("team1", {}).get("teamId") == team_id
                     or m.get("team2", {}).get("teamId") == team_id):
-                raw_team_matches.append(m)
+                raw_team_matches.append((shortcut, m))
 
     # Transformieren
     transformed_matches = []
-    for match in raw_team_matches:
+    for shortcut, match in raw_team_matches:
         match_dt = _parse_match_datetime(match)
         if match_dt is None:
             continue
@@ -236,6 +243,7 @@ def fetch_team_matches(team_id=7):
                 ],
                 "status": status,
                 "seasonStartYear": season_start_year,
+                "competitionLogo": _COMPETITION_LOGO_MAPPING.get(shortcut),
             }
         )
 

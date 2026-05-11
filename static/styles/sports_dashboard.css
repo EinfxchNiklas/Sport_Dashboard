@@ -1546,8 +1546,9 @@ body.page-fussball th {
         }
 body.page-fussball td.team-home {
             text-align: right;
-            width: 38%;
+            width: 35%;
             font-weight: 600;
+            padding-left: 6px;
         }
 body.page-fussball td.center {
             text-align: center;
@@ -1583,6 +1584,27 @@ body.page-fussball .team-logo {
             width: 50px;
             height: 50px;
             object-fit: contain;
+        }
+body.page-fussball .competition-logo-col {
+            width: 40px;
+        }
+body.page-fussball th.competition-logo-col,
+body.page-fussball td.competition-logo-cell {
+            padding: 6px 0 6px 12px;
+            width: 40px;
+        }
+body.page-fussball .team-home-inner {
+            display: flex;
+            align-items: center;
+            justify-content: flex-end;
+            gap: 10px;
+        }
+body.page-fussball .competition-logo {
+            width: 28px;
+            height: 28px;
+            object-fit: contain;
+            display: block;
+            margin: 0 auto;
         }
 body.page-fussball .standings-wrap {
             width: 100%;
