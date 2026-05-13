@@ -568,6 +568,15 @@ body.page-fussball .standings-wrap .team-logo {
                 width: 20px;
                 height: 20px;
             }
+body.page-fussball .competition-logo {
+                width: 18px;
+                height: 18px;
+            }
+body.page-fussball th.competition-logo-col,
+body.page-fussball td.competition-logo-cell {
+                width: 28px;
+                padding-left: 6px;
+            }
 /* Mobile tabs for Matches vs Standings */
 body.page-fussball .mobile-content-tabs {
                 display: flex;
