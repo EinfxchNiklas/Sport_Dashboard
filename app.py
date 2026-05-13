@@ -160,22 +160,18 @@ def healthcheck():
 def display_matches():
     team_id = request.args.get('team', 7, type=int)
     
-    standings, standings_rate_limited = fetch_bundesliga_table()
-    matches, matches_rate_limited = fetch_team_matches(team_id)
-    
-    api_rate_limited = standings_rate_limited or matches_rate_limited
-    
+    standings, _ = fetch_bundesliga_table()
+    matches, _ = fetch_team_matches(team_id)
+
     selected_team = next((t for t in standings if t.get('teamId') == team_id), None)
     selected_team_name = selected_team['teamName'] if selected_team else 'Bundesliga'
-    
+
     return render_template(
         'fussball.html',
         matches=matches,
         standings=standings,
         selected_team_id=team_id,
         selected_team_name=selected_team_name,
-        api_rate_limited=api_rate_limited,
-        api_block_seconds_left=60 if api_rate_limited else 0,
     )
 
 @app.route('/formula1')

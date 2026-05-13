@@ -12,19 +12,6 @@
     {% endif %}
 </head>
 <body class="page-fussball">
-    {% if api_rate_limited %}
-    <div class="api-lock-overlay" role="dialog" aria-modal="true" aria-labelledby="apiLockTitle">
-        <div class="api-lock-modal">
-            <h2 id="apiLockTitle">API-Limit erreicht</h2>
-            <p>
-                Die 10 API-Calls pro Minute sind aufgebraucht. Du kannst erst nach Ablauf des Countdowns wieder auf diese Seite.
-            </p>
-            <div class="api-lock-countdown" id="apiLockCountdown">01:00</div>
-            <a class="api-lock-home" href="/">Zur Homepage</a>
-        </div>
-    </div>
-    {% endif %}
-
     <a href="/" class="home-button">← Home</a>
     <h1 class="page-title">{{ selected_team_name }} – Spiele</h1>
     <p class="subtitle"></p>
@@ -94,6 +81,7 @@
             <table>
                 <thead>
                     <tr>
+                        <th class="competition-logo-col"></th>
                         <th>Heim</th>
                         <th>Ergebnis / Termin</th>
                         <th>Gast</th>
@@ -102,6 +90,11 @@
                 <tbody>
                     {% for match in matches %}
                     <tr>
+                        <td class="competition-logo-cell">
+                            {% if match.competitionLogo %}
+                                <img src="{{ match.competitionLogo }}" alt="Wettbewerb" class="competition-logo" />
+                            {% endif %}
+                        </td>
                         <td class="team-home">
                             <div class="team-cell home">
                                 {% if match.team1.logo %}
