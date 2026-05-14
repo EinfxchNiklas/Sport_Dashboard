@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>DFB-Pokal 2024/25</title>
+    <title>DFB-Pokal {{ season_label }}</title>
     <link rel="icon" href="{{ url_for('static', filename='images/favicon.svg') }}" type="image/svg+xml">
     <link rel="stylesheet" href="/static/styles/sports_dashboard.css">
     <link rel="stylesheet" href="/static/styles/sports_dashboard.mobile.css">
@@ -14,7 +14,7 @@
 <body class="page-fussball page-dfb">
     <a href="/fussball" class="home-button">← Fußball</a>
     <div class="page-content">
-    <h1>DFB-Pokal <span class="season-tag">2024/25</span></h1>
+    <h1>DFB-Pokal <span class="season-tag">{{ season_label }}</span></h1>
 
     {# ---- Runden-Navigation: Pfeile + Dropdown ---- #}
     <div class="comp-round-nav">
