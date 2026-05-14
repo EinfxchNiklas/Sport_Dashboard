@@ -14,7 +14,7 @@
 <body class="page-fussball page-wm">
     <a href="/fussball" class="home-button">← Fußball</a>
     <div class="page-content">
-    <h1>WM 2026 <span class="season-tag">USA · Kanada · Mexiko</span></h1>
+    <h1>WM 2026</h1>
 
     {# ---- Phase-Navigation: Pfeile + Dropdown ---- #}
     <div class="comp-round-nav">
@@ -49,7 +49,6 @@
     {% if is_group_phase %}
     {# ---- Gruppenphase: alle Gruppen ---- #}
     {% set current_phase = phases | selectattr("orderID", "equalto", current_phase_id) | first %}
-    <p class="comp-phase-label">{{ current_phase.name if current_phase else "" }}</p>
 
     <div class="wm-groups-grid">
         {% for group in groups %}
