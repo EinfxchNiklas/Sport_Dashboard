@@ -1,0 +1,189 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Champions League {{ season }}/{{ (season + 1) % 100 }}</title>
+    <link rel="icon" href="{{ url_for('static', filename='images/favicon.svg') }}" type="image/svg+xml">
+    <link rel="stylesheet" href="/static/styles/sports_dashboard.css">
+    <link rel="stylesheet" href="/static/styles/sports_dashboard.mobile.css">
+    {% if umami_enabled %}
+    <script defer src="{{ umami_script_url }}" data-website-id="{{ umami_website_id }}"></script>
+    {% endif %}
+</head>
+<body class="page-fussball page-cl">
+    <a href="/fussball" class="home-button">← Fußball</a>
+    <div class="page-content">
+    <h1>Champions League <span class="season-tag">{{ season }}/{{ '%02d' % ((season + 1) % 100) }}</span></h1>
+
+    {# ---- Phase-Navigation ---- #}
+    <nav class="comp-phase-nav">
+        {% for phase in phases %}
+        <a href="/fussball/champions-league?phase={{ phase.orderID }}"
+           class="week-btn{% if phase.orderID == current_phase_id %} active{% endif %}">
+            {{ phase.name }}
+        </a>
+        {% endfor %}
+    </nav>
+
+    {% if is_ligaphase %}
+    {# ---- Ligaphase: Spieltag-Navigation ---- #}
+    <div class="comp-round-nav">
+        {% if spieltag_idx > 0 %}
+        <a href="/fussball/champions-league?phase=1&spieltag={{ spieltag_idx - 1 }}" class="round-arrow">‹</a>
+        {% else %}
+        <span class="round-arrow round-arrow--disabled">‹</span>
+        {% endif %}
+
+        <div class="round-nav-center">
+            <select class="round-dropdown"
+                    onchange="window.location='/fussball/champions-league?phase=1&spieltag='+this.value">
+                {% for i in range(spieltage_count) %}
+                <option value="{{ i }}" {% if i == spieltag_idx %}selected{% endif %}>
+                    Spieltag {{ i + 1 }}
+                </option>
+                {% endfor %}
+            </select>
+        </div>
+
+        {% if spieltag_idx < spieltage_count - 1 %}
+        <a href="/fussball/champions-league?phase=1&spieltag={{ spieltag_idx + 1 }}" class="round-arrow">›</a>
+        {% else %}
+        <span class="round-arrow round-arrow--disabled">›</span>
+        {% endif %}
+    </div>
+
+    {# ---- Ligaphase-Spiele ---- #}
+    <div class="comp-content-grid">
+        <section class="panel comp-matches-panel">
+            <div class="panel-header">Spieltag {{ spieltag_idx + 1 }} – Ligaphase</div>
+            <div class="comp-matches-list">
+                {% if matches %}
+                    {% for match in matches %}
+                    <div class="comp-match-row">
+                        <div class="comp-team comp-team--home">
+                            {% if match.team1.logo %}
+                            <img src="{{ match.team1.logo }}" alt="{{ match.team1.teamName }}" class="comp-team-logo" onerror="this.style.display='none'" />
+                            {% endif %}
+                            <span class="comp-team-name">{{ match.team1.teamName }}</span>
+                        </div>
+                        <div class="comp-score">
+                            {% if match.isFinished %}
+                                <span class="score-value">{{ match.homeScore }} : {{ match.awayScore }}</span>
+                            {% else %}
+                                <span class="score-time">{{ match.formattedDateTime }}</span>
+                            {% endif %}
+                        </div>
+                        <div class="comp-team comp-team--away">
+                            <span class="comp-team-name">{{ match.team2.teamName }}</span>
+                            {% if match.team2.logo %}
+                            <img src="{{ match.team2.logo }}" alt="{{ match.team2.teamName }}" class="comp-team-logo" onerror="this.style.display='none'" />
+                            {% endif %}
+                        </div>
+                    </div>
+                    {% endfor %}
+                {% else %}
+                    <div class="no-data">Keine Spiele für diesen Spieltag verfügbar.</div>
+                {% endif %}
+            </div>
+        </section>
+
+        {# ---- Ligaphase-Tabelle ---- #}
+        {% if table %}
+        <aside class="panel comp-table-panel">
+            <div class="panel-header">Tabelle nach der Ligaphase</div>
+            <table class="comp-standings-table">
+                <thead>
+                    <tr>
+                        <th class="col-pos">#</th>
+                        <th>Team</th>
+                        <th class="col-num">Sp.</th>
+                        <th class="col-num">S</th>
+                        <th class="col-num">U</th>
+                        <th class="col-num">N</th>
+                        <th class="col-num">TD</th>
+                        <th class="col-num col-pts">Pkt.</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for team in table %}
+                    <tr class="{% if team.position <= 8 %}cl-direct{% elif team.position <= 24 %}cl-playoff{% else %}cl-out{% endif %}">
+                        <td class="col-pos">{{ team.position }}</td>
+                        <td class="col-team">
+                            <div class="team-inline">
+                                {% if team.logo %}
+                                <img src="{{ team.logo }}" alt="{{ team.teamName }}" class="comp-table-logo" onerror="this.style.display='none'" />
+                                {% endif %}
+                                <span>{{ team.teamName }}</span>
+                            </div>
+                        </td>
+                        <td class="col-num">{{ team.played }}</td>
+                        <td class="col-num">{{ team.won }}</td>
+                        <td class="col-num">{{ team.draw }}</td>
+                        <td class="col-num">{{ team.lost }}</td>
+                        <td class="col-num">{{ team.goalDiff }}</td>
+                        <td class="col-num col-pts">{{ team.points }}</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+            <div class="comp-table-legend">
+                <span class="legend-dot legend-dot--direct"></span> Achtelfinale direkt
+                <span class="legend-dot legend-dot--playoff"></span> Play-offs
+                <span class="legend-dot legend-dot--out"></span> Ausgeschieden
+            </div>
+        </aside>
+        {% endif %}
+    </div>
+
+    {% else %}
+    {# ---- K.o.-Runde ---- #}
+    <section class="panel comp-ko-panel">
+        {% set current_phase = phases | selectattr("orderID", "equalto", current_phase_id) | first %}
+        <div class="panel-header">{{ current_phase.name if current_phase else "" }}</div>
+        <div class="comp-ko-matches">
+            {% if matches %}
+                {% set ns = namespace(prev_date="") %}
+                {% for match in matches %}
+                    {% if match.matchDate | string != ns.prev_date %}
+                        <div class="comp-date-separator">
+                            {{ match.formattedDateTime.split('–')[1].strip() if '–' in match.formattedDateTime else "" }}
+                        </div>
+                        {% set ns.prev_date = match.matchDate | string %}
+                    {% endif %}
+                    <div class="comp-match-row">
+                        <div class="comp-team comp-team--home">
+                            {% if match.team1.logo %}
+                            <img src="{{ match.team1.logo }}" alt="{{ match.team1.teamName }}" class="comp-team-logo" onerror="this.style.display='none'" />
+                            {% endif %}
+                            <span class="comp-team-name">{{ match.team1.teamName }}</span>
+                        </div>
+                        <div class="comp-score">
+                            {% if match.isFinished %}
+                                <span class="score-value">{{ match.homeScore }} : {{ match.awayScore }}</span>
+                            {% else %}
+                                <span class="score-time">{{ match.formattedDateTime }}</span>
+                            {% endif %}
+                        </div>
+                        <div class="comp-team comp-team--away">
+                            <span class="comp-team-name">{{ match.team2.teamName }}</span>
+                            {% if match.team2.logo %}
+                            <img src="{{ match.team2.logo }}" alt="{{ match.team2.teamName }}" class="comp-team-logo" onerror="this.style.display='none'" />
+                            {% endif %}
+                        </div>
+                    </div>
+                {% endfor %}
+            {% else %}
+                <div class="no-data">Keine Spiele für diese Runde verfügbar.</div>
+            {% endif %}
+        </div>
+    </section>
+    {% endif %}
+
+    </div>
+
+    <footer>
+        <p><a href="/impressum">Impressum</a> | <a href="/datenschutz">Datenschutz</a> | <a href="/docs">Docs</a></p>
+    </footer>
+</body>
+</html>

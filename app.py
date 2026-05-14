@@ -9,6 +9,9 @@ import requests
 from data_sources.get_fussball_data import (
     fetch_team_matches,
     fetch_bundesliga_table,
+    fetch_cl_data,
+    fetch_dfb_data,
+    fetch_wm_data,
 )
 from data_sources.get_formula1_data import (
     fetch_formula1_weekends,
@@ -88,6 +91,7 @@ def _check_website_health():
     required_routes = {
         '/',
         '/fussball',
+        '/fussball/bundesliga',
         '/formula1',
         '/american_football',
     }
@@ -157,9 +161,17 @@ def healthcheck():
     ), http_code
 
 @app.route('/fussball')
+def fussball_selector():
+    from data_sources._openligadb_common import _current_football_season
+    year = _current_football_season()
+    season_label = f"{year}/{(year + 1) % 100:02d}"
+    return render_template('fussball_select.html', season_label=season_label)
+
+
+@app.route('/fussball/bundesliga')
 def display_matches():
     team_id = request.args.get('team', 7, type=int)
-    
+
     standings, _ = fetch_bundesliga_table()
     matches, _ = fetch_team_matches(team_id)
 
@@ -173,6 +185,29 @@ def display_matches():
         selected_team_id=team_id,
         selected_team_name=selected_team_name,
     )
+
+
+@app.route('/fussball/champions-league')
+def fussball_cl():
+    phase_order_id = request.args.get('phase', 1, type=int)
+    spieltag_idx = request.args.get('spieltag', None, type=int)
+    data = fetch_cl_data(phase_order_id=phase_order_id, spieltag_idx=spieltag_idx)
+    return render_template('fussball_cl.html', **data)
+
+
+@app.route('/fussball/dfb-pokal')
+def fussball_dfb():
+    round_order_id = request.args.get('runde', 1, type=int)
+    data = fetch_dfb_data(round_order_id=round_order_id)
+    return render_template('fussball_dfb.html', **data)
+
+
+@app.route('/fussball/wm')
+def fussball_wm():
+    phase_order_id = request.args.get('phase', 1, type=int)
+    data = fetch_wm_data(phase_order_id=phase_order_id)
+    return render_template('fussball_wm.html', **data)
+
 
 @app.route('/formula1')
 def formula1_dashboard():
