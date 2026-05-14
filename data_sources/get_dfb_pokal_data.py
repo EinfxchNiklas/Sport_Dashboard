@@ -26,7 +26,7 @@ DFB_ROUNDS = [
     {"orderID": 3, "name": "Achtelfinale"},
     {"orderID": 4, "name": "Viertelfinale"},
     {"orderID": 5, "name": "Halbfinale"},
-    {"orderID": 6, "name": "Endspiel"},
+    {"orderID": 6, "name": "Finale"},
 ]
 
 

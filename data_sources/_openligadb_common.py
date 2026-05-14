@@ -159,12 +159,22 @@ def _parse_match_datetime(match):
 
 
 def _get_final_result(match):
-    """Gibt das Endergebnis eines Spiels zurück (None wenn noch nicht gespielt)."""
+    """Gibt das Endergebnis eines Spiels zurück (None wenn noch nicht gespielt).
+    
+    Nimmt immer das Result mit der höchsten resultOrderID, um bei K.O.-Spielen
+    (DFB-Pokal, CL, etc.) auch Verlängerung und Elfmeterschießen korrekt anzuzeigen.
+    
+    ResultTypes:
+    - 1: Halbzeit
+    - 2: Endergebnis (nach 90 Min)
+    - 4: nach Verlängerung
+    - 5: nach Elfmeterschießen
+    """
     results = match.get("matchResults", [])
-    final = next((r for r in results if r.get("resultTypeID") == 2), None)
-    if final is None and results:
-        final = max(results, key=lambda r: r.get("resultOrderID", 0))
-    return final
+    if not results:
+        return None
+    # Nimm das Result mit der höchsten OrderID (= tatsächliches Endergebnis)
+    return max(results, key=lambda r: r.get("resultOrderID", 0))
 
 
 def _transform_raw_match(match, local_tz):
@@ -173,7 +183,7 @@ def _transform_raw_match(match, local_tz):
     Rückgabe-Dict:
         matchId, team1{teamId,teamName,logo}, team2{...},
         matchDateTimeUTC, matchDate, formattedDateTime,
-        homeScore, awayScore, isFinished
+        homeScore, awayScore, isFinished, resultType, resultName
     """
     match_dt = _parse_match_datetime(match)
     if match_dt is None:
@@ -189,9 +199,13 @@ def _transform_raw_match(match, local_tz):
     if final:
         home_score = final.get("pointsTeam1", "-")
         away_score = final.get("pointsTeam2", "-")
+        result_type_id = final.get("resultTypeID")
+        result_name = final.get("resultName", "")
     else:
         home_score = "-"
         away_score = "-"
+        result_type_id = None
+        result_name = ""
 
     return {
         "matchId": match.get("matchID"),
@@ -211,6 +225,8 @@ def _transform_raw_match(match, local_tz):
         "homeScore": home_score,
         "awayScore": away_score,
         "isFinished": bool(match.get("matchIsFinished")),
+        "resultType": result_type_id,
+        "resultName": result_name,
     }
 
 

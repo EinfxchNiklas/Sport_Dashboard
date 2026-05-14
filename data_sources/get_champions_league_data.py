@@ -65,6 +65,15 @@ _CL_LOGO_OVERRIDES = {
     "FC Arsenal":         "https://upload.wikimedia.org/wikipedia/en/5/53/Arsenal_FC.svg",
     "FC Liverpool":       "https://upload.wikimedia.org/wikipedia/en/0/0c/Liverpool_FC.svg",
     "Union Saint-Gilloise": "https://upload.wikimedia.org/wikipedia/commons/f/f6/USG.png",
+    # Weitere häufige Teams für bessere Kompatibilität
+    "Paris Saint-Germain": "https://upload.wikimedia.org/wikipedia/en/a/a7/Paris_Saint-Germain_F.C..svg",
+    "FC Barcelona":       "https://upload.wikimedia.org/wikipedia/en/4/47/FC_Barcelona_%28crest%29.svg",
+    "Real Madrid":        "https://upload.wikimedia.org/wikipedia/en/5/56/Real_Madrid_CF.svg",
+    "Manchester City":    "https://upload.wikimedia.org/wikipedia/en/e/eb/Manchester_City_FC_badge.svg",
+    "Inter Mailand":      "https://upload.wikimedia.org/wikipedia/commons/0/05/FC_Internazionale_Milano_2021.svg",
+    "AC Mailand":         "https://upload.wikimedia.org/wikipedia/commons/d/d0/Logo_of_AC_Milan.svg",
+    "Atletico Madrid":    "https://upload.wikimedia.org/wikipedia/en/f/f4/Atletico_Madrid_2017_logo.svg",
+    "Juventus Turin":     "https://upload.wikimedia.org/wikipedia/commons/a/a8/Juventus_FC_-_pictogram_black_%28Italy%2C_2017%29.svg",
 }
 
 

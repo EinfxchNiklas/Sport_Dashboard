@@ -14,6 +14,12 @@ from ._openligadb_common import (
     _parse_match_datetime,
 )
 
+# Importiere Champions League Logo-Überschreibungen für internationale Teams
+try:
+    from .get_champions_league_data import _CL_LOGO_OVERRIDES
+except ImportError:
+    _CL_LOGO_OVERRIDES = {}
+
 load_dotenv()
 
 
@@ -59,6 +65,27 @@ def get_team_logo_path(team_name):
     if os.path.exists(image_path):
         return f"/static/images/BL_Team_Logos/{filename}"
     return None
+
+
+def get_team_logo(team_name, api_logo_url=None):
+    """Gibt die beste verfügbare Logo-URL für ein Team zurück.
+    
+    Prüft in folgender Reihenfolge:
+    1. Lokale Bundesliga-Logos (für deutsche Teams)
+    2. Champions League Logo-Überschreibungen (für internationale Teams)
+    3. API Logo-URL (Fallback)
+    """
+    # Zuerst lokale Bundesliga-Logos prüfen
+    local_logo = get_team_logo_path(team_name)
+    if local_logo:
+        return local_logo
+    
+    # Dann Champions League Logo-Überschreibungen prüfen
+    if team_name in _CL_LOGO_OVERRIDES:
+        return _CL_LOGO_OVERRIDES[team_name]
+    
+    # Fallback auf API Logo-URL
+    return api_logo_url
 
 
 # ---------------------------------------------------------------------------
@@ -208,11 +235,11 @@ def fetch_team_matches(team_id=7):
         transformed_matches.append({
             "team1": {
                 "teamName": home_team_name,
-                "logo": get_team_logo_path(home_team_name) or match.get("team1", {}).get("teamIconUrl"),
+                "logo": get_team_logo(home_team_name, match.get("team1", {}).get("teamIconUrl")),
             },
             "team2": {
                 "teamName": away_team_name,
-                "logo": get_team_logo_path(away_team_name) or match.get("team2", {}).get("teamIconUrl"),
+                "logo": get_team_logo(away_team_name, match.get("team2", {}).get("teamIconUrl")),
             },
             "matchDateTime": match_dt.isoformat(),
             "formattedDateTime": formatted_date_time,
@@ -264,7 +291,7 @@ def fetch_bundesliga_table():
             "position": idx + 1,
             "teamId": row.get("teamInfoId"),
             "teamName": team_name,
-            "logo": get_team_logo_path(team_name) or row.get("teamIconUrl"),
+            "logo": get_team_logo(team_name, row.get("teamIconUrl")),
             "playedGames": row.get("matches", 0),
             "goalDifference": row.get("goalDiff", 0),
             "points": row.get("points", 0),

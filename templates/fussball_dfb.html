@@ -63,6 +63,11 @@
                     <div class="comp-score">
                         {% if match.isFinished %}
                             <span class="score-value">{{ match.homeScore }} : {{ match.awayScore }}</span>
+                            {% if match.resultType == 4 %}
+                                <span class="score-note">n.V.</span>
+                            {% elif match.resultType == 5 %}
+                                <span class="score-note">n.E.</span>
+                            {% endif %}
                         {% else %}
                             <span class="score-time">{{ match.formattedDateTime }}</span>
                         {% endif %}
