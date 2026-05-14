@@ -781,6 +781,9 @@ body.page-home .sport-name {
         text-shadow: 0 2px 12px rgba(0, 0, 0, 0.9);
         white-space: nowrap;
     }
+body.page-home .fussball .sport-name {
+        text-transform: none;
+    }
 body.page-home .sport-subtitle {
         font-size: 0.85rem;
         letter-spacing: 2px;
