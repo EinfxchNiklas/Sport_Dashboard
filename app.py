@@ -200,6 +200,8 @@ def formula1_past_weekends():
 def formula1_past_weekend_results(meeting_key):
     return jsonify(fetch_meeting_session_result_summaries(meeting_key))
 
+NFL_DEFAULT_SEASON = 2026
+
 @app.route('/american_football')
 def american_football():
     # Keep season choices aligned with available API data.
@@ -210,9 +212,9 @@ def american_football():
 
     available_seasons = [(y, str(y)) for y in range(min_available_season, max_available_season + 1)]
 
-    selected_season = request.args.get('season', current_season, type=int)
+    selected_season = request.args.get('season', NFL_DEFAULT_SEASON, type=int)
     if selected_season < min_available_season or selected_season > max_available_season:
-        selected_season = current_season
+        selected_season = NFL_DEFAULT_SEASON
     
     season_type = request.args.get('type', 'reg', type=str)
     if season_type not in ('reg', 'post'):
