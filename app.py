@@ -106,15 +106,51 @@ def _check_website_health():
 
 
 
+def _is_nfl_game_pending(game):
+    """Return True if a game is not fully completed yet."""
+    status_code = str(game.get('statusCode', '')).strip()
+    status = str(game.get('status', '')).strip().lower()
+
+    # API uses status code 0 for scheduled/not started games.
+    if status_code == '0':
+        return True
+
+    # Keep live or interrupted games in the currently selected week.
+    pending_markers = (
+        'live',
+        'in progress',
+        'quarter',
+        'q1',
+        'q2',
+        'q3',
+        'q4',
+        'ot',
+        'halftime',
+        'delayed',
+        'postponed',
+        'suspended',
+    )
+    return any(marker in status for marker in pending_markers)
+
+
 def _find_latest_available_nfl_week(season, season_type, max_week):
-    """Return latest week/round that has at least one game for the given season/type."""
-    for week in range(max_week, 0, -1):
+    """Return the first not-yet-completed week for the given season/type."""
+    fallback_week = 1
+
+    for week in range(1, max_week + 1):
         games, rate_limited = fetch_nfl_scores(season, week, season_type)
         if rate_limited:
-            break
-        if games:
+            return fallback_week, None, True
+
+        if not games:
+            return week, None, False
+
+        if any(_is_nfl_game_pending(game) for game in games):
             return week, games, False
-    return 1, None, False
+
+        fallback_week = min(week + 1, max_week)
+
+    return fallback_week, None, False
 
 @app.route('/')
 def homepage():
@@ -239,7 +275,7 @@ def formula1_past_weekend_results(meeting_key):
 def american_football():
     # Keep season choices aligned with available API data.
     now = datetime.now()
-    current_season = now.year if now.month >= 8 else now.year - 1
+    current_season = now.year if now.month >= 5 else now.year - 1
     min_available_season = 2022
     max_available_season = max(now.year, current_season)
 
@@ -337,7 +373,7 @@ def american_football():
 def american_football_week_results():
     # Keep season query consistent with the season selector bounds.
     now = datetime.now()
-    current_season = now.year if now.month >= 8 else now.year - 1
+    current_season = now.year if now.month >= 5 else now.year - 1
     min_available_season = 2022
     max_available_season = max(now.year, current_season)
 
