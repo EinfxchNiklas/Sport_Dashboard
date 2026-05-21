@@ -107,11 +107,39 @@ def _add_fallback_logos(matches):
     return matches
 
 
-def fetch_dfb_data(round_order_id=1):
+def _fetch_or_cache_round_raw(season, round_order_id):
+    """Liest Rohdaten einer DFB-Runde aus Cache oder API."""
+    cache_key_raw = f"dfb_{season}_{round_order_id}_raw"
+    raw = _get_cached(cache_key_raw)
+    if raw is not None:
+        return raw
+
+    raw = _fetch_competition_group_matches(_DFB_SHORTCUT, season, round_order_id)
+    _set_cached(cache_key_raw, raw)
+    return raw
+
+
+def _auto_select_default_round(season):
+    """Waehlt die erste noch nicht vollstaendig gespielte DFB-Runde.
+
+    Falls alle Runden beendet sind, wird Runde 1 zurueckgegeben.
+    """
+    for round_meta in DFB_ROUNDS:
+        round_id = round_meta["orderID"]
+        raw = _fetch_or_cache_round_raw(season, round_id)
+        if not raw:
+            return round_id
+        if any(not m.get("matchIsFinished", False) for m in raw):
+            return round_id
+    return 1
+
+
+def fetch_dfb_data(round_order_id=None):
     """Gibt DFB-Pokal-Daten für eine bestimmte Runde zurück.
 
     Args:
         round_order_id: 1=1. Runde … 6=Endspiel
+                        None -> automatische Auswahl
 
     Returns:
         Dict mit:
@@ -123,13 +151,21 @@ def fetch_dfb_data(round_order_id=1):
     local_tz = pytz_timezone("Europe/Berlin")
     season = _current_football_season()
     season_label = f"{season}/{(season + 1) % 100:02d}"
+
+    if round_order_id is None:
+        round_order_id = _auto_select_default_round(season)
+
+    valid_round_ids = {r["orderID"] for r in DFB_ROUNDS}
+    if round_order_id not in valid_round_ids:
+        round_order_id = 1
+
     cache_key = f"dfb_{season}_{round_order_id}"
 
     cached = _get_cached(cache_key)
     if cached:
         return cached
 
-    raw = _fetch_competition_group_matches(_DFB_SHORTCUT, season, round_order_id)
+    raw = _fetch_or_cache_round_raw(season, round_order_id)
     matches = [m for m in [_transform_raw_match(r, local_tz) for r in raw] if m]
     matches.sort(key=lambda m: m["matchDateTimeUTC"])
     

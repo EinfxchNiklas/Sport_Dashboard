@@ -225,7 +225,7 @@ def display_matches():
 
 @app.route('/fussball/champions-league')
 def fussball_cl():
-    phase_order_id = request.args.get('phase', 1, type=int)
+    phase_order_id = request.args.get('phase', type=int)
     spieltag_idx = request.args.get('spieltag', None, type=int)
     data = fetch_cl_data(phase_order_id=phase_order_id, spieltag_idx=spieltag_idx)
     return render_template('fussball_cl.html', **data)
@@ -233,7 +233,7 @@ def fussball_cl():
 
 @app.route('/fussball/dfb-pokal')
 def fussball_dfb():
-    round_order_id = request.args.get('runde', 1, type=int)
+    round_order_id = request.args.get('runde', type=int)
     data = fetch_dfb_data(round_order_id=round_order_id)
     return render_template('fussball_dfb.html', **data)
 

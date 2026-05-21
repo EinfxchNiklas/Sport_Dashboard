@@ -226,15 +226,79 @@ def _compute_cl_table_from_ligaphase(all_raw_spieltage):
     return table
 
 
+def _fetch_or_cache_ligaphase_raw(season):
+    """Liest alle Ligaphase-Spieltage (1-8) aus dem Cache oder von der API."""
+    cache_key_raw = f"cl_{season}_all_spieltage"
+    all_raw = _get_cached(cache_key_raw)
+    if all_raw is not None:
+        return all_raw
+
+    with ThreadPoolExecutor(max_workers=_LIGAPHASE_SPIELTAGE) as executor:
+        futs = {
+            i: executor.submit(
+                _fetch_competition_group_matches, _CL_SHORTCUT, season, i
+            )
+            for i in range(1, _LIGAPHASE_SPIELTAGE + 1)
+        }
+        all_raw = {i: futs[i].result() for i in range(1, _LIGAPHASE_SPIELTAGE + 1)}
+    _set_cached(cache_key_raw, all_raw)
+    return all_raw
+
+
+def _fetch_or_cache_ko_raw(season, phase_order_id):
+    """Liest Rohdaten fuer eine K.o.-Phase aus Cache oder API."""
+    cache_key_raw = f"cl_{season}_phase_{phase_order_id}_raw"
+    all_raw_ko = _get_cached(cache_key_raw)
+    if all_raw_ko is not None:
+        return all_raw_ko
+
+    api_groups = _PHASE_TO_API_GROUPS.get(phase_order_id, [])
+    all_raw_ko = []
+    if api_groups:
+        with ThreadPoolExecutor(max_workers=len(api_groups)) as executor:
+            futs = [
+                executor.submit(
+                    _fetch_competition_group_matches, _CL_SHORTCUT, season, g
+                )
+                for g in api_groups
+            ]
+            for f in futs:
+                all_raw_ko.extend(f.result())
+
+    _set_cached(cache_key_raw, all_raw_ko)
+    return all_raw_ko
+
+
+def _auto_select_default_phase_and_spieltag(season):
+    """Waehlt Default-Ansicht: naechster offener Spieltag bzw. naechste offene Runde."""
+    all_raw = _fetch_or_cache_ligaphase_raw(season)
+
+    # 1) Ligaphase: erster Spieltag mit mindestens einem nicht beendeten Match
+    for i in range(1, _LIGAPHASE_SPIELTAGE + 1):
+        raw_matches = all_raw.get(i, [])
+        if raw_matches and any(not m.get("matchIsFinished", False) for m in raw_matches):
+            return 1, i - 1
+
+    # 2) K.o.-Phasen: erste Runde mit mindestens einem nicht beendeten Match
+    for phase_id in range(2, 7):
+        raw_matches = _fetch_or_cache_ko_raw(season, phase_id)
+        if raw_matches and any(not m.get("matchIsFinished", False) for m in raw_matches):
+            return phase_id, None
+
+    # 3) Alles beendet -> zurueck zu Spieltag 1 der Ligaphase
+    return 1, 0
+
+
 # ---------------------------------------------------------------------------
 # Öffentliche Funktion
 # ---------------------------------------------------------------------------
 
-def fetch_cl_data(phase_order_id=1, spieltag_idx=None):
+def fetch_cl_data(phase_order_id=None, spieltag_idx=None):
     """Gibt Champions-League-Daten für eine Phase zurück.
 
     Args:
         phase_order_id: 1=Ligaphase, 2=Play-offs, 3=Achtelfinale, ...
+                None -> automatische Auswahl
         spieltag_idx:   0-basierter Spieltag-Index (0–7) innerhalb der Ligaphase.
                         None → automatisch letzter gespielteer Spieltag.
 
@@ -250,34 +314,34 @@ def fetch_cl_data(phase_order_id=1, spieltag_idx=None):
     """
     local_tz = pytz_timezone("Europe/Berlin")
     season = _current_football_season()
+
+    if phase_order_id is None:
+        phase_order_id, auto_spieltag_idx = _auto_select_default_phase_and_spieltag(season)
+        if spieltag_idx is None:
+            spieltag_idx = auto_spieltag_idx
+
     is_ligaphase = (phase_order_id == 1)
 
     # --- Ligaphase ---
     if is_ligaphase:
         # Alle 8 Spieltage parallel fetchen und gemeinsam cachen
-        cache_key_raw = f"cl_{season}_all_spieltage"
-        all_raw = _get_cached(cache_key_raw)
-        if all_raw is None:
-            with ThreadPoolExecutor(max_workers=_LIGAPHASE_SPIELTAGE) as executor:
-                futs = {
-                    i: executor.submit(
-                        _fetch_competition_group_matches, _CL_SHORTCUT, season, i
-                    )
-                    for i in range(1, _LIGAPHASE_SPIELTAGE + 1)
-                }
-                all_raw = {i: futs[i].result() for i in range(1, _LIGAPHASE_SPIELTAGE + 1)}
-            _set_cached(cache_key_raw, all_raw)
+        all_raw = _fetch_or_cache_ligaphase_raw(season)
 
-        # Default: letzter Spieltag mit mindestens einem Match in der Vergangenheit
+        # Default innerhalb der Ligaphase (wenn explizit Phase 1 geoeffnet wurde):
+        # naechster noch nicht vollstaendig gespielter Spieltag, sonst Spieltag 1.
         if spieltag_idx is None:
-            now_utc = datetime.now(timezone.utc).isoformat()
             spieltag_idx = 0
+            found_upcoming_or_running = False
             for i in range(1, _LIGAPHASE_SPIELTAGE + 1):
-                if any(
-                    m.get("matchDateTimeUTC", "9999") <= now_utc
-                    for m in all_raw.get(i, [])
-                ):
+                raw_matches = all_raw.get(i, [])
+                if not raw_matches:
+                    continue
+                if any(not m.get("matchIsFinished", False) for m in raw_matches):
                     spieltag_idx = i - 1  # 0-basiert
+                    found_upcoming_or_running = True
+                    break
+            if not found_upcoming_or_running:
+                spieltag_idx = 0
         spieltag_idx = max(0, min(spieltag_idx, _LIGAPHASE_SPIELTAGE - 1))
 
         cache_key = f"cl_{season}_st_{spieltag_idx}"
@@ -312,18 +376,7 @@ def fetch_cl_data(phase_order_id=1, spieltag_idx=None):
     if cached:
         return cached
 
-    api_groups = _PHASE_TO_API_GROUPS.get(phase_order_id, [])
-    all_raw_ko = []
-    if api_groups:
-        with ThreadPoolExecutor(max_workers=len(api_groups)) as executor:
-            futs = [
-                executor.submit(
-                    _fetch_competition_group_matches, _CL_SHORTCUT, season, g
-                )
-                for g in api_groups
-            ]
-            for f in futs:
-                all_raw_ko.extend(f.result())
+    all_raw_ko = _fetch_or_cache_ko_raw(season, phase_order_id)
 
     matches = [m for m in [_transform_raw_match(r, local_tz) for r in all_raw_ko] if m]
     matches.sort(key=lambda m: m["matchDateTimeUTC"])
