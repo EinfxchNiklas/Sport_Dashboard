@@ -55,25 +55,59 @@ _PHASE_TO_API_GROUPS = {
 
 _LIGAPHASE_SPIELTAGE = 8
 
-# Ersatz-Logos für Teams, deren API-URLs defekt/blockiert/ohne Transparenz sind
+# Lokale CL-Logos: internationale Teams liegen in CL_Teams,
+# deutsche Teams weiterhin in BL_Team_Logos. Wenn kein Mapping passt,
+# bleibt das API-Logo als Fallback erhalten.
 _CL_LOGO_OVERRIDES = {
-    # 404-URLs aus API → korrekte Wikipedia-SVG-Dateien
-    "Qarabag FK":         "https://upload.wikimedia.org/wikipedia/en/f/fe/Qaraba%C4%9F_FK_logo.svg",
-    "Paphos FC":          "https://upload.wikimedia.org/wikipedia/en/9/9b/Pafos_FC_crest.svg",
-    "Eintracht Frankfurt": "https://upload.wikimedia.org/wikipedia/en/7/7e/Eintracht_Frankfurt_crest.svg",
-    # JPEG-Logos mit weißem Hintergrund → SVG-Versionen ohne Hintergrund
-    "FC Arsenal":         "https://upload.wikimedia.org/wikipedia/en/5/53/Arsenal_FC.svg",
-    "FC Liverpool":       "https://upload.wikimedia.org/wikipedia/en/0/0c/Liverpool_FC.svg",
-    "Union Saint-Gilloise": "https://upload.wikimedia.org/wikipedia/commons/f/f6/USG.png",
-    # Weitere häufige Teams für bessere Kompatibilität
-    "Paris Saint-Germain": "https://upload.wikimedia.org/wikipedia/en/a/a7/Paris_Saint-Germain_F.C..svg",
-    "FC Barcelona":       "https://upload.wikimedia.org/wikipedia/en/4/47/FC_Barcelona_%28crest%29.svg",
-    "Real Madrid":        "https://upload.wikimedia.org/wikipedia/en/5/56/Real_Madrid_CF.svg",
-    "Manchester City":    "https://upload.wikimedia.org/wikipedia/en/e/eb/Manchester_City_FC_badge.svg",
-    "Inter Mailand":      "https://upload.wikimedia.org/wikipedia/commons/0/05/FC_Internazionale_Milano_2021.svg",
-    "AC Mailand":         "https://upload.wikimedia.org/wikipedia/commons/d/d0/Logo_of_AC_Milan.svg",
-    "Atletico Madrid":    "https://upload.wikimedia.org/wikipedia/en/f/f4/Atletico_Madrid_2017_logo.svg",
-    "Juventus Turin":     "https://upload.wikimedia.org/wikipedia/commons/a/a8/Juventus_FC_-_pictogram_black_%28Italy%2C_2017%29.svg",
+    # Deutsche Vereine -> Bundesliga-Ordner
+    "Borussia Dortmund": "/static/images/BL_Team_Logos/Dortmund.png",
+    "FC Bayern München": "/static/images/BL_Team_Logos/Bayern.png",
+    "Bayer 04 Leverkusen": "/static/images/BL_Team_Logos/Leverkusen.png",
+    "Eintracht Frankfurt": "/static/images/BL_Team_Logos/Frankfurt.png",
+    "RB Leipzig": "/static/images/BL_Team_Logos/Leipzig.png",
+    "VfB Stuttgart": "/static/images/BL_Team_Logos/Stuttgart.png",
+
+    # Internationale Vereine -> CL-Ordner (inkl. Namensvarianten)
+    "FC Arsenal": "/static/images/CL_Teams/arsenal.png",
+    "Arsenal FC": "/static/images/CL_Teams/arsenal.png",
+    "Aston Villa": "/static/images/CL_Teams/aston-villa.png",
+    "Atletico Madrid": "/static/images/CL_Teams/atletico-madrid.png",
+    "Atlético Madrid": "/static/images/CL_Teams/atletico-madrid.png",
+    "FC Barcelona": "/static/images/CL_Teams/barcelona.png",
+    "Feyenoord Rotterdam": "/static/images/CL_Teams/feyenoord.png",
+    "Galatasaray Istanbul": "/static/images/CL_Teams/galatasaray.png",
+    "Galatasaray": "/static/images/CL_Teams/galatasaray.png",
+    "Inter Mailand": "/static/images/CL_Teams/inter.png",
+    "Inter Milan": "/static/images/CL_Teams/inter.png",
+    "OSC Lille": "/static/images/CL_Teams/lille.png",
+    "Lille OSC": "/static/images/CL_Teams/lille.png",
+    "FC Liverpool": "/static/images/CL_Teams/liverpool.png",
+    "Liverpool FC": "/static/images/CL_Teams/liverpool.png",
+    "AC Mailand": "/static/images/CL_Teams/milan.png",
+    "AC Milan": "/static/images/CL_Teams/milan.png",
+    "Manchester City": "/static/images/CL_Teams/manchester-city.png",
+    "Manchester United": "/static/images/CL_Teams/manchester-united.png",
+    "SSC Neapel": "/static/images/CL_Teams/napoli.png",
+    "SSC Napoli": "/static/images/CL_Teams/napoli.png",
+    "Paris Saint-Germain": "/static/images/CL_Teams/paris-saint-germain.png",
+    "FC Porto": "/static/images/CL_Teams/porto.png",
+    "PSV Eindhoven": "/static/images/CL_Teams/psv.png",
+    "Racing Club de Lens": "/static/images/CL_Teams/rc-lens.png",
+    "RC Lens": "/static/images/CL_Teams/rc-lens.png",
+    "Real Betis": "/static/images/CL_Teams/real-betis.png",
+    "Real Betis Balompie": "/static/images/CL_Teams/real-betis.png",
+    "AS Rom": "/static/images/CL_Teams/roma.png",
+    "AS Roma": "/static/images/CL_Teams/roma.png",
+    "Real Madrid": "/static/images/CL_Teams/real-madrid.png",
+    "Schachtar Donezk": "/static/images/CL_Teams/shakhtar.png",
+    "Shakhtar Donetsk": "/static/images/CL_Teams/shakhtar.png",
+    "Slavia Prag": "/static/images/CL_Teams/slavia-praha.png",
+    "Slavia Praha": "/static/images/CL_Teams/slavia-praha.png",
+    "FC Villarreal": "/static/images/CL_Teams/villarreal.png",
+    "Villarreal CF": "/static/images/CL_Teams/villarreal.png",
+    "Union Saint-Gilloise": "/static/images/CL_Teams/union-saint-gilloise.png",
+    "Paphos FC": "/static/images/CL_Teams/paphos.png",
+    "Qarabag FK": "/static/images/CL_Teams/qarabag.png",
 }
 
 
