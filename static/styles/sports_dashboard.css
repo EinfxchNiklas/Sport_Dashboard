@@ -2480,6 +2480,25 @@ body.page-wm .wm-group-card {
     margin-bottom: 0;
 }
 
+body.page-wm .wm-group-card--deutschland {
+    border: 2px solid transparent;
+    border-radius: 12px;
+    background:
+        linear-gradient(#1e1e1e, #1e1e1e) padding-box,
+        linear-gradient(
+            to bottom,
+            #111111 0%,
+            #111111 33%,
+            #dd0000 33%,
+            #dd0000 66%,
+            #ffce00 66%,
+            #ffce00 100%
+        ) border-box;
+    box-shadow:
+        0 0 8px rgba(221, 0, 0, 0.45),
+        0 0 14px rgba(255, 206, 0, 0.4);
+}
+
 /* WM Match-Darstellung – größere Schrift wie Bundesliga */
 body.page-wm .comp-team-name {
     font-size: 15px;

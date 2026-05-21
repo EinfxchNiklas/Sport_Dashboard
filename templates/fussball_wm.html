@@ -52,7 +52,7 @@
 
     <div class="wm-groups-grid">
         {% for group in groups %}
-        <div class="wm-group-card panel">
+        <div class="wm-group-card panel{% if group.label|upper == 'E' %} wm-group-card--deutschland{% endif %}">
             <div class="panel-header">Gruppe {{ group.label }}</div>
 
             {# Tabelle #}
