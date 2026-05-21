@@ -27,9 +27,9 @@ _WM_SHORTCUT = "wm26"
 _WM_SEASON = 2026
 
 WM_PHASES = [
-    {"orderID": 1, "name": "Gruppenphase 1"},
-    {"orderID": 2, "name": "Gruppenphase 2"},
-    {"orderID": 3, "name": "Gruppenphase 3"},
+    {"orderID": 1, "name": "Gruppenphase Spieltag 1"},
+    {"orderID": 2, "name": "Gruppenphase Spieltag 2"},
+    {"orderID": 3, "name": "Gruppenphase Spieltag 3"},
     {"orderID": 4, "name": "Sechzehntelfinale"},
     {"orderID": 5, "name": "Achtelfinale"},
     {"orderID": 6, "name": "Viertelfinale"},
