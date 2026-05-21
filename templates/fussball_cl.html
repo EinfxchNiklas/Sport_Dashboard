@@ -11,7 +11,7 @@
     <script defer src="{{ umami_script_url }}" data-website-id="{{ umami_website_id }}"></script>
     {% endif %}
 </head>
-<body class="page-fussball page-cl">
+<body class="page-fussball page-cl{% if is_ligaphase and table %} has-mobile-ligaphase-tabs{% endif %}">
     <a href="/fussball" class="home-button">← Fußball</a>
     <div class="page-content">
     <h1>Champions League <span class="season-tag">{{ season }}/{{ '%02d' % ((season + 1) % 100) }}</span></h1>
@@ -52,6 +52,13 @@
         <span class="round-arrow round-arrow--disabled">›</span>
         {% endif %}
     </div>
+
+    {% if table %}
+    <div class="mobile-content-tabs" data-tabs="cl-ligaphase">
+        <button type="button" class="active" data-tab="matches">Spiele</button>
+        <button type="button" data-tab="standings">Tabelle</button>
+    </div>
+    {% endif %}
 
     {# ---- Ligaphase-Spiele ---- #}
     <div class="comp-content-grid">
@@ -185,5 +192,52 @@
     <footer>
         <p><a href="/impressum">Impressum</a> | <a href="/datenschutz">Datenschutz</a> | <a href="/docs">Docs</a></p>
     </footer>
+
+    <script>
+        (function () {
+            var tabs = document.querySelector('.mobile-content-tabs[data-tabs="cl-ligaphase"]');
+            var contentGrid = document.querySelector('.comp-content-grid');
+            var mobileQuery = window.matchMedia('(max-width: 700px)');
+
+            if (!tabs || !contentGrid) {
+                return;
+            }
+
+            function setActiveTab(tabName) {
+                var buttons = tabs.querySelectorAll('button[data-tab]');
+                buttons.forEach(function (button) {
+                    button.classList.toggle('active', button.dataset.tab === tabName);
+                });
+
+                if (tabName === 'standings' && mobileQuery.matches) {
+                    contentGrid.classList.add('mobile-standings-only');
+                } else {
+                    contentGrid.classList.remove('mobile-standings-only');
+                }
+            }
+
+            tabs.addEventListener('click', function (event) {
+                var button = event.target.closest('button[data-tab]');
+                if (!button) {
+                    return;
+                }
+                setActiveTab(button.dataset.tab);
+            });
+
+            function syncForViewport() {
+                if (!mobileQuery.matches) {
+                    setActiveTab('matches');
+                }
+            }
+
+            if (typeof mobileQuery.addEventListener === 'function') {
+                mobileQuery.addEventListener('change', syncForViewport);
+            } else if (typeof mobileQuery.addListener === 'function') {
+                mobileQuery.addListener(syncForViewport);
+            }
+
+            setActiveTab('matches');
+        })();
+    </script>
 </body>
 </html>

@@ -600,10 +600,24 @@ body.page-fussball .mobile-content-tabs button.active {
                 background: #ffd24a;
                 color: #111;
             }
+body.page-cl .mobile-content-tabs button.active {
+                background: #1e90ff;
+                color: #111;
+            }
 body.page-fussball .standings-wrap {
                 display: none;
             }
 body.page-fussball .standings-wrap.active {
+                display: block;
+            }
+
+body.page-cl.has-mobile-ligaphase-tabs .comp-content-grid .comp-table-panel {
+                display: none;
+            }
+body.page-cl.has-mobile-ligaphase-tabs .comp-content-grid.mobile-standings-only .comp-matches-panel {
+                display: none;
+            }
+body.page-cl.has-mobile-ligaphase-tabs .comp-content-grid.mobile-standings-only .comp-table-panel {
                 display: block;
             }
         }
