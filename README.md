@@ -4,7 +4,7 @@ Dieses Projekt ist ein privates, nicht-kommerzielles Sport-Dashboard, das Daten 
 
 Ziel ist eine zentrale Übersicht für:
 
-- Fußball (Bundesliga)
+- Fußball (Bundesliga, Champions League, DFB-Pokal, WM 2026)
 - Formel 1
 - NFL
 
@@ -17,9 +17,13 @@ Zusätzlich gelten die Nutzungsbedingungen der eingebundenen API-Anbieter (siehe
 
 ## Was zeigt die Seite?
 
-- Fußball: Bundesliga-Tabelle und Spiele eines ausgewählten Teams
-- Formel 1: kommende und vergangene Rennwochenenden, Session-Ergebnisse, Championship-Stände
-- NFL: Wochenübersicht (Regular Season/Playoffs), Scores, Standings, Team-Roster
+- Fußball: Wettbewerbsauswahl mit Bundesliga, Champions League, DFB-Pokal und WM 2026
+- Fußball Bundesliga: Team-Auswahl, Spiele je Team, Live-Tabelle
+- Fußball Champions League: Ligaphase mit Spieltag-Navigation, KO-Phasen und Tabelle
+- Fußball DFB-Pokal: Rundenansicht mit Navigation und Spielstatus
+- Fußball WM 2026: Gruppenphase (Tabellen + Spiele) und KO-Phase
+- Formel 1: Kommende und vergangene Rennwochenenden, Session-Ergebnisse, Championship-Stände (Fahrer/Konstrukteure)
+- NFL: Wochenübersicht (Regular Season/Playoffs), Scores, Standings (Division/Conference/League), Team-Roster
 
 ## Schnellstart (lokal)
 
@@ -56,6 +60,8 @@ TANK01_NFL_API_KEY=dein_tank01_key
 DEBUG=False
 PORT=5000
 OPENF1_BASE_URL=SET_Base_URL
+UMAMI_SCRIPT_URL=
+UMAMI_WEBSITE_ID=
 ```
 
 5. Starten
@@ -110,7 +116,7 @@ Hinweis: Die folgenden Angaben sind nach bestem Wissen dokumentiert (Stand 12.04
 - Authentifizierung: keine – vollständig öffentliche API, kein API-Key erforderlich
 - Rate Limits: keine offiziellen Limits dokumentiert; Community-betriebene API
 - Lizenz: Apache-2.0 (siehe https://github.com/OpenLigaDB/OpenLigaDB-Samples)
-- Abgedeckte Wettbewerbe: 1. Bundesliga (`bl1`), DFB-Pokal (`dfb`), Champions League (`ucl`)
+- Abgedeckte Wettbewerbe: 1. Bundesliga (`bl1`), DFB-Pokal (`dfb`), Champions League (`ucl`), WM 2026 (`wm26`)
 
 ### 2) OpenF1 (Formel 1)
 

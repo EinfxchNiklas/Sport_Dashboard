@@ -312,6 +312,41 @@ body.page-home .impressum-button {
         padding: 8px 12px;
         font-size: 12px;
     }
+body.page-home .fussball-split .content {
+        opacity: 0;
+        transform: scale(0.98);
+    }
+body.page-home .fussball-split-links {
+        flex-direction: row;
+    }
+body.page-home .fussball-split .fussball-split-link {
+        opacity: 1;
+        transform: translateY(0);
+        pointer-events: auto;
+        padding: 10px 8px;
+        gap: 5px;
+    }
+body.page-home .fussball-split .fussball-split-link-top {
+        border-bottom: none;
+        border-right: 1px solid rgba(255, 255, 255, 0.2);
+    }
+body.page-home .fussball-split .split-link-title {
+        font-size: clamp(0.95rem, 3.4vw, 1.2rem);
+        text-align: center;
+    }
+body.page-home .fussball-split .split-link-subtitle,
+body.page-home .fussball-split .split-link-arrow {
+        opacity: 1;
+        transform: translateY(0);
+    }
+body.page-home .fussball-split .split-link-subtitle {
+        font-size: clamp(0.68rem, 2.2vw, 0.8rem);
+        letter-spacing: 0.8px;
+        color: rgba(255, 255, 255, 0.85);
+    }
+body.page-home .fussball-split .split-link-arrow {
+        opacity: 0.6;
+    }
 }
 
 @media (max-width: 760px) {
@@ -600,10 +635,24 @@ body.page-fussball .mobile-content-tabs button.active {
                 background: #ffd24a;
                 color: #111;
             }
+body.page-cl .mobile-content-tabs button.active {
+                background: #1e90ff;
+                color: #111;
+            }
 body.page-fussball .standings-wrap {
                 display: none;
             }
 body.page-fussball .standings-wrap.active {
+                display: block;
+            }
+
+body.page-cl.has-mobile-ligaphase-tabs .comp-content-grid .comp-table-panel {
+                display: none;
+            }
+body.page-cl.has-mobile-ligaphase-tabs .comp-content-grid.mobile-standings-only .comp-matches-panel {
+                display: none;
+            }
+body.page-cl.has-mobile-ligaphase-tabs .comp-content-grid.mobile-standings-only .comp-table-panel {
                 display: block;
             }
         }

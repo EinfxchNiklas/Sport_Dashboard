@@ -1,0 +1,95 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>DFB-Pokal {{ season_label }}</title>
+    <link rel="icon" href="{{ url_for('static', filename='images/favicon.svg') }}" type="image/svg+xml">
+    <link rel="stylesheet" href="/static/styles/sports_dashboard.css">
+    <link rel="stylesheet" href="/static/styles/sports_dashboard.mobile.css">
+    {% if umami_enabled %}
+    <script defer src="{{ umami_script_url }}" data-website-id="{{ umami_website_id }}"></script>
+    {% endif %}
+</head>
+<body class="page-fussball page-dfb">
+    <a href="/fussball" class="home-button">← Wettbewerbe</a>
+    <div class="page-content">
+    <h1>DFB-Pokal <span class="season-tag">{{ season_label }}</span></h1>
+
+    {# ---- Runden-Navigation: Pfeile + Dropdown ---- #}
+    <div class="comp-round-nav">
+        {% set prev_id = current_round_id - 1 %}
+        {% set next_id = current_round_id + 1 %}
+        {% set max_id = rounds | map(attribute='orderID') | max %}
+
+        {% if current_round_id > 1 %}
+        <a href="/fussball/dfb-pokal?runde={{ prev_id }}" class="round-arrow">‹</a>
+        {% else %}
+        <span class="round-arrow round-arrow--disabled">‹</span>
+        {% endif %}
+
+        <div class="round-nav-center">
+            <select class="round-dropdown"
+                    onchange="window.location='/fussball/dfb-pokal?runde='+this.value">
+                {% for runde in rounds %}
+                <option value="{{ runde.orderID }}" {% if runde.orderID == current_round_id %}selected{% endif %}>
+                    {{ runde.name }}
+                </option>
+                {% endfor %}
+            </select>
+        </div>
+
+        {% if current_round_id < max_id %}
+        <a href="/fussball/dfb-pokal?runde={{ next_id }}" class="round-arrow">›</a>
+        {% else %}
+        <span class="round-arrow round-arrow--disabled">›</span>
+        {% endif %}
+    </div>
+
+    {# ---- Spiele der aktuellen Runde ---- #}
+    {% set current_round = rounds | selectattr("orderID", "equalto", current_round_id) | first %}
+    <section class="panel comp-ko-panel">
+        <div class="panel-header">{{ current_round.name if current_round else "" }}</div>
+        <div class="comp-ko-matches">
+            {% if matches %}
+                {% for match in matches %}
+                <div class="comp-match-row">
+                    <div class="comp-team comp-team--home">
+                        {% if match.team1.logo %}
+                        <img src="{{ match.team1.logo }}" alt="{{ match.team1.teamName }}" class="comp-team-logo" />
+                        {% endif %}
+                        <span class="comp-team-name">{{ match.team1.teamName }}</span>
+                    </div>
+                    <div class="comp-score">
+                        {% if match.isFinished %}
+                            <span class="score-value">{{ match.homeScore }} : {{ match.awayScore }}</span>
+                            {% if match.resultType == 4 %}
+                                <span class="score-note">n.V.</span>
+                            {% elif match.resultType == 5 %}
+                                <span class="score-note">n.E.</span>
+                            {% endif %}
+                        {% else %}
+                            <span class="score-time">{{ match.formattedDateTime }}</span>
+                        {% endif %}
+                    </div>
+                    <div class="comp-team comp-team--away">
+                        <span class="comp-team-name">{{ match.team2.teamName }}</span>
+                        {% if match.team2.logo %}
+                        <img src="{{ match.team2.logo }}" alt="{{ match.team2.teamName }}" class="comp-team-logo" />
+                        {% endif %}
+                    </div>
+                </div>
+                {% endfor %}
+            {% else %}
+                <div class="no-data">Keine Spiele für diese Runde verfügbar.</div>
+            {% endif %}
+        </div>
+    </section>
+
+    </div>
+
+    <footer>
+        <p><a href="/impressum">Impressum</a> | <a href="/datenschutz">Datenschutz</a> | <a href="/docs">Docs</a></p>
+    </footer>
+</body>
+</html>

@@ -1,0 +1,396 @@
+"""Champions-League-Daten via OpenLigaDB (Shortcut: ucl).
+
+API-Struktur des "ucl"-Shortcuts:
+  Group  1– 8  →  Ligaphase Spieltag 1–8 (je eigene Gruppe)
+  Group  9     →  Play-offs
+  Group 10–11  →  Achtelfinale Hinspiele / Rückspiele
+  Group 12–13  →  Viertelfinale Hinspiele / Rückspiele
+  Group 14–15  →  Halbfinale Hinspiele / Rückspiele
+  Group 16     →  Finale
+
+UI-Phasen (1–6) werden auf API-Gruppen gemappt, damit Hin- und
+Rückspiele einer K.o.-Runde zusammen angezeigt werden.
+"""
+
+from concurrent.futures import ThreadPoolExecutor
+from datetime import datetime, timezone
+
+from pytz import timezone as pytz_timezone
+
+from ._openligadb_common import (
+    _current_football_season,
+    _fetch_competition_group_matches,
+    _normalize_icon_url,
+    _transform_raw_match,
+    _get_cached,
+    _set_cached,
+)
+
+
+# ---------------------------------------------------------------------------
+# Konfiguration
+# ---------------------------------------------------------------------------
+
+_CL_SHORTCUT = "ucl"
+
+# UI-Phasen (angezeigt in der Navigationsleiste)
+CL_PHASES = [
+    {"orderID": 1, "name": "Ligaphase"},
+    {"orderID": 2, "name": "Play-offs"},
+    {"orderID": 3, "name": "Achtelfinale"},
+    {"orderID": 4, "name": "Viertelfinale"},
+    {"orderID": 5, "name": "Halbfinale"},
+    {"orderID": 6, "name": "Finale"},
+]
+
+# Mapping: UI-Phase → OpenLigaDB-Group-OrderIDs
+_PHASE_TO_API_GROUPS = {
+    1: [1, 2, 3, 4, 5, 6, 7, 8],  # Ligaphase: 8 Spieltage
+    2: [9],                         # Play-offs
+    3: [10, 11],                    # Achtelfinale Hin + Rück
+    4: [12, 13],                    # Viertelfinale Hin + Rück
+    5: [14, 15],                    # Halbfinale Hin + Rück
+    6: [16],                        # Finale
+}
+
+_LIGAPHASE_SPIELTAGE = 8
+
+# Lokale CL-Logos: internationale Teams liegen in CL_Teams,
+# deutsche Teams weiterhin in BL_Team_Logos. Wenn kein Mapping passt,
+# bleibt das API-Logo als Fallback erhalten.
+_CL_LOGO_OVERRIDES = {
+    # Deutsche Vereine -> Bundesliga-Ordner
+    "Borussia Dortmund": "/static/images/BL_Team_Logos/Dortmund.png",
+    "FC Bayern München": "/static/images/BL_Team_Logos/Bayern.png",
+    "Bayer 04 Leverkusen": "/static/images/BL_Team_Logos/Leverkusen.png",
+    "Eintracht Frankfurt": "/static/images/BL_Team_Logos/Frankfurt.png",
+    "RB Leipzig": "/static/images/BL_Team_Logos/Leipzig.png",
+    "VfB Stuttgart": "/static/images/BL_Team_Logos/Stuttgart.png",
+
+    # Internationale Vereine -> CL-Ordner (inkl. Namensvarianten)
+    "FC Arsenal": "/static/images/CL_Teams/arsenal.png",
+    "Arsenal FC": "/static/images/CL_Teams/arsenal.png",
+    "Aston Villa": "/static/images/CL_Teams/aston-villa.png",
+    "Atletico Madrid": "/static/images/CL_Teams/atletico-madrid.png",
+    "Atlético Madrid": "/static/images/CL_Teams/atletico-madrid.png",
+    "FC Barcelona": "/static/images/CL_Teams/barcelona.png",
+    "Feyenoord Rotterdam": "/static/images/CL_Teams/feyenoord.png",
+    "Galatasaray Istanbul": "/static/images/CL_Teams/galatasaray.png",
+    "Galatasaray": "/static/images/CL_Teams/galatasaray.png",
+    "Inter Mailand": "/static/images/CL_Teams/inter.png",
+    "Inter Milan": "/static/images/CL_Teams/inter.png",
+    "OSC Lille": "/static/images/CL_Teams/lille.png",
+    "Lille OSC": "/static/images/CL_Teams/lille.png",
+    "FC Liverpool": "/static/images/CL_Teams/liverpool.png",
+    "Liverpool FC": "/static/images/CL_Teams/liverpool.png",
+    "AC Mailand": "/static/images/CL_Teams/milan.png",
+    "AC Milan": "/static/images/CL_Teams/milan.png",
+    "Manchester City": "/static/images/CL_Teams/manchester-city.png",
+    "Manchester United": "/static/images/CL_Teams/manchester-united.png",
+    "SSC Neapel": "/static/images/CL_Teams/napoli.png",
+    "SSC Napoli": "/static/images/CL_Teams/napoli.png",
+    "Paris Saint-Germain": "/static/images/CL_Teams/paris-saint-germain.png",
+    "FC Porto": "/static/images/CL_Teams/porto.png",
+    "PSV Eindhoven": "/static/images/CL_Teams/psv.png",
+    "Racing Club de Lens": "/static/images/CL_Teams/rc-lens.png",
+    "RC Lens": "/static/images/CL_Teams/rc-lens.png",
+    "Real Betis": "/static/images/CL_Teams/real-betis.png",
+    "Real Betis Balompie": "/static/images/CL_Teams/real-betis.png",
+    "AS Rom": "/static/images/CL_Teams/roma.png",
+    "AS Roma": "/static/images/CL_Teams/roma.png",
+    "Real Madrid": "/static/images/CL_Teams/real-madrid.png",
+    "Schachtar Donezk": "/static/images/CL_Teams/shakhtar.png",
+    "Shakhtar Donetsk": "/static/images/CL_Teams/shakhtar.png",
+    "Slavia Prag": "/static/images/CL_Teams/slavia-praha.png",
+    "Slavia Praha": "/static/images/CL_Teams/slavia-praha.png",
+    "FC Villarreal": "/static/images/CL_Teams/villarreal.png",
+    "Villarreal CF": "/static/images/CL_Teams/villarreal.png",
+    "Union Saint-Gilloise": "/static/images/CL_Teams/union-saint-gilloise.png",
+    "Paphos FC": "/static/images/CL_Teams/paphos.png",
+    "Qarabag FK": "/static/images/CL_Teams/qarabag.png",
+}
+
+
+def _override_logos(matches, table):
+    """Ersetzt bekannte fehlerhafte/unpassende Logo-URLs durch korrekte Alternativen."""
+    for m in matches:
+        for key in ("team1", "team2"):
+            name = m.get(key, {}).get("teamName")
+            if name in _CL_LOGO_OVERRIDES:
+                m[key]["logo"] = _CL_LOGO_OVERRIDES[name]
+    for row in table:
+        if row.get("teamName") in _CL_LOGO_OVERRIDES:
+            row["logo"] = _CL_LOGO_OVERRIDES[row["teamName"]]
+
+
+def _compute_cl_table_from_ligaphase(all_raw_spieltage):
+    """Berechnet die CL-Tabelle ausschließlich aus den Ligaphase-Spielen (Spieltage 1-8).
+    
+    Args:
+        all_raw_spieltage: Dict {1: [...], 2: [...], ..., 8: [...]} mit Raw-Match-Objekten
+    
+    Returns:
+        Liste von Team-Statistiken, sortiert nach Punkten/Torverhältnis
+    """
+    from collections import defaultdict
+    
+    team_stats = defaultdict(lambda: {
+        "teamId": None,
+        "teamName": "",
+        "logo": "",
+        "played": 0,
+        "won": 0,
+        "draw": 0,
+        "lost": 0,
+        "goalsFor": 0,
+        "goalsAgainst": 0,
+        "points": 0,
+    })
+    
+    # Durch alle 8 Spieltage iterieren
+    for spieltag in range(1, _LIGAPHASE_SPIELTAGE + 1):
+        raw_matches = all_raw_spieltage.get(spieltag, [])
+        for match in raw_matches:
+            # Nur beendete Spiele zählen
+            if not match.get("matchIsFinished"):
+                continue
+            
+            results = match.get("matchResults", [])
+            if not results:
+                continue
+            
+            # Endergebnis ist das letzte Result-Objekt
+            final_result = results[-1]
+            
+            team1 = match.get("team1", {})
+            team2 = match.get("team2", {})
+            team1_name = team1.get("teamName", "")
+            team2_name = team2.get("teamName", "")
+            
+            if not team1_name or not team2_name:
+                continue
+            
+            goals1 = final_result.get("pointsTeam1", 0)
+            goals2 = final_result.get("pointsTeam2", 0)
+            
+            # Team 1 initialisieren falls neu
+            if team_stats[team1_name]["teamId"] is None:
+                team_stats[team1_name]["teamId"] = team1.get("teamId")
+                team_stats[team1_name]["teamName"] = team1_name
+                team_stats[team1_name]["logo"] = _normalize_icon_url(team1.get("teamIconUrl"))
+            
+            # Team 2 initialisieren falls neu
+            if team_stats[team2_name]["teamId"] is None:
+                team_stats[team2_name]["teamId"] = team2.get("teamId")
+                team_stats[team2_name]["teamName"] = team2_name
+                team_stats[team2_name]["logo"] = _normalize_icon_url(team2.get("teamIconUrl"))
+            
+            # Statistiken aktualisieren
+            team_stats[team1_name]["played"] += 1
+            team_stats[team2_name]["played"] += 1
+            
+            team_stats[team1_name]["goalsFor"] += goals1
+            team_stats[team1_name]["goalsAgainst"] += goals2
+            team_stats[team2_name]["goalsFor"] += goals2
+            team_stats[team2_name]["goalsAgainst"] += goals1
+            
+            if goals1 > goals2:
+                team_stats[team1_name]["won"] += 1
+                team_stats[team1_name]["points"] += 3
+                team_stats[team2_name]["lost"] += 1
+            elif goals1 < goals2:
+                team_stats[team2_name]["won"] += 1
+                team_stats[team2_name]["points"] += 3
+                team_stats[team1_name]["lost"] += 1
+            else:
+                team_stats[team1_name]["draw"] += 1
+                team_stats[team2_name]["draw"] += 1
+                team_stats[team1_name]["points"] += 1
+                team_stats[team2_name]["points"] += 1
+    
+    # In Liste umwandeln und Torverhältnis berechnen
+    table = []
+    for stats in team_stats.values():
+        stats["goalDiff"] = stats["goalsFor"] - stats["goalsAgainst"]
+        table.append(stats)
+    
+    # Sortieren: 1. Punkte, 2. Torverhältnis, 3. Tore geschossen, 4. Name
+    table.sort(
+        key=lambda t: (-t["points"], -t["goalDiff"], -t["goalsFor"], t["teamName"])
+    )
+    
+    # Position hinzufügen
+    for idx, team in enumerate(table):
+        team["position"] = idx + 1
+    
+    return table
+
+
+def _fetch_or_cache_ligaphase_raw(season):
+    """Liest alle Ligaphase-Spieltage (1-8) aus dem Cache oder von der API."""
+    cache_key_raw = f"cl_{season}_all_spieltage"
+    all_raw = _get_cached(cache_key_raw)
+    if all_raw is not None:
+        return all_raw
+
+    with ThreadPoolExecutor(max_workers=_LIGAPHASE_SPIELTAGE) as executor:
+        futs = {
+            i: executor.submit(
+                _fetch_competition_group_matches, _CL_SHORTCUT, season, i
+            )
+            for i in range(1, _LIGAPHASE_SPIELTAGE + 1)
+        }
+        all_raw = {i: futs[i].result() for i in range(1, _LIGAPHASE_SPIELTAGE + 1)}
+    _set_cached(cache_key_raw, all_raw)
+    return all_raw
+
+
+def _fetch_or_cache_ko_raw(season, phase_order_id):
+    """Liest Rohdaten fuer eine K.o.-Phase aus Cache oder API."""
+    cache_key_raw = f"cl_{season}_phase_{phase_order_id}_raw"
+    all_raw_ko = _get_cached(cache_key_raw)
+    if all_raw_ko is not None:
+        return all_raw_ko
+
+    api_groups = _PHASE_TO_API_GROUPS.get(phase_order_id, [])
+    all_raw_ko = []
+    if api_groups:
+        with ThreadPoolExecutor(max_workers=len(api_groups)) as executor:
+            futs = [
+                executor.submit(
+                    _fetch_competition_group_matches, _CL_SHORTCUT, season, g
+                )
+                for g in api_groups
+            ]
+            for f in futs:
+                all_raw_ko.extend(f.result())
+
+    _set_cached(cache_key_raw, all_raw_ko)
+    return all_raw_ko
+
+
+def _auto_select_default_phase_and_spieltag(season):
+    """Waehlt Default-Ansicht: naechster offener Spieltag bzw. naechste offene Runde."""
+    all_raw = _fetch_or_cache_ligaphase_raw(season)
+
+    # 1) Ligaphase: erster Spieltag mit mindestens einem nicht beendeten Match
+    for i in range(1, _LIGAPHASE_SPIELTAGE + 1):
+        raw_matches = all_raw.get(i, [])
+        if raw_matches and any(not m.get("matchIsFinished", False) for m in raw_matches):
+            return 1, i - 1
+
+    # 2) K.o.-Phasen: erste Runde mit mindestens einem nicht beendeten Match
+    for phase_id in range(2, 7):
+        raw_matches = _fetch_or_cache_ko_raw(season, phase_id)
+        if raw_matches and any(not m.get("matchIsFinished", False) for m in raw_matches):
+            return phase_id, None
+
+    # 3) Alles beendet -> zurueck zu Spieltag 1 der Ligaphase
+    return 1, 0
+
+
+# ---------------------------------------------------------------------------
+# Öffentliche Funktion
+# ---------------------------------------------------------------------------
+
+def fetch_cl_data(phase_order_id=None, spieltag_idx=None):
+    """Gibt Champions-League-Daten für eine Phase zurück.
+
+    Args:
+        phase_order_id: 1=Ligaphase, 2=Play-offs, 3=Achtelfinale, ...
+                None -> automatische Auswahl
+        spieltag_idx:   0-basierter Spieltag-Index (0–7) innerhalb der Ligaphase.
+                        None → automatisch letzter gespielteer Spieltag.
+
+    Returns:
+        Dict mit:
+            phases          – Liste aller UI-Phasen
+            current_phase_id
+            matches         – Spiele des gewählten Spieltags / der K.o.-Runde
+            spieltage_count – 8 (immer)
+            spieltag_idx    – 0-basierter Index des angezeigten Spieltags
+            table           – Ligaphase-Tabelle (nur phase_order_id == 1)
+            is_ligaphase    – True wenn Ligaphase
+    """
+    local_tz = pytz_timezone("Europe/Berlin")
+    season = _current_football_season()
+
+    if phase_order_id is None:
+        phase_order_id, auto_spieltag_idx = _auto_select_default_phase_and_spieltag(season)
+        if spieltag_idx is None:
+            spieltag_idx = auto_spieltag_idx
+
+    is_ligaphase = (phase_order_id == 1)
+
+    # --- Ligaphase ---
+    if is_ligaphase:
+        # Alle 8 Spieltage parallel fetchen und gemeinsam cachen
+        all_raw = _fetch_or_cache_ligaphase_raw(season)
+
+        # Default innerhalb der Ligaphase (wenn explizit Phase 1 geoeffnet wurde):
+        # naechster noch nicht vollstaendig gespielter Spieltag, sonst Spieltag 1.
+        if spieltag_idx is None:
+            spieltag_idx = 0
+            found_upcoming_or_running = False
+            for i in range(1, _LIGAPHASE_SPIELTAGE + 1):
+                raw_matches = all_raw.get(i, [])
+                if not raw_matches:
+                    continue
+                if any(not m.get("matchIsFinished", False) for m in raw_matches):
+                    spieltag_idx = i - 1  # 0-basiert
+                    found_upcoming_or_running = True
+                    break
+            if not found_upcoming_or_running:
+                spieltag_idx = 0
+        spieltag_idx = max(0, min(spieltag_idx, _LIGAPHASE_SPIELTAGE - 1))
+
+        cache_key = f"cl_{season}_st_{spieltag_idx}"
+        cached = _get_cached(cache_key)
+        if cached:
+            return cached
+
+        raw = all_raw.get(spieltag_idx + 1, [])
+        matches = [m for m in [_transform_raw_match(r, local_tz) for r in raw] if m]
+        matches.sort(key=lambda m: m["matchDateTimeUTC"])
+
+        # Tabelle nur aus Ligaphase-Spielen (Spieltage 1-8) berechnen
+        table = _compute_cl_table_from_ligaphase(all_raw)
+
+        _override_logos(matches, table)
+        result = {
+            "phases": CL_PHASES,
+            "current_phase_id": 1,
+            "matches": matches,
+            "spieltage_count": _LIGAPHASE_SPIELTAGE,
+            "spieltag_idx": spieltag_idx,
+            "table": table,
+            "is_ligaphase": True,
+            "season": season,
+        }
+        _set_cached(cache_key, result)
+        return result
+
+    # --- K.o.-Phasen ---
+    cache_key = f"cl_{season}_phase_{phase_order_id}"
+    cached = _get_cached(cache_key)
+    if cached:
+        return cached
+
+    all_raw_ko = _fetch_or_cache_ko_raw(season, phase_order_id)
+
+    matches = [m for m in [_transform_raw_match(r, local_tz) for r in all_raw_ko] if m]
+    matches.sort(key=lambda m: m["matchDateTimeUTC"])
+
+    _override_logos(matches, [])
+    result = {
+        "phases": CL_PHASES,
+        "current_phase_id": phase_order_id,
+        "matches": matches,
+        "spieltage_count": _LIGAPHASE_SPIELTAGE,
+        "spieltag_idx": 0,
+        "table": [],
+        "is_ligaphase": False,
+        "season": season,
+    }
+    _set_cached(cache_key, result)
+    return result

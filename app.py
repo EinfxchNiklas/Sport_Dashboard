@@ -9,6 +9,9 @@ import requests
 from data_sources.get_fussball_data import (
     fetch_team_matches,
     fetch_bundesliga_table,
+    fetch_cl_data,
+    fetch_dfb_data,
+    fetch_wm_data,
 )
 from data_sources.get_formula1_data import (
     fetch_formula1_weekends,
@@ -88,6 +91,7 @@ def _check_website_health():
     required_routes = {
         '/',
         '/fussball',
+        '/fussball/bundesliga',
         '/formula1',
         '/american_football',
     }
@@ -102,15 +106,51 @@ def _check_website_health():
 
 
 
+def _is_nfl_game_pending(game):
+    """Return True if a game is not fully completed yet."""
+    status_code = str(game.get('statusCode', '')).strip()
+    status = str(game.get('status', '')).strip().lower()
+
+    # API uses status code 0 for scheduled/not started games.
+    if status_code == '0':
+        return True
+
+    # Keep live or interrupted games in the currently selected week.
+    pending_markers = (
+        'live',
+        'in progress',
+        'quarter',
+        'q1',
+        'q2',
+        'q3',
+        'q4',
+        'ot',
+        'halftime',
+        'delayed',
+        'postponed',
+        'suspended',
+    )
+    return any(marker in status for marker in pending_markers)
+
+
 def _find_latest_available_nfl_week(season, season_type, max_week):
-    """Return latest week/round that has at least one game for the given season/type."""
-    for week in range(max_week, 0, -1):
+    """Return the first not-yet-completed week for the given season/type."""
+    fallback_week = 1
+
+    for week in range(1, max_week + 1):
         games, rate_limited = fetch_nfl_scores(season, week, season_type)
         if rate_limited:
-            break
-        if games:
+            return fallback_week, None, True
+
+        if not games:
+            return week, None, False
+
+        if any(_is_nfl_game_pending(game) for game in games):
             return week, games, False
-    return 1, None, False
+
+        fallback_week = min(week + 1, max_week)
+
+    return fallback_week, None, False
 
 @app.route('/')
 def homepage():
@@ -157,9 +197,20 @@ def healthcheck():
     ), http_code
 
 @app.route('/fussball')
+def fussball_selector():
+    from data_sources._openligadb_common import _current_football_season
+    year = _current_football_season()
+    season_label = f"{year}/{(year + 1) % 100:02d}"
+    return render_template('fussball_select.html', season_label=season_label)
+
+
+@app.route('/fussball/bundesliga')
 def display_matches():
     team_id = request.args.get('team', 7, type=int)
-    
+    source = request.args.get('source', 'home', type=str)
+    if source not in {'home', 'select'}:
+        source = 'home'
+
     standings, _ = fetch_bundesliga_table()
     matches, _ = fetch_team_matches(team_id)
 
@@ -172,7 +223,33 @@ def display_matches():
         standings=standings,
         selected_team_id=team_id,
         selected_team_name=selected_team_name,
+        source=source,
+        home_url='/fussball' if source == 'select' else '/',
+        home_label='Wettbewerbe' if source == 'select' else 'Home',
     )
+
+
+@app.route('/fussball/champions-league')
+def fussball_cl():
+    phase_order_id = request.args.get('phase', type=int)
+    spieltag_idx = request.args.get('spieltag', None, type=int)
+    data = fetch_cl_data(phase_order_id=phase_order_id, spieltag_idx=spieltag_idx)
+    return render_template('fussball_cl.html', **data)
+
+
+@app.route('/fussball/dfb-pokal')
+def fussball_dfb():
+    round_order_id = request.args.get('runde', type=int)
+    data = fetch_dfb_data(round_order_id=round_order_id)
+    return render_template('fussball_dfb.html', **data)
+
+
+@app.route('/fussball/wm')
+def fussball_wm():
+    phase_order_id = request.args.get('phase', 1, type=int)
+    data = fetch_wm_data(phase_order_id=phase_order_id)
+    return render_template('fussball_wm.html', **data)
+
 
 @app.route('/formula1')
 def formula1_dashboard():
@@ -304,7 +381,7 @@ def american_football():
 def american_football_week_results():
     # Keep season query consistent with the season selector bounds.
     now = datetime.now()
-    current_season = now.year if now.month >= 8 else now.year - 1
+    current_season = now.year if now.month >= 5 else now.year - 1
     min_available_season = 2022
     max_available_season = max(now.year, current_season)
 

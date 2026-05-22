@@ -749,6 +749,86 @@ body.page-home .fussball {
         radial-gradient(circle at 50% -15%, rgba(255, 215, 40, 0.74) 0%, rgba(255, 215, 40, 0.36) 40%, rgba(0, 0, 0, 0) 72%),
         linear-gradient(to bottom, #3a300f 0%, #241d0b 52%, #050401 100%);
     }
+body.page-home .fussball-split-links {
+        position: absolute;
+        inset: 0;
+        z-index: 3;
+        display: flex;
+        flex-direction: column;
+        pointer-events: none;
+    }
+body.page-home .fussball-split-link {
+        flex: 1;
+        display: flex;
+    flex-direction: column;
+        align-items: center;
+        justify-content: center;
+    gap: 6px;
+        text-decoration: none;
+        color: #ffffff;
+        font-size: 1rem;
+        font-weight: 700;
+        letter-spacing: 1.4px;
+        text-transform: uppercase;
+        text-shadow: 0 2px 8px rgba(0, 0, 0, 0.85);
+        opacity: 0;
+        transform: translateY(10px);
+        transition: opacity 0.25s ease, transform 0.25s ease;
+        pointer-events: none;
+    }
+body.page-home .fussball-split-link-top {
+        border-bottom: 1px solid rgba(255, 255, 255, 0.2);
+    }
+body.page-home .split-link-title {
+    font-size: clamp(1.15rem, 1.85vw, 1.5rem);
+        font-weight: 800;
+        line-height: 1.1;
+        text-transform: uppercase;
+        letter-spacing: 1.4px;
+    }
+body.page-home .split-link-subtitle {
+    font-size: clamp(0.9rem, 1.2vw, 1.05rem);
+        font-weight: 600;
+        line-height: 1.2;
+        letter-spacing: 1.1px;
+        text-transform: uppercase;
+        color: rgba(255, 255, 255, 0.85);
+        opacity: 0;
+        transform: translateY(10px);
+        transition: opacity 0.35s ease 0.04s, transform 0.35s ease 0.04s;
+    }
+body.page-home .split-link-arrow {
+        font-size: 1rem;
+        line-height: 1;
+        opacity: 0;
+        transform: translateY(8px);
+        transition: opacity 0.35s ease 0.08s, transform 0.35s ease 0.08s;
+    }
+body.page-home .fussball-split:hover .fussball-split-link,
+body.page-home .fussball-split:focus-within .fussball-split-link {
+        opacity: 1;
+        transform: translateY(0);
+        pointer-events: auto;
+    }
+body.page-home .fussball-split .fussball-split-link:hover,
+body.page-home .fussball-split .fussball-split-link:focus-visible {
+        color: #ffffff;
+        text-decoration: none;
+    }
+body.page-home .fussball-split .fussball-split-link:hover .split-link-subtitle,
+body.page-home .fussball-split .fussball-split-link:focus-visible .split-link-subtitle,
+body.page-home .fussball-split .fussball-split-link:active .split-link-subtitle,
+body.page-home .fussball-split .fussball-split-link:hover .split-link-arrow,
+body.page-home .fussball-split .fussball-split-link:focus-visible .split-link-arrow,
+body.page-home .fussball-split .fussball-split-link:active .split-link-arrow {
+    opacity: 0.7;
+        transform: translateY(0);
+    }
+body.page-home .fussball-split:hover .content,
+body.page-home .fussball-split:focus-within .content {
+        opacity: 0;
+        transform: scale(0.98);
+    }
 body.page-home .formula1 {
         background:
         radial-gradient(circle at 50% -15%, rgba(235, 45, 45, 0.76) 0%, rgba(235, 45, 45, 0.34) 40%, rgba(0, 0, 0, 0) 72%),
@@ -780,6 +860,9 @@ body.page-home .sport-name {
         text-transform: uppercase;
         text-shadow: 0 2px 12px rgba(0, 0, 0, 0.9);
         white-space: nowrap;
+    }
+body.page-home .fussball .sport-name {
+        text-transform: none;
     }
 body.page-home .sport-subtitle {
         font-size: 0.85rem;
@@ -1905,5 +1988,738 @@ body.page-impressum .home-button:hover {
         background: #262626;
         border-color: #6a6a6a;
         color: #ffffff;
+    }
+}
+
+/* ==========================================================================
+   Competition-Selektor (body.page-fussball-select)
+   ========================================================================== */
+
+body.page-fussball-select {
+    background: #141414;
+    color: #f5f5f5;
+    font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 60px 20px 40px;
+    box-sizing: border-box;
+}
+
+body.page-fussball-select .home-button {
+    position: fixed;
+    top: 18px;
+    left: 18px;
+    z-index: 1000;
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 8px 12px;
+    background: #1e1e1e;
+    border: 1px solid #2d2d2d;
+    border-radius: 8px;
+    color: #f5f5f5;
+    text-decoration: none;
+    font-size: 13px;
+    font-weight: 600;
+    transition: background 0.15s, border-color 0.15s, color 0.15s;
+}
+
+body.page-fussball-select .home-button:hover {
+    background: #2a2a2a;
+    border-color: #ffd24a;
+    color: #ffd24a;
+}
+
+body.page-fussball-select .select-page {
+    width: 100%;
+    max-width: 900px;
+    text-align: center;
+}
+
+body.page-fussball-select .select-title {
+    font-size: clamp(2rem, 3.2vw, 2.5rem);
+    font-weight: 700;
+    margin: 0 0 6px;
+    color: #ffd24a;
+}
+
+body.page-fussball-select .select-subtitle {
+    font-size: 15px;
+    color: #9ca3af;
+    margin: 0 0 36px;
+}
+
+body.page-fussball-select .competition-grid {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 20px;
+}
+
+body.page-fussball-select .competition-card {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 14px;
+    padding: 32px 20px;
+    background: #1e1e1e;
+    border: 1px solid #2d2d2d;
+    border-radius: 16px;
+    text-decoration: none;
+    color: #f5f5f5;
+    transition: background 0.2s, border-color 0.2s, transform 0.2s;
+    min-height: 180px;
+}
+
+body.page-fussball-select .competition-card:hover {
+    background: #252525;
+    transform: translateY(-3px);
+}
+
+body.page-fussball-select .competition-card--bundesliga:hover {
+    border-color: #e8192c;
+}
+
+body.page-fussball-select .competition-card--cl:hover {
+    border-color: #1e90ff;
+}
+
+body.page-fussball-select .competition-card--dfb:hover {
+    border-color: #22c55e;
+}
+
+body.page-fussball-select .competition-card--wm:hover {
+    border-color: #ffd24a;
+}
+
+body.page-fussball-select .competition-logo-large {
+    width: 72px;
+    height: 72px;
+    object-fit: contain;
+    flex-shrink: 0;
+}
+
+body.page-fussball-select .wm-trophy-icon {
+    font-size: 56px;
+    line-height: 1;
+}
+
+body.page-fussball-select .competition-name {
+    font-size: 17px;
+    font-weight: 700;
+    color: #f5f5f5;
+}
+
+body.page-fussball-select .competition-season {
+    font-size: 12px;
+    color: #9ca3af;
+}
+
+@media (max-width: 600px) {
+    body.page-fussball-select .competition-grid {
+        grid-template-columns: 1fr;
+    }
+}
+
+/* ==========================================================================
+   Gemeinsame Stile: CL, DFB-Pokal, WM (body.page-fussball .page-cl / page-dfb / page-wm)
+   ========================================================================== */
+
+body.page-cl,
+body.page-dfb,
+body.page-wm {
+    background: #141414;
+    color: #f5f5f5;
+    font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
+    padding: 30px;
+    padding-bottom: 0;
+    box-sizing: border-box;
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+}
+
+/* Inhalt auf 1200px zentrieren */
+body.page-cl .page-content,
+body.page-dfb .page-content,
+body.page-wm .page-content {
+    max-width: 1200px;
+    width: 100%;
+    margin-left: auto;
+    margin-right: auto;
+    margin-bottom: 22px;
+    box-sizing: border-box;
+}
+
+body.page-cl h1,
+body.page-dfb h1,
+body.page-wm h1 {
+    font-size: clamp(2rem, 3.2vw, 2.5rem);
+    font-weight: 700;
+    margin: 8px auto 20px;
+    max-width: 1200px;
+}
+
+body.page-cl .season-tag,
+body.page-dfb .season-tag,
+body.page-wm .season-tag {
+    font-size: 0.7em;
+    font-weight: 400;
+    color: #9ca3af;
+    margin-left: 8px;
+}
+
+/* home-button */
+body.page-cl .home-button,
+body.page-dfb .home-button,
+body.page-wm .home-button {
+    position: fixed;
+    top: 18px;
+    left: 18px;
+    z-index: 1000;
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 8px 12px;
+    background: #1e1e1e;
+    border: 1px solid #2d2d2d;
+    border-radius: 8px;
+    color: #f5f5f5;
+    text-decoration: none;
+    font-size: 13px;
+    font-weight: 600;
+    transition: background 0.15s, border-color 0.15s, color 0.15s;
+}
+
+body.page-cl .home-button:hover { border-color: #1e90ff; color: #1e90ff; background: #2a2a2a; }
+body.page-dfb .home-button:hover { border-color: #22c55e; color: #22c55e; background: #2a2a2a; }
+body.page-wm .home-button:hover { border-color: #ffd24a; color: #ffd24a; background: #2a2a2a; }
+
+/* Phase-Nav (CL) */
+body.page-cl .comp-phase-nav {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    margin-bottom: 20px;
+}
+
+body.page-cl .comp-phase-nav .week-btn {
+    padding: 6px 12px;
+    border: 1px solid #3a3a3a;
+    border-radius: 6px;
+    text-decoration: none;
+    color: #d0d0d0;
+    font-size: 13px;
+    transition: border-color 0.15s, color 0.15s;
+}
+
+body.page-cl .comp-phase-nav .week-btn:hover,
+body.page-cl .comp-phase-nav .week-btn.active {
+    border-color: #1e90ff;
+    color: #1e90ff;
+}
+
+body.page-cl .comp-phase-nav .week-btn.active {
+    font-weight: 600;
+}
+
+/* Runden-Navigation (CL Spieltag / DFB / WM) */
+body.page-cl .comp-round-nav,
+body.page-dfb .comp-round-nav,
+body.page-wm .comp-round-nav {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    margin-bottom: 20px;
+    max-width: 480px;
+}
+
+.round-arrow {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 36px;
+    height: 36px;
+    border-radius: 8px;
+    border: 1px solid #3a3a3a;
+    color: #d0d0d0;
+    font-size: 18px;
+    text-decoration: none;
+    flex-shrink: 0;
+    transition: border-color 0.15s, color 0.15s;
+}
+
+body.page-cl .round-arrow:hover     { border-color: #1e90ff; color: #1e90ff; }
+body.page-dfb .round-arrow:hover    { border-color: #22c55e; color: #22c55e; }
+body.page-wm .round-arrow:hover     { border-color: #ffd24a; color: #ffd24a; }
+
+.round-arrow--disabled {
+    opacity: 0.3;
+    cursor: default;
+    pointer-events: none;
+}
+
+.round-nav-center {
+    flex: 1;
+}
+
+.round-dropdown {
+    width: 100%;
+    padding: 8px 12px;
+    background: #1e1e1e;
+    border: 1px solid #3a3a3a;
+    border-radius: 8px;
+    color: #f5f5f5;
+    font-size: 14px;
+    font-family: inherit;
+    cursor: pointer;
+    appearance: none;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12'%3E%3Cpath fill='%239ca3af' d='M6 8L1 3h10z'/%3E%3C/svg%3E");
+    background-repeat: no-repeat;
+    background-position: right 10px center;
+}
+
+.round-dropdown:focus { outline: none; }
+body.page-cl .round-dropdown:focus     { border-color: #1e90ff; }
+body.page-dfb .round-dropdown:focus    { border-color: #22c55e; }
+body.page-wm .round-dropdown:focus     { border-color: #ffd24a; }
+
+/* Panel */
+body.page-cl .panel,
+body.page-dfb .panel,
+body.page-wm .panel {
+    background: #1e1e1e;
+    border: 1px solid #2d2d2d;
+    border-radius: 12px;
+    overflow: hidden;
+    margin-bottom: 20px;
+}
+
+body.page-cl .panel-header,
+body.page-dfb .panel-header,
+body.page-wm .panel-header {
+    padding: 12px 16px;
+    background: #2a2a2a;
+    font-weight: 600;
+    font-size: 12px;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+    color: #bdbdbd;
+}
+
+/* Match-Rows (alle 3 Seiten) */
+.comp-matches-list,
+.comp-ko-matches {
+    padding: 8px 0;
+}
+
+.comp-match-row {
+    display: grid;
+    grid-template-columns: 1fr 90px 1fr;
+    align-items: center;
+    gap: 8px;
+    padding: 10px 16px;
+    border-bottom: 1px solid #232323;
+}
+
+.comp-match-row:last-child { border-bottom: none; }
+.comp-match-row:hover { background: #252525; }
+
+.comp-match-row--compact {
+    padding: 7px 12px;
+}
+
+.comp-team {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    min-width: 0;
+}
+
+.comp-team--home {
+    justify-content: flex-end;
+    text-align: right;
+}
+
+.comp-team--away {
+    justify-content: flex-start;
+}
+
+.comp-team-name {
+    font-size: 14px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.comp-team-logo {
+    width: 24px;
+    height: 24px;
+    min-width: 24px;
+    object-fit: contain;
+    flex-shrink: 0;
+}
+
+.comp-score {
+    text-align: center;
+    flex-shrink: 0;
+}
+
+.score-value {
+    font-size: 16px;
+    font-weight: 700;
+    color: #ffd24a;
+}
+
+.score-note {
+    display: block;
+    font-size: 10px;
+    font-weight: 500;
+    color: #9ca3af;
+    margin-top: 2px;
+    letter-spacing: 0.02em;
+}
+
+.score-time {
+    font-size: 11px;
+    color: #9ca3af;
+    line-height: 1.3;
+}
+
+.comp-date-separator {
+    padding: 6px 16px 2px;
+    font-size: 11px;
+    color: #9ca3af;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+}
+
+.comp-phase-label {
+    font-size: 13px;
+    color: #9ca3af;
+    margin: -12px 0 16px;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+}
+
+/* CL 2-Spalten-Layout für Ligaphase */
+body.page-cl .comp-content-grid {
+    display: grid;
+    grid-template-columns: 1fr 380px;
+    gap: 20px;
+    align-items: start;
+}
+
+body.page-cl .comp-matches-panel { margin-bottom: 0; }
+body.page-cl .comp-table-panel   { margin-bottom: 0; }
+
+/* CL Match-Darstellung – größere Schrift wie Bundesliga */
+body.page-cl .comp-team-name {
+    font-size: 15px;
+    font-weight: 600;
+}
+
+body.page-cl .comp-team-logo {
+    width: 32px;
+    height: 32px;
+    min-width: 32px;
+}
+
+body.page-cl .score-value {
+    font-size: 18px;
+    font-weight: 700;
+    color: #ffd24a;
+}
+
+body.page-cl .score-time {
+    font-size: 12px;
+    color: #d9d9d9;
+    font-weight: 500;
+}
+
+body.page-cl .comp-match-row {
+    padding: 12px 16px;
+}
+
+/* CL Tabelle */
+body.page-cl .comp-standings-table {
+    width: 100%;
+    border-collapse: collapse;
+}
+
+body.page-cl .comp-standings-table thead {
+    background: #2a2a2a;
+}
+
+body.page-cl .comp-standings-table th {
+    padding: 10px 10px;
+    font-size: 11px;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+    color: #bdbdbd;
+    font-weight: 600;
+}
+
+body.page-cl .comp-standings-table td {
+    padding: 8px 10px;
+    font-size: 13px;
+    border-bottom: 1px solid #2d2d2d;
+}
+
+body.page-cl .comp-standings-table .col-pos { text-align: center; width: 28px; color: #9ca3af; }
+body.page-cl .comp-standings-table .col-num { text-align: center; width: 32px; }
+body.page-cl .comp-standings-table .col-pts { color: #ffd24a; font-weight: 700; }
+
+body.page-cl .comp-table-logo {
+    width: 18px;
+    height: 18px;
+    object-fit: contain;
+}
+
+body.page-cl .team-inline {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+}
+
+/* CL Tabelle – Farbkodierung */
+body.page-cl .comp-standings-table tr.cl-direct  { background: rgba(30, 144, 255, 0.14); }
+body.page-cl .comp-standings-table tr.cl-direct:hover { background: rgba(30, 144, 255, 0.28); }
+body.page-cl .comp-standings-table tr.cl-playoff { background: rgba(255, 165, 0, 0.12); }
+body.page-cl .comp-standings-table tr.cl-playoff:hover { background: rgba(255, 165, 0, 0.24); }
+body.page-cl .comp-standings-table tr.cl-out     { background: rgba(200, 50, 50, 0.10); }
+body.page-cl .comp-standings-table tr.cl-out:hover { background: rgba(200, 50, 50, 0.20); }
+
+/* Tabellenlegende */
+body.page-cl .comp-table-legend {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 10px 14px;
+    font-size: 11px;
+    color: #9ca3af;
+    border-top: 1px solid #2d2d2d;
+    flex-wrap: wrap;
+}
+
+.legend-dot {
+    display: inline-block;
+    width: 10px;
+    height: 10px;
+    border-radius: 2px;
+    margin-right: 4px;
+    vertical-align: middle;
+}
+
+.legend-dot--direct  { background: rgba(30, 144, 255, 0.5); }
+.legend-dot--playoff { background: rgba(255, 165, 0, 0.5); }
+.legend-dot--out     { background: rgba(200, 50, 50, 0.5); }
+
+/* DFB K.o.-Panel */
+body.page-dfb .comp-ko-panel { max-width: 700px; }
+
+/* DFB Match-Darstellung – größere Schrift wie Bundesliga */
+body.page-dfb .comp-team-name {
+    font-size: 15px;
+    font-weight: 600;
+}
+
+body.page-dfb .comp-team-logo {
+    width: 32px;
+    height: 32px;
+    min-width: 32px;
+}
+
+body.page-dfb .score-value {
+    font-size: 18px;
+    font-weight: 700;
+    color: #ffd24a;
+}
+
+body.page-dfb .score-time {
+    font-size: 12px;
+    color: #d9d9d9;
+    font-weight: 500;
+}
+
+body.page-dfb .comp-match-row {
+    padding: 12px 16px;
+}
+
+/* WM Gruppen-Grid */
+body.page-wm .wm-groups-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+    gap: 18px;
+}
+
+body.page-wm .wm-group-card {
+    margin-bottom: 0;
+}
+
+body.page-wm .wm-group-card--deutschland {
+    border: 2px solid transparent;
+    border-radius: 12px;
+    background:
+        linear-gradient(#1e1e1e, #1e1e1e) padding-box,
+        linear-gradient(
+            to bottom,
+            #111111 0%,
+            #111111 33%,
+            #dd0000 33%,
+            #dd0000 66%,
+            #ffce00 66%,
+            #ffce00 100%
+        ) border-box;
+    box-shadow:
+        0 0 8px rgba(221, 0, 0, 0.45),
+        0 0 14px rgba(255, 206, 0, 0.4);
+}
+
+/* WM Match-Darstellung – größere Schrift wie Bundesliga */
+body.page-wm .comp-team-name {
+    font-size: 15px;
+    font-weight: 600;
+}
+
+body.page-wm .comp-team-logo {
+    width: 32px;
+    height: 32px;
+    min-width: 32px;
+}
+
+body.page-wm .score-value {
+    font-size: 18px;
+    font-weight: 700;
+    color: #ffd24a;
+}
+
+body.page-wm .score-time {
+    font-size: 12px;
+    color: #d9d9d9;
+    font-weight: 500;
+}
+
+body.page-wm .comp-match-row {
+    padding: 12px 16px;
+}
+
+body.page-wm .wm-standings-table {
+    width: 100%;
+    border-collapse: collapse;
+}
+
+body.page-wm .wm-standings-table thead {
+    background: #2a2a2a;
+}
+
+body.page-wm .wm-standings-table th {
+    padding: 8px 8px;
+    font-size: 10px;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+    color: #bdbdbd;
+    font-weight: 600;
+}
+
+body.page-wm .wm-standings-table td {
+    padding: 7px 8px;
+    font-size: 13px;
+    border-bottom: 1px solid #2d2d2d;
+}
+
+body.page-wm .wm-standings-table tbody tr:hover { background: #242424; }
+
+body.page-wm .wm-standings-table .col-pos { text-align: center; width: 22px; color: #9ca3af; }
+body.page-wm .wm-standings-table .col-num { text-align: center; }
+body.page-wm .wm-standings-table .col-pts { color: #ffd24a; font-weight: 700; }
+body.page-wm .wm-standings-table .col-team { max-width: 130px; }
+
+body.page-wm .team-inline {
+    display: flex;
+    align-items: center;
+    gap: 5px;
+    min-width: 0;
+}
+
+body.page-wm .team-inline span {
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    font-size: 12px;
+}
+
+body.page-wm .wm-flag {
+    width: 20px;
+    height: 14px;
+    object-fit: cover;
+    border-radius: 2px;
+    flex-shrink: 0;
+}
+
+body.page-wm .wm-group-matches {
+    border-top: 1px solid #2d2d2d;
+    padding: 4px 0;
+}
+
+/* K.o.-Panel WM */
+body.page-wm .comp-ko-panel { max-width: 800px; }
+
+/* Footer */
+body.page-cl footer,
+body.page-dfb footer,
+body.page-wm footer {
+    margin-top: auto;
+    padding: 18px 30px;
+    background: #141414;
+    border-top: 0.1px solid #4e4e4e;
+    text-align: center;
+    margin-left: -30px;
+    margin-right: -30px;
+}
+
+body.page-cl footer a,
+body.page-dfb footer a,
+body.page-wm footer a { color: #f5f5f5; }
+
+body.page-cl footer p,
+body.page-dfb footer p,
+body.page-wm footer p { margin: 0; }
+
+/* Mobile */
+@media (max-width: 700px) {
+    body.page-cl,
+    body.page-dfb,
+    body.page-wm {
+        padding: 20px 14px;
+        padding-bottom: 0;
+    }
+
+    body.page-cl h1,
+    body.page-dfb h1,
+    body.page-wm h1 {
+        margin-top: 52px;
+    }
+
+    body.page-cl .comp-content-grid {
+        grid-template-columns: 1fr;
+    }
+
+    body.page-wm .wm-groups-grid {
+        grid-template-columns: 1fr;
+    }
+
+    .comp-team-name {
+        font-size: 12px;
+    }
+
+    body.page-cl footer,
+    body.page-dfb footer,
+    body.page-wm footer {
+        margin-left: -14px;
+        margin-right: -14px;
     }
 }

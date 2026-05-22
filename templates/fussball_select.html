@@ -1,0 +1,49 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Fußball – Wettbewerb wählen</title>
+    <link rel="icon" href="{{ url_for('static', filename='images/favicon.svg') }}" type="image/svg+xml">
+    <link rel="stylesheet" href="/static/styles/sports_dashboard.css">
+    <link rel="stylesheet" href="/static/styles/sports_dashboard.mobile.css">
+    {% if umami_enabled %}
+    <script defer src="{{ umami_script_url }}" data-website-id="{{ umami_website_id }}"></script>
+    {% endif %}
+</head>
+<body class="page-fussball-select">
+    <a href="/" class="home-button">← Home</a>
+
+    <div class="select-page">
+        <h1 class="select-title">Fußball</h1>
+        <p class="select-subtitle">Wähle einen Wettbewerb</p>
+
+        <div class="competition-grid">
+            <a href="/fussball/wm" class="competition-card competition-card--wm">
+                <img src="/static/images/Competition_Logo/world-cup-2026-white.png" alt="FIFA WM" class="competition-logo-large" />
+                <span class="competition-name">WM 2026</span>
+                <span class="competition-season">USA · Kanada · Mexiko</span>
+
+            </a>
+            
+            <a href="/fussball/champions-league" class="competition-card competition-card--cl">
+                <img src="/static/images/Competition_Logo/champions_league_silber.png" alt="Champions League" class="competition-logo-large" />
+                <span class="competition-name">Champions League</span>
+                <span class="competition-season">{{ season_label }}</span>
+            </a>
+
+            <a href="/fussball/dfb-pokal" class="competition-card competition-card--dfb">
+                <img src="/static/images/Competition_Logo/DFB_pokal.png" alt="DFB-Pokal" class="competition-logo-large" />
+                <span class="competition-name">DFB-Pokal</span>
+                <span class="competition-season">{{ season_label }}</span>
+            </a>
+
+            <a href="/fussball/bundesliga?source=select" class="competition-card competition-card--bundesliga">
+                <img src="/static/images/Competition_Logo/Bundesliga.png" alt="Bundesliga" class="competition-logo-large" />
+                <span class="competition-name">Bundesliga</span>
+                <span class="competition-season">{{ season_label }}</span>
+            </a>
+        </div>
+    </div>
+</body>
+</html>
