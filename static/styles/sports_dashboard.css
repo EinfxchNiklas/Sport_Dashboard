@@ -749,6 +749,86 @@ body.page-home .fussball {
         radial-gradient(circle at 50% -15%, rgba(255, 215, 40, 0.74) 0%, rgba(255, 215, 40, 0.36) 40%, rgba(0, 0, 0, 0) 72%),
         linear-gradient(to bottom, #3a300f 0%, #241d0b 52%, #050401 100%);
     }
+body.page-home .fussball-split-links {
+        position: absolute;
+        inset: 0;
+        z-index: 3;
+        display: flex;
+        flex-direction: column;
+        pointer-events: none;
+    }
+body.page-home .fussball-split-link {
+        flex: 1;
+        display: flex;
+    flex-direction: column;
+        align-items: center;
+        justify-content: center;
+    gap: 6px;
+        text-decoration: none;
+        color: #ffffff;
+        font-size: 1rem;
+        font-weight: 700;
+        letter-spacing: 1.4px;
+        text-transform: uppercase;
+        text-shadow: 0 2px 8px rgba(0, 0, 0, 0.85);
+        opacity: 0;
+        transform: translateY(10px);
+        transition: opacity 0.25s ease, transform 0.25s ease;
+        pointer-events: none;
+    }
+body.page-home .fussball-split-link-top {
+        border-bottom: 1px solid rgba(255, 255, 255, 0.2);
+    }
+body.page-home .split-link-title {
+    font-size: clamp(1.15rem, 1.85vw, 1.5rem);
+        font-weight: 800;
+        line-height: 1.1;
+        text-transform: uppercase;
+        letter-spacing: 1.4px;
+    }
+body.page-home .split-link-subtitle {
+    font-size: clamp(0.9rem, 1.2vw, 1.05rem);
+        font-weight: 600;
+        line-height: 1.2;
+        letter-spacing: 1.1px;
+        text-transform: uppercase;
+        color: rgba(255, 255, 255, 0.85);
+        opacity: 0;
+        transform: translateY(10px);
+        transition: opacity 0.35s ease 0.04s, transform 0.35s ease 0.04s;
+    }
+body.page-home .split-link-arrow {
+        font-size: 1rem;
+        line-height: 1;
+        opacity: 0;
+        transform: translateY(8px);
+        transition: opacity 0.35s ease 0.08s, transform 0.35s ease 0.08s;
+    }
+body.page-home .fussball-split:hover .fussball-split-link,
+body.page-home .fussball-split:focus-within .fussball-split-link {
+        opacity: 1;
+        transform: translateY(0);
+        pointer-events: auto;
+    }
+body.page-home .fussball-split .fussball-split-link:hover,
+body.page-home .fussball-split .fussball-split-link:focus-visible {
+        color: #ffffff;
+        text-decoration: none;
+    }
+body.page-home .fussball-split .fussball-split-link:hover .split-link-subtitle,
+body.page-home .fussball-split .fussball-split-link:focus-visible .split-link-subtitle,
+body.page-home .fussball-split .fussball-split-link:active .split-link-subtitle,
+body.page-home .fussball-split .fussball-split-link:hover .split-link-arrow,
+body.page-home .fussball-split .fussball-split-link:focus-visible .split-link-arrow,
+body.page-home .fussball-split .fussball-split-link:active .split-link-arrow {
+    opacity: 0.7;
+        transform: translateY(0);
+    }
+body.page-home .fussball-split:hover .content,
+body.page-home .fussball-split:focus-within .content {
+        opacity: 0;
+        transform: scale(0.98);
+    }
 body.page-home .formula1 {
         background:
         radial-gradient(circle at 50% -15%, rgba(235, 45, 45, 0.76) 0%, rgba(235, 45, 45, 0.34) 40%, rgba(0, 0, 0, 0) 72%),
