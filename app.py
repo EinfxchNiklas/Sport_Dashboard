@@ -280,6 +280,8 @@ def formula1_past_weekend_results(meeting_key):
 @app.route('/american_football')
 def american_football():
     # Keep season choices aligned with available API data.
+    # From May onward the new season year is used as default (playoffs/Super Bowl
+    # run through April, so January through April still belong to the previous season).
     now = datetime.now()
     current_season = now.year if now.month >= 5 else now.year - 1
     min_available_season = 2022
