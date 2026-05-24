@@ -674,6 +674,8 @@ def fetch_championship_standings(year=None):
     for session in sessions_payload:
         if session.get("session_type") != "Race":
             continue
+        if session.get("session_name") != "Race":
+            continue
 
         session_start = _parse_iso_datetime(session.get("date_start"))
         if not session_start or session_start > now:
@@ -767,12 +769,12 @@ def fetch_championship_standings(year=None):
         current_points = row.get("points_current")
         if current_position is None or current_points is None:
             continue
-        points_int = int(current_points)
         drivers.append(
             {
+                "driver_number": driver_number,
                 "position": current_position,
                 "name": driver_name_by_number.get(driver_number, f"#{driver_number}"),
-                "points": points_int,
+                "points": int(current_points),
                 "team_logo": _get_team_logo_url(driver_team_by_number.get(driver_number)),
             }
         )
@@ -784,12 +786,11 @@ def fetch_championship_standings(year=None):
         team_name = row.get("team_name")
         if current_position is None or current_points is None or not team_name:
             continue
-        points_int = int(current_points)
         teams.append(
             {
                 "position": current_position,
                 "name": team_name,
-                "points": points_int,
+                "points": int(current_points),
                 "team_logo": _get_team_logo_url(team_name),
             }
         )
@@ -797,11 +798,94 @@ def fetch_championship_standings(year=None):
     drivers.sort(key=lambda x: x["position"])
     teams.sort(key=lambda x: x["position"])
 
+    session_label = (
+        latest_race.get("meeting_name")
+        or meeting_name_by_key.get(latest_race.get("meeting_key"))
+    )
+
+    # ── Sprint-Punkte einrechnen ───────────────────────────────────────────────
+    # Hat nach dem letzten GP-Rennen ein Sprint stattgefunden, wird dessen
+    # kumulatives points_current per driver_number in die Standings übernommen
+    # und die Positionen werden neu berechnet.
+    # OpenF1 liefert Sprint-Daten nur partiell (nicht alle 20 Fahrer erscheinen),
+    # daher werden nur die vorhandenen Einträge aktualisiert.
+    latest_race_date_str = latest_race.get("date_start") or ""
+    sprint_sessions_later = sorted(
+        [
+            s for s in sessions_payload
+            if s.get("session_name") == "Sprint"
+            and s.get("session_type") == "Race"
+            and (s.get("date_start") or "") > latest_race_date_str
+            and _parse_iso_datetime(s.get("date_start")) is not None
+            and _parse_iso_datetime(s.get("date_start")) <= now
+        ],
+        key=lambda s: s.get("date_start") or "",
+        reverse=True,
+    )
+
+    for sprint_session in sprint_sessions_later:
+        sprint_key = sprint_session.get("session_key")
+        if not sprint_key:
+            continue
+
+        # Fahrerpunkte aus Sprint-Snapshot
+        sprint_driver_rows = drivers_by_session.get(sprint_key, [])
+        sprint_points_by_number = {
+            row["driver_number"]: int(row["points_current"])
+            for row in sprint_driver_rows
+            if row.get("driver_number") is not None and row.get("points_current") is not None
+        }
+        if not sprint_points_by_number:
+            continue
+
+        for driver in drivers:
+            dn = driver.get("driver_number")
+            if dn is not None and dn in sprint_points_by_number:
+                driver["points"] = sprint_points_by_number[dn]
+
+        drivers.sort(key=lambda d: d["points"], reverse=True)
+        for pos, driver in enumerate(drivers, 1):
+            driver["position"] = pos
+
+        # Konstrukteure: Sprint-Teamdaten direkt verwenden wenn vorhanden,
+        # sonst aus den aktualisierten Fahrerpunkten neu aggregieren.
+        sprint_team_rows = teams_by_session.get(sprint_key, [])
+        sprint_team_points = {
+            row["team_name"]: int(row["points_current"])
+            for row in sprint_team_rows
+            if row.get("team_name") and row.get("points_current") is not None
+        }
+        if sprint_team_points:
+            for team in teams:
+                if team["name"] in sprint_team_points:
+                    team["points"] = sprint_team_points[team["name"]]
+        else:
+            team_totals: dict = {}
+            for driver in drivers:
+                dn = driver.get("driver_number")
+                team_name = driver_team_by_number.get(dn) if dn is not None else None
+                if team_name:
+                    team_totals[team_name] = team_totals.get(team_name, 0) + driver["points"]
+            for team in teams:
+                if team["name"] in team_totals:
+                    team["points"] = team_totals[team["name"]]
+
+        teams.sort(key=lambda t: t["points"], reverse=True)
+        for pos, team in enumerate(teams, 1):
+            team["position"] = pos
+
+        sprint_meeting_label = (
+            sprint_session.get("meeting_name")
+            or meeting_name_by_key.get(sprint_session.get("meeting_key"))
+        )
+        if sprint_meeting_label:
+            base = sprint_meeting_label.replace(" Grand Prix", "")
+            session_label = f"{base} Sprint"
+
+        break  # nur den neuesten Sprint verwenden
+
     return {
         "drivers": drivers,
         "teams": teams,
-        "session_label": (
-            latest_race.get("meeting_name")
-            or meeting_name_by_key.get(latest_race.get("meeting_key"))
-        ),
+        "session_label": session_label,
     }
