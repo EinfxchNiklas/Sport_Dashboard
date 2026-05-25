@@ -62,6 +62,8 @@ PORT=5000
 OPENF1_BASE_URL=SET_Base_URL
 UMAMI_SCRIPT_URL=
 UMAMI_WEBSITE_ID=
+EXPORT_USERNAME=dein_export_user
+EXPORT_PASSWORD=dein_export_passwort
 ```
 
 5. Starten

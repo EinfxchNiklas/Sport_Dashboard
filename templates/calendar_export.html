@@ -1,0 +1,63 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Kalender Export Auswahl</title>
+    <link rel="icon" href="{{ url_for('static', filename='images/favicon.svg') }}" type="image/svg+xml">
+    <link rel="stylesheet" href="/static/styles/sports_dashboard.css">
+    <link rel="stylesheet" href="/static/styles/sports_dashboard.mobile.css">
+    {% if umami_enabled %}
+    <script defer src="{{ umami_script_url }}" data-website-id="{{ umami_website_id }}"></script>
+    {% endif %}
+</head>
+<body class="page-fussball page-calendar-export">
+    <a href="/" class="home-button">← Home</a>
+
+    <main class="page-content">
+        <section class="panel">
+            <h1 style="margin-top: 0;">TimeTree Export</h1>
+            <p>Wähle aus, welche Termine der kompletten Saison in die ICS-Datei exportiert werden sollen.</p>
+
+            <form method="post" action="/calendar-export/download" class="export-form">
+                <label><input type="checkbox" name="football_dortmund" checked> Fußball: Borussia Dortmund (gesamte Saison, alle Wettbewerbe)</label>
+                <label><input type="checkbox" name="football_bremen" checked> Fußball: Werder Bremen (gesamte Saison, alle Wettbewerbe)</label>
+                <label><input type="checkbox" name="f1_sessions" checked> Formel 1: alle Sessions der Saison</label>
+                <label><input type="checkbox" name="f1_weekend_all_day" checked> Formel 1: ganztägiger Rennwochenende-Eintrag (alle Wochenenden der Saison)</label>
+                <label><input type="checkbox" name="nfl_chiefs" checked> NFL: Kansas City Chiefs (gesamte Saison)</label>
+                <label><input type="checkbox" name="nfl_bengals" checked> NFL: Cincinnati Bengals (gesamte Saison)</label>
+
+                <button type="submit" class="week-btn active export-download-btn">ICS für TimeTree herunterladen</button>
+            </form>
+
+            <section class="export-note" aria-label="Dauerregeln">
+                <h2 class="export-rules-title">Dauerregeln</h2>
+                <div class="export-rules-grid">
+                    <article class="export-rule-card export-rule-card-football">
+                        <h3>Fußball</h3>
+                        <p>Alle Spiele: 2h</p>
+                    </article>
+                    <article class="export-rule-card export-rule-card-f1">
+                        <h3>Formel 1</h3>
+                        <ul>
+                            <li>Training: 1h</li>
+                            <li>Qualifying (normal + Sprint): 1:15h</li>
+                            <li>Sprint-Rennen: 45min</li>
+                            <li>Rennen: 2h</li>
+                        </ul>
+                    </article>
+                    <article class="export-rule-card export-rule-card-nfl">
+                        <h3>NFL</h3>
+                        <p>Alle Spiele: 4h</p>
+                    </article>
+                </div>
+            </section>
+
+        </section>
+    </main>
+
+    <footer>
+        <p><a href="/impressum">Impressum</a> | <a href="/datenschutz">Datenschutz</a> | <a href="/docs">Docs</a></p>
+    </footer>
+</body>
+</html>

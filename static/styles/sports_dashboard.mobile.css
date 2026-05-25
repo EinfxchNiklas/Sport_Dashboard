@@ -666,6 +666,10 @@ body.page-formula1 footer {
         padding-left: 16px;
         padding-right: 16px;
     }
+
+body.page-calendar-export .export-rules-grid {
+    grid-template-columns: 1fr;
+}
 }
 
 @media (max-width: 700px) {
