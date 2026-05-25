@@ -1,5 +1,6 @@
 import json
 import os
+from threading import Lock
 import time
 from datetime import datetime
 from zoneinfo import ZoneInfo
@@ -10,13 +11,14 @@ from dotenv import load_dotenv
 
 load_dotenv()
 
-OPENF1_BASE_URL = os.environ.get("OPENF1_BASE_URL").rstrip("/")
+OPENF1_BASE_URL = (os.environ.get("OPENF1_BASE_URL") or "").rstrip("/")
 BERLIN_TZ = ZoneInfo("Europe/Berlin")
 
 API_CACHE = {}
 DEFAULT_CACHE_TTL_SECONDS = 180
 MIN_REQUEST_INTERVAL_SECONDS = 0.38
 LAST_REQUEST_AT_MONOTONIC = 0.0
+PERSISTED_STALE_FALLBACK_SECONDS = 60 * 60 * 24 * 3
 ENDPOINT_CACHE_TTL_SECONDS = {
     "meetings": 600,
     "sessions": 300,
@@ -25,6 +27,21 @@ ENDPOINT_CACHE_TTL_SECONDS = {
     "championship_drivers": 180,
     "championship_teams": 180,
 }
+ENDPOINT_PERSISTED_STALE_MAX_AGE_SECONDS = {
+    "meetings": 60 * 60 * 24 * 21,
+    "sessions": 60 * 60 * 24 * 7,
+    "drivers": 60 * 60 * 24 * 7,
+    "session_result": 60 * 60 * 24 * 7,
+    "championship_drivers": 60 * 60 * 24 * 7,
+    "championship_teams": 60 * 60 * 24 * 7,
+}
+
+_PROJECT_ROOT = os.path.abspath(os.path.join(os.path.dirname(__file__), ".."))
+_RUNTIME_CACHE_DIR = os.path.join(_PROJECT_ROOT, ".cache")
+_OPENF1_LAST_KNOWN_CACHE_FILE = os.path.join(_RUNTIME_CACHE_DIR, "openf1_last_known.json")
+_LAST_KNOWN_CACHE_LOCK = Lock()
+_LAST_KNOWN_CACHE_LOADED = False
+_LAST_KNOWN_API_CACHE = {}
 
 TEAM_LOGO_FILES = {
     "McLaren": "mclaren.png",
@@ -54,6 +71,94 @@ def _get_team_logo_url(team_name):
 def _make_cache_key(endpoint, params):
     serialized_params = json.dumps(params or {}, sort_keys=True, default=str)
     return f"{endpoint}|{serialized_params}"
+
+
+def _load_last_known_api_cache_once():
+    global _LAST_KNOWN_CACHE_LOADED, _LAST_KNOWN_API_CACHE
+
+    if _LAST_KNOWN_CACHE_LOADED:
+        return
+
+    with _LAST_KNOWN_CACHE_LOCK:
+        if _LAST_KNOWN_CACHE_LOADED:
+            return
+
+        try:
+            with open(_OPENF1_LAST_KNOWN_CACHE_FILE, "r", encoding="utf-8") as cache_file:
+                payload = json.load(cache_file)
+                if isinstance(payload, dict):
+                    _LAST_KNOWN_API_CACHE = payload
+                else:
+                    _LAST_KNOWN_API_CACHE = {}
+        except (FileNotFoundError, OSError, json.JSONDecodeError):
+            _LAST_KNOWN_API_CACHE = {}
+
+        _LAST_KNOWN_CACHE_LOADED = True
+
+
+def _persist_last_known_api_cache():
+    try:
+        os.makedirs(_RUNTIME_CACHE_DIR, exist_ok=True)
+        tmp_path = _OPENF1_LAST_KNOWN_CACHE_FILE + ".tmp"
+        with open(tmp_path, "w", encoding="utf-8") as cache_file:
+            json.dump(_LAST_KNOWN_API_CACHE, cache_file, ensure_ascii=True, separators=(",", ":"))
+        os.replace(tmp_path, _OPENF1_LAST_KNOWN_CACHE_FILE)
+    except OSError:
+        # Ignore disk cache write issues; in-memory cache still works.
+        return
+
+
+def _store_last_known_snapshot(cache_key, data):
+    if not isinstance(data, list) or not data:
+        return
+
+    _load_last_known_api_cache_once()
+    with _LAST_KNOWN_CACHE_LOCK:
+        _LAST_KNOWN_API_CACHE[cache_key] = {
+            "updated_at": time.time(),
+            "data": data,
+        }
+        _persist_last_known_api_cache()
+
+
+def _get_last_known_snapshot(cache_key, endpoint):
+    _load_last_known_api_cache_once()
+    entry = _LAST_KNOWN_API_CACHE.get(cache_key)
+    if not isinstance(entry, dict):
+        return None
+
+    data = entry.get("data")
+    updated_at = entry.get("updated_at")
+    if not isinstance(data, list) or not data:
+        return None
+    if not isinstance(updated_at, (int, float)):
+        return None
+
+    max_age_seconds = ENDPOINT_PERSISTED_STALE_MAX_AGE_SECONDS.get(
+        endpoint,
+        PERSISTED_STALE_FALLBACK_SECONDS,
+    )
+    age_seconds = time.time() - float(updated_at)
+    if age_seconds > max_age_seconds:
+        return None
+
+    return data
+
+
+def _get_best_stale_fallback(cache_key, endpoint, cached_entry):
+    if cached_entry and cached_entry.get("data"):
+        cached_entry["expires_at"] = time.monotonic() + 60
+        return cached_entry["data"]
+
+    persisted_data = _get_last_known_snapshot(cache_key, endpoint)
+    if persisted_data:
+        API_CACHE[cache_key] = {
+            "expires_at": time.monotonic() + 60,
+            "data": persisted_data,
+        }
+        return persisted_data
+
+    return []
 
 
 def _get_json(endpoint, params=None, retries=3):
@@ -91,11 +196,12 @@ def _get_json(endpoint, params=None, retries=3):
 
             # Do not retry hard client errors like 400/404.
             if 400 <= response.status_code < 500:
-                return []
+                return _get_best_stale_fallback(cache_key, endpoint, cached_entry)
 
             response.raise_for_status()
             payload = response.json()
-            # Only accept list payloads; error responses are dicts and should be treated as empty
+            # OpenF1 can return HTTP 200 with non-list payloads (e.g. message text for plan limits).
+            # Treat those as unavailable live data and fallback to last known snapshot.
             data = payload if isinstance(payload, list) else []
             ttl = ENDPOINT_CACHE_TTL_SECONDS.get(endpoint, DEFAULT_CACHE_TTL_SECONDS)
             if data:
@@ -104,24 +210,16 @@ def _get_json(endpoint, params=None, retries=3):
                     "expires_at": time.monotonic() + ttl,
                     "data": data,
                 }
+                _store_last_known_snapshot(cache_key, data)
                 return data
-            else:
-                # API returned empty list (e.g. during a live session).
-                # Keep stale data alive for 60 s so the UI stays populated,
-                # then retry after that window.
-                if cached_entry:
-                    cached_entry["expires_at"] = time.monotonic() + 60
-                    return cached_entry["data"]
-                return []
-        except requests.exceptions.RequestException as e:
+            # API returned no list data (e.g. during a live session).
+            return _get_best_stale_fallback(cache_key, endpoint, cached_entry)
+        except (requests.exceptions.RequestException, ValueError):
             if attempt == max(retries, 5) - 1:
-                if cached_entry:
-                    # Stale fallback to keep UI responsive during transient failures.
-                    return cached_entry["data"]
-                return []
+                return _get_best_stale_fallback(cache_key, endpoint, cached_entry)
             time.sleep(0.55 * (attempt + 1))
 
-    return []
+    return _get_best_stale_fallback(cache_key, endpoint, cached_entry)
 
 
 def _parse_iso_datetime(value):
