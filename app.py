@@ -10,6 +10,7 @@ from data_sources.get_fussball_data import (
     fetch_team_matches,
     fetch_bundesliga_table,
     fetch_cl_data,
+    fetch_cl_ligaphase_table,
     fetch_dfb_data,
     fetch_wm_data,
 )
@@ -233,8 +234,19 @@ def display_matches():
 def fussball_cl():
     phase_order_id = request.args.get('phase', type=int)
     spieltag_idx = request.args.get('spieltag', None, type=int)
-    data = fetch_cl_data(phase_order_id=phase_order_id, spieltag_idx=spieltag_idx)
+
+    data = fetch_cl_data(
+        phase_order_id=phase_order_id,
+        spieltag_idx=spieltag_idx,
+        include_table=False,
+    )
     return render_template('fussball_cl.html', **data)
+
+
+@app.route('/api/fussball/champions-league/table')
+def fussball_cl_table_api():
+    table = fetch_cl_ligaphase_table()
+    return jsonify({'table': table})
 
 
 @app.route('/fussball/dfb-pokal')

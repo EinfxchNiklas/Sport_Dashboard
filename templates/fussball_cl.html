@@ -11,7 +11,7 @@
     <script defer src="{{ umami_script_url }}" data-website-id="{{ umami_website_id }}"></script>
     {% endif %}
 </head>
-<body class="page-fussball page-cl{% if is_ligaphase and table %} has-mobile-ligaphase-tabs{% endif %}">
+<body class="page-fussball page-cl{% if is_ligaphase %} has-mobile-ligaphase-tabs{% endif %}">
     <a href="/fussball" class="home-button">← Wettbewerbe</a>
     <div class="page-content">
     <h1>Champions League <span class="season-tag">{{ season }}/{{ '%02d' % ((season + 1) % 100) }}</span></h1>
@@ -53,12 +53,10 @@
         {% endif %}
     </div>
 
-    {% if table %}
     <div class="mobile-content-tabs" data-tabs="cl-ligaphase">
         <button type="button" class="active" data-tab="matches">Spiele</button>
         <button type="button" data-tab="standings">Tabelle</button>
     </div>
-    {% endif %}
 
     {# ---- Ligaphase-Spiele ---- #}
     <div class="comp-content-grid">
@@ -96,10 +94,11 @@
         </section>
 
         {# ---- Ligaphase-Tabelle ---- #}
-        {% if table %}
         <aside class="panel comp-table-panel">
             <div class="panel-header">Tabelle nach der Ligaphase</div>
-            <table class="comp-standings-table">
+            <div class="no-data" id="cl-table-loading">Tabelle wird geladen ...</div>
+            <div class="no-data" id="cl-table-error" style="display:none;">Tabelle konnte nicht geladen werden.</div>
+            <table class="comp-standings-table" id="cl-standings-table" style="display:none;">
                 <thead>
                     <tr>
                         <th class="col-pos">#</th>
@@ -112,27 +111,7 @@
                         <th class="col-num col-pts">Pkt.</th>
                     </tr>
                 </thead>
-                <tbody>
-                    {% for team in table %}
-                    <tr class="{% if team.position <= 8 %}cl-direct{% elif team.position <= 24 %}cl-playoff{% else %}cl-out{% endif %}">
-                        <td class="col-pos">{{ team.position }}</td>
-                        <td class="col-team">
-                            <div class="team-inline">
-                                {% if team.logo %}
-                                <img src="{{ team.logo }}" alt="{{ team.teamName }}" class="comp-table-logo" onerror="this.style.display='none'" />
-                                {% endif %}
-                                <span>{{ team.teamName }}</span>
-                            </div>
-                        </td>
-                        <td class="col-num">{{ team.played }}</td>
-                        <td class="col-num">{{ team.won }}</td>
-                        <td class="col-num">{{ team.draw }}</td>
-                        <td class="col-num">{{ team.lost }}</td>
-                        <td class="col-num">{{ team.goalDiff }}</td>
-                        <td class="col-num col-pts">{{ team.points }}</td>
-                    </tr>
-                    {% endfor %}
-                </tbody>
+                <tbody id="cl-standings-body"></tbody>
             </table>
             <div class="comp-table-legend">
                 <span class="legend-dot legend-dot--direct"></span> Achtelfinale direkt
@@ -140,7 +119,6 @@
                 <span class="legend-dot legend-dot--out"></span> Ausgeschieden
             </div>
         </aside>
-        {% endif %}
     </div>
 
     {% else %}
@@ -230,6 +208,158 @@
                 }
             }
 
+            function rowClassByPosition(position) {
+                if (position <= 8) {
+                    return 'cl-direct';
+                }
+                if (position <= 24) {
+                    return 'cl-playoff';
+                }
+                return 'cl-out';
+            }
+
+            function createCell(className, text) {
+                var td = document.createElement('td');
+                td.className = className;
+                td.textContent = text;
+                return td;
+            }
+
+            function createTeamCell(team) {
+                var td = document.createElement('td');
+                td.className = 'col-team';
+
+                var inline = document.createElement('div');
+                inline.className = 'team-inline';
+
+                if (team.logo) {
+                    var logo = document.createElement('img');
+                    logo.src = team.logo;
+                    logo.alt = team.teamName;
+                    logo.className = 'comp-table-logo';
+                    logo.onerror = function () {
+                        logo.style.display = 'none';
+                    };
+                    inline.appendChild(logo);
+                }
+
+                var name = document.createElement('span');
+                name.textContent = team.teamName;
+                inline.appendChild(name);
+
+                td.appendChild(inline);
+                return td;
+            }
+
+            function renderTableRows(tableRows) {
+                var body = document.getElementById('cl-standings-body');
+                if (!body) {
+                    return;
+                }
+
+                body.innerHTML = '';
+
+                tableRows.forEach(function (team) {
+                    var tr = document.createElement('tr');
+                    tr.className = rowClassByPosition(team.position || 0);
+
+                    tr.appendChild(createCell('col-pos', String(team.position || '')));
+                    tr.appendChild(createTeamCell(team));
+                    tr.appendChild(createCell('col-num', String(team.played || 0)));
+                    tr.appendChild(createCell('col-num', String(team.won || 0)));
+                    tr.appendChild(createCell('col-num', String(team.draw || 0)));
+                    tr.appendChild(createCell('col-num', String(team.lost || 0)));
+                    tr.appendChild(createCell('col-num', String(team.goalDiff || 0)));
+                    tr.appendChild(createCell('col-num col-pts', String(team.points || 0)));
+
+                    body.appendChild(tr);
+                });
+            }
+
+            function getTableCacheKey() {
+                return 'cl-ligaphase-table-v1-{{ season }}';
+            }
+
+            function readTableFromCache() {
+                try {
+                    var raw = sessionStorage.getItem(getTableCacheKey());
+                    if (!raw) {
+                        return null;
+                    }
+                    var parsed = JSON.parse(raw);
+                    return Array.isArray(parsed) ? parsed : null;
+                } catch (e) {
+                    return null;
+                }
+            }
+
+            function writeTableToCache(tableRows) {
+                try {
+                    sessionStorage.setItem(getTableCacheKey(), JSON.stringify(tableRows));
+                } catch (e) {
+                    // Ignore storage failures (private mode/quota).
+                }
+            }
+
+            function areTableRowsEqual(a, b) {
+                if (!Array.isArray(a) || !Array.isArray(b)) {
+                    return false;
+                }
+                if (a.length !== b.length) {
+                    return false;
+                }
+                return JSON.stringify(a) === JSON.stringify(b);
+            }
+
+            function loadTableLazy() {
+                var loading = document.getElementById('cl-table-loading');
+                var error = document.getElementById('cl-table-error');
+                var tableElement = document.getElementById('cl-standings-table');
+
+                if (!loading || !error || !tableElement) {
+                    return;
+                }
+
+                var cachedRows = readTableFromCache();
+                if (cachedRows && cachedRows.length) {
+                    renderTableRows(cachedRows);
+                    loading.style.display = 'none';
+                    error.style.display = 'none';
+                    tableElement.style.display = '';
+                } else {
+                    loading.style.display = '';
+                    error.style.display = 'none';
+                    tableElement.style.display = 'none';
+                }
+
+                fetch('/api/fussball/champions-league/table', { headers: { Accept: 'application/json' } })
+                    .then(function (response) {
+                        if (!response.ok) {
+                            throw new Error('HTTP ' + response.status);
+                        }
+                        return response.json();
+                    })
+                    .then(function (payload) {
+                        var tableRows = Array.isArray(payload.table) ? payload.table : [];
+
+                        if (tableRows.length && !areTableRowsEqual(cachedRows, tableRows)) {
+                            renderTableRows(tableRows);
+                        }
+                        if (tableRows.length) {
+                            writeTableToCache(tableRows);
+                        }
+                        loading.style.display = 'none';
+                        error.style.display = tableRows.length ? 'none' : 'block';
+                        tableElement.style.display = tableRows.length ? '' : 'none';
+                    })
+                    .catch(function () {
+                        loading.style.display = 'none';
+                        if (!(cachedRows && cachedRows.length)) {
+                            error.style.display = 'block';
+                        }
+                    });
+            }
+
             if (typeof mobileQuery.addEventListener === 'function') {
                 mobileQuery.addEventListener('change', syncForViewport);
             } else if (typeof mobileQuery.addListener === 'function') {
@@ -237,6 +367,7 @@
             }
 
             setActiveTab('matches');
+            loadTableLazy();
         })();
     </script>
 </body>

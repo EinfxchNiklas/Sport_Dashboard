@@ -245,6 +245,33 @@ def _fetch_or_cache_ligaphase_raw(season):
     return all_raw
 
 
+def _fetch_or_cache_ligaphase_matchday_raw(season, spieltag_number):
+    """Liest einen einzelnen Ligaphase-Spieltag (1-8) aus Cache oder API."""
+    if spieltag_number < 1 or spieltag_number > _LIGAPHASE_SPIELTAGE:
+        return []
+
+    cache_key_raw = f"cl_{season}_st_{spieltag_number}_raw"
+    cached = _get_cached(cache_key_raw)
+    if cached is not None:
+        return cached
+
+    raw = _fetch_competition_group_matches(_CL_SHORTCUT, season, spieltag_number)
+    _set_cached(cache_key_raw, raw)
+    return raw
+
+
+def _fetch_or_cache_ko_group_raw(season, group_order_id):
+    """Liest eine einzelne K.o.-API-Gruppe aus Cache oder API."""
+    cache_key_raw = f"cl_{season}_group_{group_order_id}_raw"
+    cached = _get_cached(cache_key_raw)
+    if cached is not None:
+        return cached
+
+    raw = _fetch_competition_group_matches(_CL_SHORTCUT, season, group_order_id)
+    _set_cached(cache_key_raw, raw)
+    return raw
+
+
 def _fetch_or_cache_ko_raw(season, phase_order_id):
     """Liest Rohdaten fuer eine K.o.-Phase aus Cache oder API."""
     cache_key_raw = f"cl_{season}_phase_{phase_order_id}_raw"
@@ -258,7 +285,7 @@ def _fetch_or_cache_ko_raw(season, phase_order_id):
         with ThreadPoolExecutor(max_workers=len(api_groups)) as executor:
             futs = [
                 executor.submit(
-                    _fetch_competition_group_matches, _CL_SHORTCUT, season, g
+                    _fetch_or_cache_ko_group_raw, season, g
                 )
                 for g in api_groups
             ]
@@ -271,29 +298,54 @@ def _fetch_or_cache_ko_raw(season, phase_order_id):
 
 def _auto_select_default_phase_and_spieltag(season):
     """Waehlt Default-Ansicht: naechster offener Spieltag bzw. naechste offene Runde."""
-    all_raw = _fetch_or_cache_ligaphase_raw(season)
-
     # 1) Ligaphase: erster Spieltag mit mindestens einem nicht beendeten Match
     for i in range(1, _LIGAPHASE_SPIELTAGE + 1):
-        raw_matches = all_raw.get(i, [])
+        raw_matches = _fetch_or_cache_ligaphase_matchday_raw(season, i)
         if raw_matches and any(not m.get("matchIsFinished", False) for m in raw_matches):
             return 1, i - 1
 
     # 2) K.o.-Phasen: erste Runde mit mindestens einem nicht beendeten Match
     for phase_id in range(2, 7):
-        raw_matches = _fetch_or_cache_ko_raw(season, phase_id)
-        if raw_matches and any(not m.get("matchIsFinished", False) for m in raw_matches):
-            return phase_id, None
+        for group_id in _PHASE_TO_API_GROUPS.get(phase_id, []):
+            raw_matches = _fetch_or_cache_ko_group_raw(season, group_id)
+            if raw_matches and any(not m.get("matchIsFinished", False) for m in raw_matches):
+                return phase_id, None
 
     # 3) Alles beendet -> zurueck zu Spieltag 1 der Ligaphase
     return 1, 0
+
+
+def _auto_select_ligaphase_spieltag_idx(season):
+    """Waehlt in der Ligaphase den ersten Spieltag mit offenem Match, sonst Spieltag 1."""
+    for i in range(1, _LIGAPHASE_SPIELTAGE + 1):
+        raw_matches = _fetch_or_cache_ligaphase_matchday_raw(season, i)
+        if raw_matches and any(not m.get("matchIsFinished", False) for m in raw_matches):
+            return i - 1
+    return 0
 
 
 # ---------------------------------------------------------------------------
 # Öffentliche Funktion
 # ---------------------------------------------------------------------------
 
-def fetch_cl_data(phase_order_id=None, spieltag_idx=None):
+def fetch_cl_ligaphase_table(season=None):
+    """Berechnet die CL-Ligaphase-Tabelle (spieltage 1-8)."""
+    if season is None:
+        season = _current_football_season()
+
+    cache_key = f"cl_{season}_table"
+    cached = _get_cached(cache_key)
+    if cached is not None:
+        return cached
+
+    all_raw = _fetch_or_cache_ligaphase_raw(season)
+    table = _compute_cl_table_from_ligaphase(all_raw)
+    _override_logos([], table)
+    _set_cached(cache_key, table)
+    return table
+
+
+def fetch_cl_data(phase_order_id=None, spieltag_idx=None, include_table=False):
     """Gibt Champions-League-Daten für eine Phase zurück.
 
     Args:
@@ -324,37 +376,20 @@ def fetch_cl_data(phase_order_id=None, spieltag_idx=None):
 
     # --- Ligaphase ---
     if is_ligaphase:
-        # Alle 8 Spieltage parallel fetchen und gemeinsam cachen
-        all_raw = _fetch_or_cache_ligaphase_raw(season)
-
-        # Default innerhalb der Ligaphase (wenn explizit Phase 1 geoeffnet wurde):
-        # naechster noch nicht vollstaendig gespielter Spieltag, sonst Spieltag 1.
         if spieltag_idx is None:
-            spieltag_idx = 0
-            found_upcoming_or_running = False
-            for i in range(1, _LIGAPHASE_SPIELTAGE + 1):
-                raw_matches = all_raw.get(i, [])
-                if not raw_matches:
-                    continue
-                if any(not m.get("matchIsFinished", False) for m in raw_matches):
-                    spieltag_idx = i - 1  # 0-basiert
-                    found_upcoming_or_running = True
-                    break
-            if not found_upcoming_or_running:
-                spieltag_idx = 0
+            spieltag_idx = _auto_select_ligaphase_spieltag_idx(season)
         spieltag_idx = max(0, min(spieltag_idx, _LIGAPHASE_SPIELTAGE - 1))
 
-        cache_key = f"cl_{season}_st_{spieltag_idx}"
+        cache_key = f"cl_{season}_st_{spieltag_idx}_table_{1 if include_table else 0}"
         cached = _get_cached(cache_key)
         if cached:
             return cached
 
-        raw = all_raw.get(spieltag_idx + 1, [])
+        raw = _fetch_or_cache_ligaphase_matchday_raw(season, spieltag_idx + 1)
         matches = [m for m in [_transform_raw_match(r, local_tz) for r in raw] if m]
         matches.sort(key=lambda m: m["matchDateTimeUTC"])
 
-        # Tabelle nur aus Ligaphase-Spielen (Spieltage 1-8) berechnen
-        table = _compute_cl_table_from_ligaphase(all_raw)
+        table = fetch_cl_ligaphase_table(season) if include_table else []
 
         _override_logos(matches, table)
         result = {
