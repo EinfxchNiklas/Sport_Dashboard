@@ -183,7 +183,7 @@ def _format_f1_session_title(session_name):
     else:
         normalized = session_name or 'Session'
 
-    return f'Formel 1: {normalized}'
+    return f'{normalized}'
 
 
 def _dedupe_events(events):
