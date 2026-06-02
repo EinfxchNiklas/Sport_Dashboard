@@ -21,6 +21,7 @@ from data_sources.get_fussball_data import (
     fetch_dfb_data,
     fetch_wm_data,
 )
+from data_sources.get_injured_players import fetch_injured_players
 from data_sources.get_formula1_data import (
     fetch_formula1_weekends,
     fetch_championship_standings,
@@ -260,6 +261,21 @@ def display_matches():
         home_url='/fussball' if source == 'select' else '/',
         home_label='Wettbewerbe' if source == 'select' else 'Home',
     )
+
+
+@app.route('/fussball/bundesliga/verletzte')
+def bundesliga_injured_players():
+    team_id = request.args.get('team', 7, type=int)
+
+    standings, _ = fetch_bundesliga_table()
+    selected_team = next((t for t in standings if t.get('teamId') == team_id), None)
+    team_name = selected_team['teamName'] if selected_team else None
+
+    if team_name is None:
+        return jsonify({'players': [], 'error': 'unknown_team'}), 404
+
+    players, error = fetch_injured_players(team_name)
+    return jsonify({'players': players, 'error': error, 'teamName': team_name})
 
 
 @app.route('/fussball/champions-league')

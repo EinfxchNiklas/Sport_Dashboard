@@ -9,6 +9,10 @@ Versionsregel:
 - Kleine Änderungen und Bugfixes erhöhen die Minor-Version (v1.1, v1.2, ...).
 - Größere Erweiterungen (z. B. neue Sportarten oder neue Competitions) erhöhen die Major-Version (v2.0, v3.0, ...).
 
+## v6.1 - 2026-06-02 - Verletzte Spieler (Bundesliga)
+
+Kurzbeschreibung: Auf der Bundesliga-Seite kann je Verein zwischen Spielen und einer Liste verletzter Spieler umgeschaltet werden. Die Verletzungsdaten (Name, Position, Alter, Art der Verletzung, verletzt seit, verpasste Spiele) werden per Web-Scraping von Transfermarkt bezogen und serverseitig gecached.
+
 ## v6.0 - 2026-05-23 - DFB-Pokal, Champions League und WM 2026
 
 Kurzbeschreibung: Internationale Fußball-Wettbewerbe wurden als Features gebündelt integriert und die Turnieransichten für den produktiven Einsatz erweitert.

@@ -1609,6 +1609,58 @@ body.page-fussball .table-wrap {
             width: 100%;
             grid-area: matches;
         }
+body.page-fussball .fussball-view-switch {
+            display: flex;
+            gap: 0;
+            margin: 12px 12px 14px 12px;
+            border-radius: 8px;
+            overflow: hidden;
+        }
+body.page-fussball .fussball-switch-btn {
+            flex: 1;
+            padding: 12px;
+            background: #2a2a2a;
+            border: none;
+            border-radius: 0;
+            color: #b0b0b0;
+            font-size: 13px;
+            font-weight: 600;
+            font-family: inherit;
+            cursor: pointer;
+            transition: background 0.2s, color 0.2s;
+        }
+body.page-fussball .fussball-switch-btn:hover {
+            color: #f5f5f5;
+        }
+body.page-fussball .fussball-switch-btn.active {
+            background: #ffd24a;
+            color: #111;
+        }
+body.page-fussball .injuries-table .injury-name {
+            font-weight: 600;
+            color: #f5f5f5;
+        }
+body.page-fussball .injuries-mobile-toggle {
+            display: none;
+        }
+body.page-fussball .injuries-table td {
+            font-size: 14px;
+            color: #e0e0e0;
+            font-weight: 500;
+        }
+body.page-fussball .injuries-table td.center {
+            width: auto;
+            color: #ffd24a;
+            font-weight: 700;
+        }
+body.page-fussball .injuries-loading,
+body.page-fussball .injuries-empty,
+body.page-fussball .injuries-error {
+            text-align: center;
+            padding: 30px;
+            color: #999;
+            font-size: 14px;
+        }
 body.page-fussball table {
             width: 100%;
             border-collapse: collapse;
