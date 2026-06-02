@@ -559,7 +559,10 @@ body.page-fussball .fussball-view-injuries.injuries-expanded {
 body.page-fussball .injuries-mobile-toggle {
                 display: flex;
                 justify-content: flex-end;
-                padding: 8px 8px 0 8px;
+                padding: 0 8px;
+            }
+body.page-fussball .injuries-mobile-toggle[hidden] {
+                display: none !important;
             }
 body.page-fussball .injuries-toggle-btn {
                 background: #2a2a2a;

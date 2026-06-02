@@ -134,9 +134,6 @@
                  data-injuries-url="/fussball/bundesliga/verletzte?team={{ selected_team_id }}">
                 <div class="injuries-loading no-data">Verletzte Spieler werden geladen …</div>
                 <div class="injuries-content" hidden>
-                    <div class="injuries-mobile-toggle">
-                        <button type="button" class="injuries-toggle-btn" aria-expanded="false">Mehr Details</button>
-                    </div>
                     <table class="injuries-table">
                         <thead>
                             <tr>
@@ -155,6 +152,9 @@
                 <div class="injuries-error no-data" hidden>Verletztendaten konnten nicht geladen werden.</div>
             </div>
         </section>
+        <div class="injuries-mobile-toggle" hidden>
+            <button type="button" class="injuries-toggle-btn" aria-expanded="false">Mehr Details</button>
+        </div>
     </div>
     {% if api_rate_limited %}
     <script>
@@ -302,14 +302,24 @@
             var buttons = switchBar.querySelectorAll('.fussball-switch-btn');
             var loadingEl = injuriesPanel.querySelector('.injuries-loading');
             var contentEl = injuriesPanel.querySelector('.injuries-content');
+            var mobileToggleEl = document.querySelector('.page-grid > .injuries-mobile-toggle');
             var tbodyEl = injuriesPanel.querySelector('.injuries-table tbody');
             var emptyEl = injuriesPanel.querySelector('.injuries-empty');
             var errorEl = injuriesPanel.querySelector('.injuries-error');
+            var mobileQuery = window.matchMedia('(max-width: 700px)');
             var hasLoaded = false;
+
+            function setMobileToggleVisibility(isVisible) {
+                if (!mobileToggleEl) {
+                    return;
+                }
+                mobileToggleEl.hidden = !(isVisible && mobileQuery.matches && !injuriesPanel.hidden);
+            }
 
             function showState(state) {
                 loadingEl.hidden = state !== 'loading';
                 contentEl.hidden = state !== 'content';
+                setMobileToggleVisibility(state === 'content' && !injuriesPanel.hidden);
                 emptyEl.hidden = state !== 'empty';
                 errorEl.hidden = state !== 'error';
             }
@@ -379,6 +389,8 @@
                 });
                 if (view === 'injuries') {
                     loadInjuries();
+                } else {
+                    setMobileToggleVisibility(false);
                 }
             }
 
@@ -388,7 +400,17 @@
                 });
             });
 
-            var toggleBtn = injuriesPanel.querySelector('.injuries-toggle-btn');
+            if (typeof mobileQuery.addEventListener === 'function') {
+                mobileQuery.addEventListener('change', function () {
+                    setMobileToggleVisibility(!contentEl.hidden);
+                });
+            } else if (typeof mobileQuery.addListener === 'function') {
+                mobileQuery.addListener(function () {
+                    setMobileToggleVisibility(!contentEl.hidden);
+                });
+            }
+
+            var toggleBtn = mobileToggleEl ? mobileToggleEl.querySelector('.injuries-toggle-btn') : null;
             if (toggleBtn) {
                 toggleBtn.addEventListener('click', function () {
                     var expanded = injuriesPanel.classList.toggle('injuries-expanded');
