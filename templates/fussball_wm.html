@@ -50,6 +50,13 @@
     {# ---- Gruppenphase: alle Gruppen ---- #}
     {% set current_phase = phases | selectattr("orderID", "equalto", current_phase_id) | first %}
 
+    {# ---- Ansicht-Switch: Gruppen ⇄ Chronologisch ---- #}
+    <div class="wm-view-switch" role="tablist" data-wm-view-switch>
+        <button type="button" class="wm-switch-btn active" data-wm-view="groups">Gruppen</button>
+        <button type="button" class="wm-switch-btn" data-wm-view="chrono">Chronologisch</button>
+    </div>
+
+    <div class="wm-view" id="wm-view-groups">
     <div class="wm-groups-grid">
         {% for group in groups %}
         <div class="wm-group-card panel{% if group.label|upper == 'E' %} wm-group-card--deutschland{% endif %}">
@@ -127,6 +134,47 @@
         <div class="no-data">Keine Gruppendaten verfügbar.</div>
         {% endif %}
     </div>
+    </div>{# /#wm-view-groups #}
+
+    {# ---- Chronologische Ansicht ---- #}
+    <div class="wm-view wm-view--hidden" id="wm-view-chrono">
+        {% if chronological_matches %}
+        <section class="panel">
+            {% set ns = namespace(last_date='') %}
+            {% for match in chronological_matches %}
+            {% if match.dateHeader != ns.last_date %}
+            {% set ns.last_date = match.dateHeader %}
+            <div class="wm-chrono-date">{{ match.dateHeader }}</div>
+            {% endif %}
+            <div class="wm-chrono-row">
+                <span class="wm-chrono-group" title="Gruppe {{ match.group }}">{{ match.group }}</span>
+                <div class="comp-team comp-team--home">
+                    <span class="comp-team-name">{{ match.team1.teamName }}</span>
+                    {% if match.team1.logo %}
+                    <img src="{{ match.team1.logo }}" alt="{{ match.team1.teamName }}" class="wm-flag" />
+                    {% endif %}
+                </div>
+                <div class="comp-score">
+                    {% if match.isFinished %}
+                        <span class="score-value">{{ match.homeScore }} : {{ match.awayScore }}</span>
+                    {% else %}
+                        <span class="score-time">{{ match.timeShort }}</span>
+                        {% if match.isToday %}<span class="score-note">heute</span>{% endif %}
+                    {% endif %}
+                </div>
+                <div class="comp-team comp-team--away">
+                    {% if match.team2.logo %}
+                    <img src="{{ match.team2.logo }}" alt="{{ match.team2.teamName }}" class="wm-flag" />
+                    {% endif %}
+                    <span class="comp-team-name">{{ match.team2.teamName }}</span>
+                </div>
+            </div>
+            {% endfor %}
+        </section>
+        {% else %}
+        <div class="no-data">Keine Spiele für diese Runde verfügbar.</div>
+        {% endif %}
+    </div>{# /#wm-view-chrono #}
 
     {% else %}
     {# ---- K.o.-Phase ---- #}
@@ -170,5 +218,29 @@
     <footer>
         <p><a href="/impressum">Impressum</a> | <a href="/datenschutz">Datenschutz</a> | <a href="/docs">Docs</a> | <a href="/calendar-export">Kalender Export</a></p>
     </footer>
+
+    <script>
+        (function () {
+            const switchBar = document.querySelector('[data-wm-view-switch]');
+            if (!switchBar) return;
+            const views = {
+                groups: document.getElementById('wm-view-groups'),
+                chrono: document.getElementById('wm-view-chrono'),
+            };
+            switchBar.querySelectorAll('.wm-switch-btn').forEach(function (btn) {
+                btn.addEventListener('click', function () {
+                    const target = btn.dataset.wmView;
+                    switchBar.querySelectorAll('.wm-switch-btn').forEach(function (b) {
+                        b.classList.toggle('active', b === btn);
+                    });
+                    Object.keys(views).forEach(function (key) {
+                        if (views[key]) {
+                            views[key].classList.toggle('wm-view--hidden', key !== target);
+                        }
+                    });
+                });
+            });
+        })();
+    </script>
 </body>
 </html>
