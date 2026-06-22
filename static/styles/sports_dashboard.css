@@ -2773,10 +2773,14 @@ body.page-wm .wm-group-card--deutschland {
     transition: background 0.15s, border-color 0.15s;
 }
 
-.sport-nav-toggle:hover,
+.sport-nav-toggle:hover {
+    background: #2a2a2a;
+    border-color: var(--nav-accent, #4b4b4b);
+}
+
 .sport-nav-toggle[aria-expanded="true"] {
     background: #2a2a2a;
-    border-color: #4b4b4b;
+    border-color: var(--nav-accent, #4b4b4b);
 }
 
 .sport-nav-bar {
@@ -2785,7 +2789,15 @@ body.page-wm .wm-group-card--deutschland {
     height: 2px;
     background: #f5f5f5;
     border-radius: 2px;
-    transition: transform 0.2s, opacity 0.2s;
+    transition: transform 0.2s, opacity 0.2s, background 0.15s;
+}
+
+.sport-nav-toggle[aria-expanded="true"] .sport-nav-bar {
+    background: var(--nav-accent, #f5f5f5);
+}
+
+.sport-nav-toggle:hover .sport-nav-bar {
+    background: var(--nav-accent, #f5f5f5);
 }
 
 .sport-nav-toggle[aria-expanded="true"] .sport-nav-bar:nth-child(1) {
@@ -2799,6 +2811,17 @@ body.page-wm .wm-group-card--deutschland {
 .sport-nav-toggle[aria-expanded="true"] .sport-nav-bar:nth-child(3) {
     transform: translateY(-6px) rotate(-45deg);
 }
+
+/* Akzentfarbe je Sport-/Wettbewerbsseite für den geöffneten Menü-Button.
+   page-cl/dfb/wm stehen nach page-fussball, damit sie dessen Wert überschreiben. */
+body.page-american { --nav-accent: #22c55e; }
+body.page-formula1 { --nav-accent: #ff2d2d; }
+body.page-fussball { --nav-accent: #ffd24a; }
+body.page-fussball-select { --nav-accent: #ffd24a; }
+body.page-cl { --nav-accent: #1e90ff; }
+body.page-dfb { --nav-accent: #22c55e; }
+body.page-wm { --nav-accent: #ffd24a; }
+
 
 .sport-nav-menu {
     position: absolute;
