@@ -7,6 +7,8 @@ rekonstruiert und nach dem Datum des ersten Spiels sortiert (→ A–L).
 
 from concurrent.futures import ThreadPoolExecutor
 from datetime import datetime
+import re
+import unicodedata
 
 from pytz import timezone as pytz_timezone
 
@@ -40,10 +42,156 @@ WM_PHASES = [
 
 _GROUP_LABELS = list("ABCDEFGHIJKL")
 
+_STREAM_PROVIDERS = {
+    "ard": {
+        "name": "ARD",
+        "logo": "/static/images/Streaming Anbieter/ARD_2019_logo.png",
+        "url": "https://www.sportschau.de/fussball/fifa-wm-2026",
+    },
+    "zdf": {
+        "name": "ZDF",
+        "logo": "/static/images/Streaming Anbieter/ZDF-Logo.png",
+        "url": "https://www.zdf.de/fussball-fifa-wm-highlights-live-livestream-100",
+    },
+    "magenta": {
+        "name": "MagentaTV",
+        "logo": "/static/images/Streaming Anbieter/MagentaTV-Logo.png",
+        "url": "https://www.magenta.tv/url/tvhubs.t-online.de/v3/ftv-web/UnstructuredGrid/482039",
+    },
+}
+
+# Quelle: vom User gelieferte finale Liste (harte Zuordnung).
+_MANUAL_STREAM_OVERRIDES = {
+    ("mexiko", "suedafrika"): {"magenta", "zdf"},
+    ("suedkorea", "tschechien"): {"magenta"},
+    ("kanada", "bosnien herzegowina"): {"ard", "magenta"},
+    ("usa", "paraguay"): {"magenta"},
+    ("katar", "schweiz"): {"magenta", "zdf"},
+    ("brasilien", "marokko"): {"magenta", "zdf"},
+    ("haiti", "schottland"): {"ard", "magenta"},
+    ("australien", "tuerkei"): {"magenta"},
+    ("deutschland", "curacao"): {"ard", "magenta"},
+    ("niederlande", "japan"): {"magenta"},
+    ("elfenbeinkueste", "ecuador"): {"ard", "magenta"},
+    ("schweden", "tunesien"): {"magenta"},
+    ("spanien", "kap verde"): {"ard", "magenta"},
+    ("belgien", "aegypten"): {"ard", "magenta"},
+    ("saudi arabien", "uruguay"): {"magenta", "zdf"},
+    ("iran", "neuseeland"): {"magenta", "zdf"},
+    ("frankreich", "senegal"): {"magenta"},
+    ("irak", "norwegen"): {"magenta"},
+    ("argentinien", "algerien"): {"ard", "magenta"},
+    ("oesterreich", "jordanien"): {"magenta", "zdf"},
+    ("portugal", "dr kongo"): {"magenta", "zdf"},
+    ("england", "kroatien"): {"magenta", "zdf"},
+    ("ghana", "panama"): {"magenta"},
+    ("usbekistan", "kolumbien"): {"magenta"},
+    ("tschechien", "suedafrika"): {"magenta", "zdf"},
+    ("schweiz", "bosnien herzegowina"): {"magenta"},
+    ("kanada", "katar"): {"magenta", "zdf"},
+    ("mexiko", "suedkorea"): {"magenta"},
+    ("usa", "australien"): {"ard", "magenta"},
+    ("schottland", "marokko"): {"magenta"},
+    ("brasilien", "haiti"): {"ard", "magenta"},
+    ("tuerkei", "paraguay"): {"magenta"},
+    ("niederlande", "schweden"): {"magenta", "zdf"},
+    ("deutschland", "elfenbeinkueste"): {"magenta", "zdf"},
+    ("ecuador", "curacao"): {"magenta", "zdf"},
+    ("tunesien", "japan"): {"magenta"},
+    ("spanien", "saudi arabien"): {"magenta"},
+    ("belgien", "iran"): {"magenta", "zdf"},
+    ("uruguay", "kap verde"): {"ard", "magenta"},
+    ("neuseeland", "aegypten"): {"magenta"},
+    ("argentinien", "oesterreich"): {"ard", "magenta"},
+    ("frankreich", "irak"): {"ard", "magenta"},
+    ("norwegen", "senegal"): {"magenta"},
+    ("jordanien", "algerien"): {"magenta", "zdf"},
+    ("portugal", "usbekistan"): {"ard", "magenta"},
+    ("england", "ghana"): {"ard", "magenta"},
+    ("panama", "kroatien"): {"magenta"},
+    ("kolumbien", "dr kongo"): {"ard", "magenta"},
+    ("schweiz", "kanada"): {"ard", "magenta"},
+    ("bosnien herzegowina", "katar"): {"magenta"},
+    ("schottland", "brasilien"): {"magenta"},
+    ("marokko", "haiti"): {"magenta", "zdf"},
+    ("tschechien", "mexiko"): {"magenta"},
+    ("suedafrika", "suedkorea"): {"magenta"},
+    ("ecuador", "deutschland"): {"ard", "magenta"},
+    ("curacao", "elfenbeinkueste"): {"magenta"},
+    ("tunesien", "niederlande"): {"ard", "magenta"},
+    ("japan", "schweden"): {"magenta"},
+    ("tuerkei", "usa"): {"magenta"},
+    ("paraguay", "australien"): {"ard", "magenta"},
+    ("norwegen", "frankreich"): {"magenta", "zdf"},
+    ("senegal", "irak"): {"magenta"},
+    ("uruguay", "spanien"): {"magenta"},
+    ("kap verde", "saudi arabien"): {"ard", "magenta"},
+    ("neuseeland", "belgien"): {"magenta"},
+    ("aegypten", "iran"): {"magenta"},
+    ("panama", "england"): {"magenta"},
+    ("kroatien", "ghana"): {"magenta", "zdf"},
+    ("kolumbien", "portugal"): {"magenta", "zdf"},
+    ("dr kongo", "usbekistan"): {"magenta"},
+    ("jordanien", "argentinien"): {"magenta"},
+    ("algerien", "oesterreich"): {"magenta", "zdf"},
+}
+
 _GERMAN_WEEKDAY_FULL = (
     "Montag", "Dienstag", "Mittwoch", "Donnerstag",
     "Freitag", "Samstag", "Sonntag",
 )
+
+
+def _normalize_for_matching(value):
+    """Normalisiert Teamnamen/Slugs für robuste Vergleiche."""
+    value = (value or "").lower().strip()
+    replacements = {
+        "ä": "ae",
+        "ö": "oe",
+        "ü": "ue",
+        "ß": "ss",
+        "&": " und ",
+    }
+    for src, target in replacements.items():
+        value = value.replace(src, target)
+    value = value.replace("-", " ")
+    value = re.sub(r"\bund\b", " ", value)
+    value = "".join(
+        ch for ch in unicodedata.normalize("NFKD", value)
+        if not unicodedata.combining(ch)
+    )
+    value = re.sub(r"[^a-z0-9 ]+", " ", value)
+    value = re.sub(r"\s+", " ", value).strip()
+    return value
+
+
+def _manual_stream_override_for_match(match):
+    """Manuelle Korrekturen für bestätigte Spiele."""
+    t1 = _normalize_for_matching(match["team1"]["teamName"])
+    t2 = _normalize_for_matching(match["team2"]["teamName"])
+    return _MANUAL_STREAM_OVERRIDES.get((t1, t2))
+
+
+def _load_hardcoded_stream_mapping(current_matches):
+    """Liefert eine rein statische Stream-Zuordnung ohne externe Quellen.
+
+    Standard ist MagentaTV; bekannte Spiele werden per festem Override gesetzt.
+    """
+    mapping = {
+        m["matchId"]: {"magenta"}
+        for m in current_matches
+        if m.get("matchId")
+    }
+
+    for match in current_matches:
+        match_id = match.get("matchId")
+        if not match_id:
+            continue
+        manual = _manual_stream_override_for_match(match)
+        if manual:
+            mapping[match_id] = set(manual)
+
+    return mapping
 
 
 # ---------------------------------------------------------------------------
@@ -211,7 +359,7 @@ def _auto_select_default_phase():
 # Chronologische Match-Liste
 # ---------------------------------------------------------------------------
 
-def _build_chronological(current_matches, team_group_label, local_tz):
+def _build_chronological(current_matches, team_group_label, local_tz, stream_mapping):
     """Reichert die Spiele der aktuellen Runde mit Gruppen-Label und
     Datums-Infos an, damit sie chronologisch (nach Anstoßzeit) und nach
     Tagen gruppiert dargestellt werden können.
@@ -233,6 +381,8 @@ def _build_chronological(current_matches, team_group_label, local_tz):
         entry["dateHeader"] = date_header
         entry["timeShort"] = local_dt.strftime("%H:%M")
         entry["isToday"] = match_date == today
+        provider_keys = sorted(stream_mapping.get(m.get("matchId"), {"magenta"}))
+        entry["streams"] = [_STREAM_PROVIDERS[k] for k in provider_keys if k in _STREAM_PROVIDERS]
         result.append(entry)
     return result
 
@@ -268,7 +418,7 @@ def fetch_wm_data(phase_order_id=None):
     if phase_order_id not in valid_phase_ids:
         phase_order_id = 1
 
-    cache_key = f"wm_{phase_order_id}"
+    cache_key = f"wm_v5_{phase_order_id}"
     cached = _get_cached(cache_key)
     if cached:
         return cached
@@ -316,8 +466,9 @@ def fetch_wm_data(phase_order_id=None):
             ]
             groups.append({"label": label, "standings": standings, "matches": group_matches})
 
+        stream_mapping = _load_hardcoded_stream_mapping(current_matches)
         chronological_matches = _build_chronological(
-            current_matches, team_group_label, local_tz
+            current_matches, team_group_label, local_tz, stream_mapping
         )
 
         result = {

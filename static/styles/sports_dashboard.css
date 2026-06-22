@@ -2743,6 +2743,17 @@ body.page-wm .wm-switch-btn.active { color: #ffd24a; border-bottom-color: #ffd24
 
 body.page-wm .wm-view--hidden { display: none; }
 
+body.page-wm .wm-chrono-legend {
+    margin: 0 0 10px;
+    padding: 10px 14px;
+    border: 1px solid #343434;
+    border-radius: 10px;
+    background: #222222;
+    color: #c8c8c8;
+    font-size: 12px;
+    line-height: 1.4;
+}
+
 /* WM Chronologische Ansicht */
 body.page-wm .wm-chrono-date {
     padding: 14px 16px 8px;
@@ -2756,11 +2767,43 @@ body.page-wm .wm-chrono-date {
 
 body.page-wm .wm-chrono-row {
     display: grid;
-    grid-template-columns: 28px 1fr 90px 1fr;
+    grid-template-columns: 28px 1fr 90px 1fr 124px;
     align-items: center;
     gap: 8px;
     padding: 12px 16px;
     border-bottom: 1px solid #232323;
+}
+
+body.page-wm .wm-chrono-streams {
+    display: flex;
+    align-items: center;
+    justify-content: flex-end;
+    gap: 6px;
+    min-width: 0;
+}
+
+body.page-wm .wm-stream-logo-link {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 38px;
+    height: 38px;
+    border-radius: 5px;
+    background: transparent;
+    border: none;
+    overflow: hidden;
+}
+
+body.page-wm .wm-stream-logo-link--disabled {
+    opacity: 0.7;
+    cursor: default;
+}
+
+body.page-wm .wm-stream-logo {
+    width: 100%;
+    height: 100%;
+    object-fit: contain;
+    background: transparent;
 }
 
 body.page-wm .wm-chrono-row:last-child { border-bottom: none; }
@@ -3124,9 +3167,24 @@ body.page-wm footer p { margin: 0; }
     }
 
     body.page-wm .wm-chrono-row {
-        grid-template-columns: 22px 1fr 74px 1fr;
+        grid-template-columns: 20px 1fr 74px 1fr 96px;
         gap: 6px;
         padding: 10px 12px;
+    }
+
+    body.page-wm .wm-stream-logo-link {
+        width: 30px;
+        height: 30px;
+        border-radius: 4px;
+    }
+
+    body.page-wm .wm-chrono-streams {
+        gap: 4px;
+    }
+
+    body.page-wm .wm-chrono-legend {
+        font-size: 11px;
+        padding: 9px 11px;
     }
 
     .comp-team-name {
