@@ -88,16 +88,19 @@ def _parse_injury_table(html):
         inline = name_cell.select_one("table.inline-table")
         if inline is not None:
             inline_rows = inline.select("tr")
-            name = inline_rows[0].get_text(" ", strip=True)
-            position = (
-                inline_rows[1].get_text(" ", strip=True)
-                if len(inline_rows) > 1
-                else "-"
-            )
+            if inline_rows:
+                name = inline_rows[0].get_text(" ", strip=True)
+                position = (
+                    inline_rows[1].get_text(" ", strip=True)
+                    if len(inline_rows) > 1
+                    else "-"
+                )
+            else:
+                name = name_cell.get_text(" ", strip=True)
+                position = "-"
         else:
             name = name_cell.get_text(" ", strip=True)
             position = "-"
-
         if not name:
             continue
 
