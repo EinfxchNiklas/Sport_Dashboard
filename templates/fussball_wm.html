@@ -24,14 +24,13 @@
         {% set max_id = phases | map(attribute='orderID') | max %}
 
         {% if current_phase_id > 1 %}
-        <a href="/fussball/wm?phase={{ prev_id }}" class="round-arrow">‹</a>
+        <a href="/fussball/wm?phase={{ prev_id }}" class="round-arrow" data-wm-phase-target="{{ prev_id }}">‹</a>
         {% else %}
         <span class="round-arrow round-arrow--disabled">‹</span>
         {% endif %}
 
         <div class="round-nav-center">
-            <select class="round-dropdown"
-                    onchange="window.location='/fussball/wm?phase='+this.value">
+            <select class="round-dropdown" data-wm-phase-select>
                 {% for phase in phases %}
                 <option value="{{ phase.orderID }}" {% if phase.orderID == current_phase_id %}selected{% endif %}>
                     {{ phase.name }}
@@ -41,7 +40,7 @@
         </div>
 
         {% if current_phase_id < max_id %}
-        <a href="/fussball/wm?phase={{ next_id }}" class="round-arrow">›</a>
+        <a href="/fussball/wm?phase={{ next_id }}" class="round-arrow" data-wm-phase-target="{{ next_id }}">›</a>
         {% else %}
         <span class="round-arrow round-arrow--disabled">›</span>
         {% endif %}
@@ -50,7 +49,15 @@
     {% if is_group_phase %}
     {# ---- Gruppenphase: alle Gruppen ---- #}
     {% set current_phase = phases | selectattr("orderID", "equalto", current_phase_id) | first %}
+    {% set wm_view = current_view if current_view in ['groups', 'chrono'] else 'groups' %}
 
+    {# ---- Ansicht-Switch: Gruppen ⇄ Chronologisch ---- #}
+    <div class="wm-view-switch" role="tablist" data-wm-view-switch>
+        <button type="button" class="wm-switch-btn{% if wm_view == 'groups' %} active{% endif %}" data-wm-view="groups">Gruppen</button>
+        <button type="button" class="wm-switch-btn{% if wm_view == 'chrono' %} active{% endif %}" data-wm-view="chrono">Chronologisch</button>
+    </div>
+
+    <div class="wm-view{% if wm_view == 'chrono' %} wm-view--hidden{% endif %}" id="wm-view-groups">
     <div class="wm-groups-grid">
         {% for group in groups %}
         <div class="wm-group-card panel{% if group.label|upper == 'E' %} wm-group-card--deutschland{% endif %}">
@@ -128,6 +135,61 @@
         <div class="no-data">Keine Gruppendaten verfügbar.</div>
         {% endif %}
     </div>
+    </div>{# /#wm-view-groups #}
+
+    {# ---- Chronologische Ansicht ---- #}
+    <div class="wm-view{% if wm_view != 'chrono' %} wm-view--hidden{% endif %}" id="wm-view-chrono">
+        {% if chronological_matches %}
+        <div class="wm-chrono-legend" role="note">Rechts siehst du die Livestream-Anbieter in Deutschland. Der Buchstabe links steht für die Gruppe.</div>
+        <section class="panel">
+            {% set ns = namespace(last_date='') %}
+            {% for match in chronological_matches %}
+            {% if match.dateHeader != ns.last_date %}
+            {% set ns.last_date = match.dateHeader %}
+            <div class="wm-chrono-date">{{ match.dateHeader }}</div>
+            {% endif %}
+            <div class="wm-chrono-row">
+                <span class="wm-chrono-group" title="Gruppe {{ match.group }}">{{ match.group }}</span>
+                <div class="comp-team comp-team--home">
+                    <span class="comp-team-name">{{ match.team1.teamName }}</span>
+                    {% if match.team1.logo %}
+                    <img src="{{ match.team1.logo }}" alt="{{ match.team1.teamName }}" class="wm-flag" />
+                    {% endif %}
+                </div>
+                <div class="comp-score">
+                    {% if match.isFinished %}
+                        <span class="score-value">{{ match.homeScore }} : {{ match.awayScore }}</span>
+                    {% else %}
+                        <span class="score-time">{{ match.timeShort }}</span>
+                        {% if match.isToday %}<span class="score-note">heute</span>{% endif %}
+                    {% endif %}
+                </div>
+                <div class="comp-team comp-team--away">
+                    {% if match.team2.logo %}
+                    <img src="{{ match.team2.logo }}" alt="{{ match.team2.teamName }}" class="wm-flag" />
+                    {% endif %}
+                    <span class="comp-team-name">{{ match.team2.teamName }}</span>
+                </div>
+                <div class="wm-chrono-streams" aria-label="Livestream-Anbieter">
+                    {% for stream in match.streams %}
+                        {% if stream.url %}
+                        <a class="wm-stream-logo-link" href="{{ stream.url }}" target="_blank" rel="noopener noreferrer" title="{{ stream.name }} Livestream">
+                            <img src="{{ stream.logo }}" alt="{{ stream.name }}" class="wm-stream-logo" />
+                        </a>
+                        {% else %}
+                        <span class="wm-stream-logo-link wm-stream-logo-link--disabled" title="{{ stream.name }}">
+                            <img src="{{ stream.logo }}" alt="{{ stream.name }}" class="wm-stream-logo" />
+                        </span>
+                        {% endif %}
+                    {% endfor %}
+                </div>
+            </div>
+            {% endfor %}
+        </section>
+        {% else %}
+        <div class="no-data">Keine Spiele für diese Runde verfügbar.</div>
+        {% endif %}
+    </div>{# /#wm-view-chrono #}
 
     {% else %}
     {# ---- K.o.-Phase ---- #}
@@ -171,5 +233,77 @@
     <footer>
         <p><a href="/impressum">Impressum</a> | <a href="/datenschutz">Datenschutz</a> | <a href="/docs">Docs</a> | <a href="/calendar-export">Kalender Export</a></p>
     </footer>
+
+    <script>
+        (function () {
+            const switchBar = document.querySelector('[data-wm-view-switch]');
+            if (!switchBar) return;
+            const phaseSelect = document.querySelector('[data-wm-phase-select]');
+            const phaseLinks = document.querySelectorAll('[data-wm-phase-target]');
+            const views = {
+                groups: document.getElementById('wm-view-groups'),
+                chrono: document.getElementById('wm-view-chrono'),
+            };
+
+            function getCurrentView() {
+                return switchBar.querySelector('.wm-switch-btn.active')?.dataset.wmView || 'groups';
+            }
+
+            function buildPhaseUrl(phaseId) {
+                const params = new URLSearchParams(window.location.search);
+                params.set('phase', String(phaseId));
+                if (getCurrentView() === 'chrono') {
+                    params.set('view', 'chrono');
+                } else {
+                    params.delete('view');
+                }
+                return window.location.pathname + '?' + params.toString();
+            }
+
+            function applyView(target, updateUrl) {
+                switchBar.querySelectorAll('.wm-switch-btn').forEach(function (b) {
+                    b.classList.toggle('active', b.dataset.wmView === target);
+                });
+                Object.keys(views).forEach(function (key) {
+                    if (views[key]) {
+                        views[key].classList.toggle('wm-view--hidden', key !== target);
+                    }
+                });
+                if (updateUrl) {
+                    const params = new URLSearchParams(window.location.search);
+                    if (target === 'chrono') {
+                        params.set('view', 'chrono');
+                    } else {
+                        params.delete('view');
+                    }
+                    window.history.replaceState({}, '', window.location.pathname + '?' + params.toString());
+                }
+            }
+
+            phaseLinks.forEach(function (link) {
+                link.addEventListener('click', function (event) {
+                    const targetPhase = link.dataset.wmPhaseTarget;
+                    if (!targetPhase) return;
+                    event.preventDefault();
+                    window.location.href = buildPhaseUrl(targetPhase);
+                });
+            });
+
+            if (phaseSelect) {
+                phaseSelect.addEventListener('change', function () {
+                    window.location.href = buildPhaseUrl(phaseSelect.value);
+                });
+            }
+
+            switchBar.querySelectorAll('.wm-switch-btn').forEach(function (btn) {
+                btn.addEventListener('click', function () {
+                    applyView(btn.dataset.wmView, true);
+                });
+            });
+
+            const initialUrlView = new URLSearchParams(window.location.search).get('view');
+            applyView(initialUrlView === 'chrono' ? 'chrono' : '{{ wm_view }}', false);
+        })();
+    </script>
 </body>
 </html>
