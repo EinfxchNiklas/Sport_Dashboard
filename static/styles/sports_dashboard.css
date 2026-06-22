@@ -111,7 +111,7 @@ body.page-american .team-picker {
         }
 body.page-american .season-picker {
             position: absolute;
-            top: 0;
+            top: 48px;
             left: -170px;
             width: 140px;
             display: flex;
