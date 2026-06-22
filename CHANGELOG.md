@@ -9,6 +9,10 @@ Versionsregel:
 - Kleine Änderungen und Bugfixes erhöhen die Minor-Version (v1.1, v1.2, ...).
 - Größere Erweiterungen (z. B. neue Sportarten oder neue Competitions) erhöhen die Major-Version (v2.0, v3.0, ...).
 
+## v6.2 - 2026-06-22 - Burger-Menü-Navigation
+
+Kurzbeschreibung: Auf allen Sportseiten wurde eine neue Burger-Menü-Navigation eingeführt, die den bisherigen `source`-URL-Parameter vollständig ersetzt. Das Menü übernimmt die sportspezifischen Akzentfarben und wird als eigene Template-Komponente (`_sport_nav.html`) gepflegt. Ein Überlappungsfehler zwischen Menü und Saisonauswahl (NFL) wurde behoben. Im Fußball-Bereich wurde die WM als visuelles Highlight auf der Homepage verankert, eine automatische Stage-Vorauswahl ergänzt und die Bezeichnung „Weltmeisterschaft" in der mobilen Ansicht auf „WM" gekürzt. Zusätzlich wurden Code-Qualitätsfixes eingespielt sowie ein Darstellungsfehler bei unvollständigem Zeilenhintergrund in Tabellen (#38) und die Dateigröße der Bundesliga-Schale reduziert.
+
 ## v6.1 - 2026-06-02 - Verletzte Spieler (Bundesliga)
 
 Kurzbeschreibung: Auf der Bundesliga-Seite kann je Verein zwischen Spielen und einer Liste verletzter Spieler umgeschaltet werden. Die Verletzungsdaten (Name, Position, Alter, Art der Verletzung, verletzt seit, verpasste Spiele) werden per Web-Scraping von Transfermarkt bezogen und serverseitig gecached.
