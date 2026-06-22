@@ -2721,7 +2721,6 @@ body.page-wm .wm-view-switch {
     display: flex;
     gap: 10px;
     margin-bottom: 18px;
-    border-bottom: 2px solid #2d2d2d;
 }
 
 body.page-wm .wm-switch-btn {
