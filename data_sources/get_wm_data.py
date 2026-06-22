@@ -170,16 +170,49 @@ def _build_group_standings(group_team_ids, all_matches, teams_info):
 
 
 # ---------------------------------------------------------------------------
+# Phasen-Auswahl
+# ---------------------------------------------------------------------------
+
+def _fetch_or_cache_phase_raw(phase_order_id):
+    """Ruft die Roh-Spiele einer WM-Phase ab (mit Cache)."""
+    cache_key = f"wm_raw_{phase_order_id}"
+    cached = _get_cached(cache_key)
+    if cached is not None:
+        return cached
+    raw = _fetch_competition_group_matches(_WM_SHORTCUT, _WM_SEASON, phase_order_id)
+    _set_cached(cache_key, raw)
+    return raw
+
+
+def _auto_select_default_phase():
+    """Waehlt die erste noch nicht vollstaendig gespielte WM-Phase.
+
+    Eine Phase ohne angesetzte Spiele (z.B. die naechste, noch nicht
+    ausgeloste Runde) gilt als aktuelle Phase. Sind alle Phasen beendet,
+    wird die letzte Phase (Finale) zurueckgegeben.
+    """
+    for phase_meta in WM_PHASES:
+        phase_id = phase_meta["orderID"]
+        raw = _fetch_or_cache_phase_raw(phase_id)
+        if not raw:
+            return phase_id
+        if any(not m.get("matchIsFinished", False) for m in raw):
+            return phase_id
+    return WM_PHASES[-1]["orderID"]
+
+
+# ---------------------------------------------------------------------------
 # Öffentliche Funktion
 # ---------------------------------------------------------------------------
 
-def fetch_wm_data(phase_order_id=1):
+def fetch_wm_data(phase_order_id=None):
     """Gibt WM-2026-Daten für eine Phase zurück.
 
     Args:
         phase_order_id:
             1–3 → Gruppenphase (Runde 1–3)
             4–8 → K.o.-Phase (Sechzehntelfinale … Finale)
+            None → automatische Auswahl der aktuellen Phase
 
     Returns:
         Dict mit:
@@ -191,6 +224,14 @@ def fetch_wm_data(phase_order_id=1):
             matches          – (nur K.o.) Spiele der Runde
     """
     local_tz = pytz_timezone("Europe/Berlin")
+
+    if phase_order_id is None:
+        phase_order_id = _auto_select_default_phase()
+
+    valid_phase_ids = {p["orderID"] for p in WM_PHASES}
+    if phase_order_id not in valid_phase_ids:
+        phase_order_id = 1
+
     cache_key = f"wm_{phase_order_id}"
     cached = _get_cached(cache_key)
     if cached:
@@ -202,9 +243,7 @@ def fetch_wm_data(phase_order_id=1):
         # Alle 3 Gruppenrunden parallel fetchen (für Standings + Gruppen-Rekonstruktion)
         with ThreadPoolExecutor(max_workers=3) as executor:
             futures = {
-                i: executor.submit(
-                    _fetch_competition_group_matches, _WM_SHORTCUT, _WM_SEASON, i
-                )
+                i: executor.submit(_fetch_or_cache_phase_raw, i)
                 for i in (1, 2, 3)
             }
             all_raw = {i: f.result() for i, f in futures.items()}
@@ -246,7 +285,7 @@ def fetch_wm_data(phase_order_id=1):
             "matches": [],
         }
     else:
-        raw = _fetch_competition_group_matches(_WM_SHORTCUT, _WM_SEASON, phase_order_id)
+        raw = _fetch_or_cache_phase_raw(phase_order_id)
         matches = [m for m in [_transform_raw_match(r, local_tz) for r in raw] if m]
         matches.sort(key=lambda m: m["matchDateTimeUTC"])
 

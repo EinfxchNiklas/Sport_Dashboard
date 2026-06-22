@@ -306,7 +306,7 @@ def fussball_dfb():
 
 @app.route('/fussball/wm')
 def fussball_wm():
-    phase_order_id = request.args.get('phase', 1, type=int)
+    phase_order_id = request.args.get('phase', type=int)
     source = request.args.get('source', 'select', type=str)
     if source not in {'home', 'select'}:
         source = 'select'
