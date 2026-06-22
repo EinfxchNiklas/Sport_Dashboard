@@ -1,0 +1,78 @@
+<nav class="sport-nav" aria-label="Sport-Navigation">
+    <button type="button" class="sport-nav-toggle" aria-expanded="false" aria-controls="sport-nav-menu" aria-label="Sportarten-Menü öffnen">
+        <span class="sport-nav-bar"></span>
+        <span class="sport-nav-bar"></span>
+        <span class="sport-nav-bar"></span>
+    </button>
+    <div class="sport-nav-menu" id="sport-nav-menu" hidden>
+        <span class="sport-nav-heading">Sportarten</span>
+        {% set is_fussball = request.path.startswith('/fussball') %}
+        <div class="sport-nav-group">
+            <button type="button" class="sport-nav-link sport-nav-group-toggle{% if is_fussball %} active{% endif %}" aria-expanded="{{ 'true' if is_fussball else 'false' }}" aria-controls="sport-nav-fussball">
+                <span class="sport-nav-icon" aria-hidden="true">⚽</span>
+                <span class="sport-nav-label">Fußball</span>
+                <span class="sport-nav-caret" aria-hidden="true">›</span>
+            </button>
+            <div class="sport-nav-submenu" id="sport-nav-fussball"{% if not is_fussball %} hidden{% endif %}>
+                <a href="/fussball/wm" class="sport-nav-sublink{% if request.path.startswith('/fussball/wm') %} active{% endif %}">WM 2026</a>
+                <a href="/fussball/champions-league" class="sport-nav-sublink{% if request.path.startswith('/fussball/champions-league') %} active{% endif %}">Champions League</a>
+                <a href="/fussball/dfb-pokal" class="sport-nav-sublink{% if request.path.startswith('/fussball/dfb-pokal') %} active{% endif %}">DFB-Pokal</a>
+                <a href="/fussball/bundesliga" class="sport-nav-sublink{% if request.path.startswith('/fussball/bundesliga') %} active{% endif %}">Bundesliga</a>
+            </div>
+        </div>
+        <a href="/formula1" class="sport-nav-link{% if request.path.startswith('/formula1') %} active{% endif %}">
+            <span class="sport-nav-icon" aria-hidden="true">🏎️</span>
+            <span class="sport-nav-label">Formel 1</span>
+        </a>
+        <a href="/american_football" class="sport-nav-link{% if request.path.startswith('/american_football') %} active{% endif %}">
+            <span class="sport-nav-icon" aria-hidden="true">🏈</span>
+            <span class="sport-nav-label">American Football</span>
+        </a>
+    </div>
+</nav>
+<script>
+(function () {
+    var toggle = document.querySelector('.sport-nav-toggle');
+    var menu = document.getElementById('sport-nav-menu');
+    if (!toggle || !menu) return;
+
+    function closeMenu() {
+        menu.hidden = true;
+        toggle.setAttribute('aria-expanded', 'false');
+    }
+
+    toggle.addEventListener('click', function (event) {
+        event.stopPropagation();
+        if (toggle.getAttribute('aria-expanded') === 'true') {
+            closeMenu();
+        } else {
+            menu.hidden = false;
+            toggle.setAttribute('aria-expanded', 'true');
+        }
+    });
+
+    var groupToggles = menu.querySelectorAll('.sport-nav-group-toggle');
+    groupToggles.forEach(function (groupToggle) {
+        var submenu = document.getElementById(groupToggle.getAttribute('aria-controls'));
+        if (!submenu) return;
+        groupToggle.addEventListener('click', function (event) {
+            event.stopPropagation();
+            var isOpen = groupToggle.getAttribute('aria-expanded') === 'true';
+            groupToggle.setAttribute('aria-expanded', isOpen ? 'false' : 'true');
+            submenu.hidden = isOpen;
+        });
+    });
+
+    document.addEventListener('click', function (event) {
+        if (!menu.hidden && !menu.contains(event.target) && !toggle.contains(event.target)) {
+            closeMenu();
+        }
+    });
+
+    document.addEventListener('keydown', function (event) {
+        if (event.key === 'Escape') {
+            closeMenu();
+        }
+    });
+})();
+</script>

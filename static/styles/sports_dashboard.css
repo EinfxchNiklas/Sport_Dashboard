@@ -111,7 +111,7 @@ body.page-american .team-picker {
         }
 body.page-american .season-picker {
             position: absolute;
-            top: 0;
+            top: 48px;
             left: -170px;
             width: 140px;
             display: flex;
@@ -733,7 +733,7 @@ body.page-home .sport-section:hover .trophy-layer {
         filter: saturate(1.16) contrast(1.1);
     }
 body.page-home .trophy-fussball {
-        background-image: url('/static/images/Trophies/Bundesligaschale1.png');
+        background-image: url('/static/images/Trophies/wm-pokal.png');
     }
 body.page-home .trophy-formula1 {
         background-image: url('/static/images/Trophies/f1_trophy.png');
@@ -2744,6 +2744,193 @@ body.page-wm .wm-group-card--deutschland {
     box-shadow:
         0 0 8px rgba(221, 0, 0, 0.45),
         0 0 14px rgba(255, 206, 0, 0.4);
+}
+
+/* ==========================================================================
+   Sport-Navigation (Burger-Menü) — auf allen Sportseiten unter dem Home-Button
+   ========================================================================== */
+
+.sport-nav {
+    position: fixed;
+    top: 62px;
+    left: 18px;
+    z-index: 1001;
+}
+
+.sport-nav-toggle {
+    display: inline-flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    gap: 4px;
+    width: 42px;
+    height: 38px;
+    padding: 0;
+    background: #1e1e1e;
+    border: 1px solid #2d2d2d;
+    border-radius: 8px;
+    cursor: pointer;
+    transition: background 0.15s, border-color 0.15s;
+}
+
+.sport-nav-toggle:hover {
+    background: #2a2a2a;
+    border-color: var(--nav-accent, #4b4b4b);
+}
+
+.sport-nav-toggle[aria-expanded="true"] {
+    background: #2a2a2a;
+    border-color: var(--nav-accent, #4b4b4b);
+}
+
+.sport-nav-bar {
+    display: block;
+    width: 20px;
+    height: 2px;
+    background: #f5f5f5;
+    border-radius: 2px;
+    transition: transform 0.2s, opacity 0.2s, background 0.15s;
+}
+
+.sport-nav-toggle[aria-expanded="true"] .sport-nav-bar {
+    background: var(--nav-accent, #f5f5f5);
+}
+
+.sport-nav-toggle:hover .sport-nav-bar {
+    background: var(--nav-accent, #f5f5f5);
+}
+
+.sport-nav-toggle[aria-expanded="true"] .sport-nav-bar:nth-child(1) {
+    transform: translateY(6px) rotate(45deg);
+}
+
+.sport-nav-toggle[aria-expanded="true"] .sport-nav-bar:nth-child(2) {
+    opacity: 0;
+}
+
+.sport-nav-toggle[aria-expanded="true"] .sport-nav-bar:nth-child(3) {
+    transform: translateY(-6px) rotate(-45deg);
+}
+
+/* Akzentfarbe je Sport-/Wettbewerbsseite für den geöffneten Menü-Button.
+   page-cl/dfb/wm stehen nach page-fussball, damit sie dessen Wert überschreiben. */
+body.page-american { --nav-accent: #22c55e; }
+body.page-formula1 { --nav-accent: #ff2d2d; }
+body.page-fussball { --nav-accent: #ffd24a; }
+body.page-fussball-select { --nav-accent: #ffd24a; }
+body.page-cl { --nav-accent: #1e90ff; }
+body.page-dfb { --nav-accent: #22c55e; }
+body.page-wm { --nav-accent: #ffd24a; }
+
+
+.sport-nav-menu {
+    position: absolute;
+    top: calc(100% + 8px);
+    left: 0;
+    min-width: 220px;
+    display: flex;
+    flex-direction: column;
+    padding: 6px;
+    background: #1b1b1b;
+    border: 1px solid #2d2d2d;
+    border-radius: 10px;
+    box-shadow: 0 12px 30px rgba(0, 0, 0, 0.45);
+}
+
+.sport-nav-menu[hidden] {
+    display: none;
+}
+
+.sport-nav-heading {
+    padding: 6px 10px 4px;
+    font-size: 11px;
+    font-weight: 700;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    color: #8a8a8a;
+}
+
+.sport-nav-link {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 9px 10px;
+    border-radius: 7px;
+    color: #f5f5f5;
+    text-decoration: none;
+    font-size: 14px;
+    font-weight: 600;
+    transition: background 0.12s, color 0.12s;
+}
+
+.sport-nav-link:hover {
+    background: #2a2a2a;
+}
+
+.sport-nav-link.active {
+    background: #242424;
+}
+
+.sport-nav-icon {
+    font-size: 16px;
+    line-height: 1;
+}
+
+/* Aufklappbare Gruppe (Fußball → Wettbewerbe) */
+.sport-nav-group-toggle {
+    width: 100%;
+    background: transparent;
+    border: none;
+    cursor: pointer;
+    text-align: left;
+    font-family: inherit;
+}
+
+.sport-nav-label {
+    flex: 1;
+}
+
+.sport-nav-caret {
+    font-size: 16px;
+    line-height: 1;
+    color: #f5f5f5;
+    transition: transform 0.18s;
+}
+
+.sport-nav-group-toggle[aria-expanded="true"] .sport-nav-caret {
+    transform: rotate(90deg);
+}
+
+.sport-nav-submenu {
+    display: flex;
+    flex-direction: column;
+    margin: 2px 0 4px 0;
+    padding-left: 14px;
+    border-left: 1px solid #2d2d2d;
+    margin-left: 18px;
+}
+
+.sport-nav-submenu[hidden] {
+    display: none;
+}
+
+.sport-nav-sublink {
+    padding: 8px 10px;
+    border-radius: 7px;
+    color: #f5f5f5;
+    text-decoration: none;
+    font-size: 13.5px;
+    font-weight: 500;
+    transition: background 0.12s, color 0.12s;
+}
+
+.sport-nav-sublink:hover {
+    background: #2a2a2a;
+}
+
+.sport-nav-sublink.active {
+    background: #242424;
+    font-weight: 600;
 }
 
 /* WM Match-Darstellung – größere Schrift wie Bundesliga */

@@ -12,7 +12,8 @@
     {% endif %}
 </head>
 <body class="page-fussball">
-    <a href="{{ home_url }}" class="home-button">← {{ home_label }}</a>
+    <a href="/" class="home-button">← Home</a>
+    {% include '_sport_nav.html' %}
     <h1 class="page-title">{{ selected_team_name }} – Spiele</h1>
     <p class="subtitle"></p>
 
@@ -27,7 +28,7 @@
             <summary>Team-Auswahl</summary>
             <nav class="team-picker">
                 {% for team in standings %}
-                     <a href="/fussball/bundesliga?team={{ team.teamId }}&amp;source={{ source }}"
+                     <a href="/fussball/bundesliga?team={{ team.teamId }}"
                    class="team-btn{% if team.teamId == selected_team_id %} active{% endif %}">
                     {% if team.logo %}
                         <img src="{{ team.logo }}" alt="{{ team.teamName }}" />
