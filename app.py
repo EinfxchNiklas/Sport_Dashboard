@@ -241,9 +241,6 @@ def fussball_selector():
 @app.route('/fussball/bundesliga')
 def display_matches():
     team_id = request.args.get('team', 7, type=int)
-    source = request.args.get('source', 'home', type=str)
-    if source not in {'home', 'select'}:
-        source = 'home'
 
     standings, _ = fetch_bundesliga_table()
     matches, _ = fetch_team_matches(team_id)
@@ -257,9 +254,6 @@ def display_matches():
         standings=standings,
         selected_team_id=team_id,
         selected_team_name=selected_team_name,
-        source=source,
-        home_url='/fussball' if source == 'select' else '/',
-        home_label='Wettbewerbe' if source == 'select' else 'Home',
     )
 
 
@@ -307,15 +301,9 @@ def fussball_dfb():
 @app.route('/fussball/wm')
 def fussball_wm():
     phase_order_id = request.args.get('phase', type=int)
-    source = request.args.get('source', 'select', type=str)
-    if source not in {'home', 'select'}:
-        source = 'select'
     data = fetch_wm_data(phase_order_id=phase_order_id)
     return render_template(
         'fussball_wm.html',
-        source=source,
-        home_url='/' if source == 'home' else '/fussball',
-        home_label='Home' if source == 'home' else 'Wettbewerbe',
         **data,
     )
 

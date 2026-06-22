@@ -12,7 +12,8 @@
     {% endif %}
 </head>
 <body class="page-fussball page-wm">
-    <a href="{{ home_url }}" class="home-button">← {{ home_label }}</a>
+    <a href="/" class="home-button">← Home</a>
+    {% include '_sport_nav.html' %}
     <div class="page-content">
     <h1>WM 2026</h1>
 
@@ -23,14 +24,14 @@
         {% set max_id = phases | map(attribute='orderID') | max %}
 
         {% if current_phase_id > 1 %}
-        <a href="/fussball/wm?phase={{ prev_id }}&amp;source={{ source }}" class="round-arrow">‹</a>
+        <a href="/fussball/wm?phase={{ prev_id }}" class="round-arrow">‹</a>
         {% else %}
         <span class="round-arrow round-arrow--disabled">‹</span>
         {% endif %}
 
         <div class="round-nav-center">
             <select class="round-dropdown"
-                    onchange="window.location='/fussball/wm?phase='+this.value+'&source={{ source }}'">
+                    onchange="window.location='/fussball/wm?phase='+this.value">
                 {% for phase in phases %}
                 <option value="{{ phase.orderID }}" {% if phase.orderID == current_phase_id %}selected{% endif %}>
                     {{ phase.name }}
@@ -40,7 +41,7 @@
         </div>
 
         {% if current_phase_id < max_id %}
-        <a href="/fussball/wm?phase={{ next_id }}&amp;source={{ source }}" class="round-arrow">›</a>
+        <a href="/fussball/wm?phase={{ next_id }}" class="round-arrow">›</a>
         {% else %}
         <span class="round-arrow round-arrow--disabled">›</span>
         {% endif %}

@@ -13,13 +13,14 @@
 </head>
 <body class="page-fussball-select">
     <a href="/" class="home-button">← Home</a>
+    {% include '_sport_nav.html' %}
 
     <div class="select-page">
         <h1 class="select-title">Fußball</h1>
         <p class="select-subtitle">Wähle einen Wettbewerb</p>
 
         <div class="competition-grid">
-            <a href="/fussball/wm?source=select" class="competition-card competition-card--wm">
+            <a href="/fussball/wm" class="competition-card competition-card--wm">
                 <img src="/static/images/Competition_Logo/world-cup-2026-white.png" alt="FIFA WM" class="competition-logo-large" />
                 <span class="competition-name">WM 2026</span>
                 <span class="competition-season">USA · Kanada · Mexiko</span>
@@ -38,7 +39,7 @@
                 <span class="competition-season">{{ season_label }}</span>
             </a>
 
-            <a href="/fussball/bundesliga?source=select" class="competition-card competition-card--bundesliga">
+            <a href="/fussball/bundesliga" class="competition-card competition-card--bundesliga">
                 <img src="/static/images/Competition_Logo/Bundesliga.png" alt="Bundesliga" class="competition-logo-large" />
                 <span class="competition-name">Bundesliga</span>
                 <span class="competition-season">{{ season_label }}</span>
