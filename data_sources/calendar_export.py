@@ -73,9 +73,12 @@ def has_valid_basic_auth(auth, expected_username, expected_password):
     if not auth:
         return False
 
+    if not expected_username or not expected_password:
+        return False
+
     return (
-        hmac.compare_digest(str(auth.username or ''), str(expected_username or ''))
-        and hmac.compare_digest(str(auth.password or ''), str(expected_password or ''))
+        hmac.compare_digest(str(auth.username or ''), str(expected_username))
+        and hmac.compare_digest(str(auth.password or ''), str(expected_password))
     )
 
 
