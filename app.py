@@ -307,8 +307,17 @@ def fussball_dfb():
 @app.route('/fussball/wm')
 def fussball_wm():
     phase_order_id = request.args.get('phase', 1, type=int)
+    source = request.args.get('source', 'select', type=str)
+    if source not in {'home', 'select'}:
+        source = 'select'
     data = fetch_wm_data(phase_order_id=phase_order_id)
-    return render_template('fussball_wm.html', **data)
+    return render_template(
+        'fussball_wm.html',
+        source=source,
+        home_url='/' if source == 'home' else '/fussball',
+        home_label='Home' if source == 'home' else 'Wettbewerbe',
+        **data,
+    )
 
 
 @app.route('/formula1')
