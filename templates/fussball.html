@@ -78,6 +78,12 @@
         </aside>
 
         <section class="panel table-wrap">
+            <div class="fussball-view-switch" role="tablist">
+                <button type="button" class="fussball-switch-btn active" data-view="matches" role="tab" aria-selected="true">Spiele</button>
+                <button type="button" class="fussball-switch-btn" data-view="injuries" role="tab" aria-selected="false">Verletzte</button>
+            </div>
+
+            <div class="fussball-view fussball-view-matches" data-view-panel="matches">
             <table>
                 <thead>
                     <tr>
@@ -122,7 +128,33 @@
                     {% endfor %}
                 </tbody>
             </table>
+            </div>
+
+            <div class="fussball-view fussball-view-injuries" data-view-panel="injuries" hidden
+                 data-injuries-url="/fussball/bundesliga/verletzte?team={{ selected_team_id }}">
+                <div class="injuries-loading no-data">Verletzte Spieler werden geladen …</div>
+                <div class="injuries-content" hidden>
+                    <table class="injuries-table">
+                        <thead>
+                            <tr>
+                                <th>Spieler</th>
+                                <th class="injuries-extra-col">Position</th>
+                                <th class="center injuries-extra-col">Alter</th>
+                                <th>Verletzung</th>
+                                <th class="center">Seit</th>
+                                <th class="center injuries-extra-col">Verpasste Spiele</th>
+                            </tr>
+                        </thead>
+                        <tbody></tbody>
+                    </table>
+                </div>
+                <div class="injuries-empty no-data" hidden>Keine verletzten Spieler gemeldet.</div>
+                <div class="injuries-error no-data" hidden>Verletztendaten konnten nicht geladen werden.</div>
+            </div>
         </section>
+        <div class="injuries-mobile-toggle" hidden>
+            <button type="button" class="injuries-toggle-btn" aria-expanded="false">Mehr Details</button>
+        </div>
     </div>
     {% if api_rate_limited %}
     <script>
@@ -257,8 +289,140 @@
         }
     </script>
 
+    <script>
+        (function () {
+            var switchBar = document.querySelector('.fussball-view-switch');
+            var panels = document.querySelectorAll('[data-view-panel]');
+            var injuriesPanel = document.querySelector('[data-view-panel="injuries"]');
+
+            if (!switchBar || !injuriesPanel) {
+                return;
+            }
+
+            var buttons = switchBar.querySelectorAll('.fussball-switch-btn');
+            var loadingEl = injuriesPanel.querySelector('.injuries-loading');
+            var contentEl = injuriesPanel.querySelector('.injuries-content');
+            var mobileToggleEl = document.querySelector('.page-grid > .injuries-mobile-toggle');
+            var tbodyEl = injuriesPanel.querySelector('.injuries-table tbody');
+            var emptyEl = injuriesPanel.querySelector('.injuries-empty');
+            var errorEl = injuriesPanel.querySelector('.injuries-error');
+            var mobileQuery = window.matchMedia('(max-width: 700px)');
+            var hasLoaded = false;
+
+            function setMobileToggleVisibility(isVisible) {
+                if (!mobileToggleEl) {
+                    return;
+                }
+                mobileToggleEl.hidden = !(isVisible && mobileQuery.matches && !injuriesPanel.hidden);
+            }
+
+            function showState(state) {
+                loadingEl.hidden = state !== 'loading';
+                contentEl.hidden = state !== 'content';
+                setMobileToggleVisibility(state === 'content' && !injuriesPanel.hidden);
+                emptyEl.hidden = state !== 'empty';
+                errorEl.hidden = state !== 'error';
+            }
+
+            function escapeHtml(value) {
+                return String(value == null ? '' : value)
+                    .replace(/&/g, '&amp;')
+                    .replace(/</g, '&lt;')
+                    .replace(/>/g, '&gt;')
+                    .replace(/"/g, '&quot;');
+            }
+
+            function renderPlayers(players) {
+                var rows = players.map(function (p) {
+                    return '<tr>' +
+                        '<td class="injury-name">' + escapeHtml(p.name) + '</td>' +
+                        '<td class="injuries-extra-col">' + escapeHtml(p.position) + '</td>' +
+                        '<td class="center injuries-extra-col">' + escapeHtml(p.age) + '</td>' +
+                        '<td>' + escapeHtml(p.injury) + '</td>' +
+                        '<td class="center">' + escapeHtml(p.since) + '</td>' +
+                        '<td class="center injuries-extra-col">' + escapeHtml(p.missedGames) + '</td>' +
+                        '</tr>';
+                }).join('');
+                tbodyEl.innerHTML = rows;
+            }
+
+            function loadInjuries() {
+                if (hasLoaded) {
+                    return;
+                }
+                hasLoaded = true;
+                showState('loading');
+
+                fetch(injuriesPanel.dataset.injuriesUrl, { headers: { 'Accept': 'application/json' } })
+                    .then(function (response) {
+                        if (!response.ok) {
+                            throw new Error('request failed');
+                        }
+                        return response.json();
+                    })
+                    .then(function (data) {
+                        if (data.error) {
+                            showState('error');
+                            return;
+                        }
+                        if (!data.players || !data.players.length) {
+                            showState('empty');
+                            return;
+                        }
+                        renderPlayers(data.players);
+                        showState('content');
+                    })
+                    .catch(function () {
+                        hasLoaded = false;
+                        showState('error');
+                    });
+            }
+
+            function activate(view) {
+                buttons.forEach(function (btn) {
+                    var isActive = btn.dataset.view === view;
+                    btn.classList.toggle('active', isActive);
+                    btn.setAttribute('aria-selected', isActive ? 'true' : 'false');
+                });
+                panels.forEach(function (panel) {
+                    panel.hidden = panel.dataset.viewPanel !== view;
+                });
+                if (view === 'injuries') {
+                    loadInjuries();
+                } else {
+                    setMobileToggleVisibility(false);
+                }
+            }
+
+            buttons.forEach(function (btn) {
+                btn.addEventListener('click', function () {
+                    activate(btn.dataset.view);
+                });
+            });
+
+            if (typeof mobileQuery.addEventListener === 'function') {
+                mobileQuery.addEventListener('change', function () {
+                    setMobileToggleVisibility(!contentEl.hidden);
+                });
+            } else if (typeof mobileQuery.addListener === 'function') {
+                mobileQuery.addListener(function () {
+                    setMobileToggleVisibility(!contentEl.hidden);
+                });
+            }
+
+            var toggleBtn = mobileToggleEl ? mobileToggleEl.querySelector('.injuries-toggle-btn') : null;
+            if (toggleBtn) {
+                toggleBtn.addEventListener('click', function () {
+                    var expanded = injuriesPanel.classList.toggle('injuries-expanded');
+                    toggleBtn.setAttribute('aria-expanded', expanded ? 'true' : 'false');
+                    toggleBtn.textContent = expanded ? 'Weniger Details' : 'Mehr Details';
+                });
+            }
+        })();
+    </script>
+
     <footer>
-        <p><a href="/impressum">Impressum</a> | <a href="/datenschutz">Datenschutz</a> | <a href="/docs">Docs</a></p>
+        <p><a href="/impressum">Impressum</a> | <a href="/datenschutz">Datenschutz</a> | <a href="/docs">Docs</a> | <a href="/calendar-export">Kalender Export</a></p>
     </footer>
 </body>
 </html>

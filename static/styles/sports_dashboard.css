@@ -1609,6 +1609,58 @@ body.page-fussball .table-wrap {
             width: 100%;
             grid-area: matches;
         }
+body.page-fussball .fussball-view-switch {
+            display: flex;
+            gap: 0;
+            margin: 12px 12px 14px 12px;
+            border-radius: 8px;
+            overflow: hidden;
+        }
+body.page-fussball .fussball-switch-btn {
+            flex: 1;
+            padding: 12px;
+            background: #2a2a2a;
+            border: none;
+            border-radius: 0;
+            color: #b0b0b0;
+            font-size: 13px;
+            font-weight: 600;
+            font-family: inherit;
+            cursor: pointer;
+            transition: background 0.2s, color 0.2s;
+        }
+body.page-fussball .fussball-switch-btn:hover {
+            color: #f5f5f5;
+        }
+body.page-fussball .fussball-switch-btn.active {
+            background: #ffd24a;
+            color: #111;
+        }
+body.page-fussball .injuries-table .injury-name {
+            font-weight: 600;
+            color: #f5f5f5;
+        }
+body.page-fussball .injuries-mobile-toggle {
+            display: none;
+        }
+body.page-fussball .injuries-table td {
+            font-size: 14px;
+            color: #e0e0e0;
+            font-weight: 500;
+        }
+body.page-fussball .injuries-table td.center {
+            width: auto;
+            color: #ffd24a;
+            font-weight: 700;
+        }
+body.page-fussball .injuries-loading,
+body.page-fussball .injuries-empty,
+body.page-fussball .injuries-error {
+            text-align: center;
+            padding: 30px;
+            color: #999;
+            font-size: 14px;
+        }
 body.page-fussball table {
             width: 100%;
             border-collapse: collapse;
@@ -1911,6 +1963,119 @@ body.page-fussball footer a {
     color: #f5f5f5;
 }
 
+/* ===== Calendar Export ===== */
+body.page-calendar-export {
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+    box-sizing: border-box;
+}
+
+body.page-calendar-export .page-content {
+    width: 100%;
+    max-width: 760px;
+    margin: 64px auto 24px;
+}
+
+body.page-calendar-export .home-button {
+    position: fixed;
+    top: 24px;
+    left: 24px;
+    z-index: 1000;
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 8px 14px;
+    background: rgba(255, 255, 255, 0.08);
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    border-radius: 6px;
+    color: #e0e0e0;
+    text-decoration: none;
+    font-size: 13px;
+    font-weight: 600;
+    transition: all 0.3s ease;
+}
+
+body.page-calendar-export .home-button:hover {
+    background: rgba(255, 255, 255, 0.08);
+    border-color: #ffffff;
+    color: #e0e0e0;
+    text-decoration: none;
+}
+
+body.page-calendar-export .panel {
+    padding: 20px;
+}
+
+body.page-calendar-export .export-form {
+    display: grid;
+    gap: 14px;
+}
+
+body.page-calendar-export .export-download-btn {
+    border: 0;
+    cursor: pointer;
+}
+
+body.page-calendar-export .export-note {
+    margin-top: 14px;
+    text-align: left;
+}
+
+body.page-calendar-export .export-rules-title {
+    margin: 0 0 10px;
+    font-size: 16px;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+    color: #bdbdbd;
+}
+
+body.page-calendar-export .export-rules-grid {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 10px;
+}
+
+body.page-calendar-export .export-rule-card {
+    background: #1a1a1a;
+    border: 1px solid #2d2d2d;
+    border-radius: 10px;
+    padding: 12px;
+}
+
+body.page-calendar-export .export-rule-card h3 {
+    margin: 0 0 8px;
+    font-size: 14px;
+}
+
+body.page-calendar-export .export-rule-card p,
+body.page-calendar-export .export-rule-card ul {
+    margin: 0;
+    color: #d4d4d4;
+    font-size: 13px;
+    line-height: 1.45;
+}
+
+body.page-calendar-export .export-rule-card ul {
+    padding-left: 18px;
+}
+
+body.page-calendar-export .export-rule-card-f1 {
+    border-color: #5a2632;
+}
+
+body.page-calendar-export .export-rule-card-football {
+    border-color: #66552a;
+}
+
+body.page-calendar-export .export-rule-card-nfl {
+    border-color: #24543a;
+}
+
+body.page-calendar-export footer {
+    margin-top: auto;
+}
+
 /* ===== Impressum ===== */
 body.page-impressum {
     background-color: #141414;
@@ -1977,14 +2142,16 @@ body.page-impressum a:hover {
 
 @media (max-width: 760px) {
 body.page-docs .home-button,
-body.page-impressum .home-button {
+body.page-impressum .home-button,
+body.page-calendar-export .home-button {
         background: #1f1f1f;
         border-color: #4b4b4b;
         color: #f5f5f5;
     }
 
 body.page-docs .home-button:hover,
-body.page-impressum .home-button:hover {
+body.page-impressum .home-button:hover,
+body.page-calendar-export .home-button:hover {
         background: #262626;
         border-color: #6a6a6a;
         color: #ffffff;

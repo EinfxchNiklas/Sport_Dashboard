@@ -18,7 +18,7 @@ Zusätzlich gelten die Nutzungsbedingungen der eingebundenen API-Anbieter (siehe
 ## Was zeigt die Seite?
 
 - Fußball: Wettbewerbsauswahl mit Bundesliga, Champions League, DFB-Pokal und WM 2026
-- Fußball Bundesliga: Team-Auswahl, Spiele je Team, Live-Tabelle
+- Fußball Bundesliga: Team-Auswahl, Spiele je Team, Live-Tabelle, Liste verletzter Spieler je Verein (Name, Position, Alter, Verletzung, verletzt seit, verpasste Spiele)
 - Fußball Champions League: Ligaphase mit Spieltag-Navigation, KO-Phasen und Tabelle
 - Fußball DFB-Pokal: Rundenansicht mit Navigation und Spielstatus
 - Fußball WM 2026: Gruppenphase (Tabellen + Spiele) und KO-Phase
@@ -62,6 +62,8 @@ PORT=5000
 OPENF1_BASE_URL=SET_Base_URL
 UMAMI_SCRIPT_URL=
 UMAMI_WEBSITE_ID=
+EXPORT_USERNAME=dein_export_user
+EXPORT_PASSWORD=dein_export_passwort
 ```
 
 5. Starten
@@ -147,11 +149,19 @@ Hinweis: Die folgenden Angaben sind nach bestem Wissen dokumentiert (Stand 12.04
 - Nutzungsregel:
   - Die API-Nutzung richtet sich nach RapidAPI- und Provider-spezifischen Bedingungen
 
+### 4) Transfermarkt (Verletzte Spieler, Bundesliga)
+
+- Website: https://www.transfermarkt.de/
+- Verwendete Quelle: Vereinsseiten `…/sperrenundverletzungen/verein/{id}`
+- Zugriff: Web-Scraping (kein offizieller, kostenloser API-Zugang verfügbar)
+- Gelesene Daten: Name, Position, Alter, Art der Verletzung, verletzt seit, verpasste Spiele
+- Hinweis: Ergebnisse werden serverseitig lange gecached, um die Anzahl der Requests gering zu halten. Maßgeblich sind die Nutzungsbedingungen von Transfermarkt; die HTML-Struktur kann sich jederzeit ändern.
+
 ## Tech Stack
 
 - Backend: Python (Flask)
 - Frontend: HTML, CSS, JavaScript
-- APIs: OpenLigaDB, OpenF1, Tank01 (RapidAPI)
+- APIs: OpenLigaDB, OpenF1, Tank01 (RapidAPI), Transfermarkt (Web-Scraping)
 - Deployment: Render
 
 ## Deployment
@@ -176,6 +186,7 @@ Sport_Dashboard/
 |-- .env.example
 |-- data_sources/
 |   |-- get_fussball_data.py
+|   |-- get_injured_players.py
 |   |-- get_formula1_data.py
 |   `-- get_nfl_data.py
 |-- templates/

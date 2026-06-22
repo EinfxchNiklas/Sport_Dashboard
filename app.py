@@ -5,14 +5,23 @@ import re
 import time
 from concurrent.futures import ThreadPoolExecutor
 from datetime import datetime
-import requests
+from functools import wraps
+from dotenv import load_dotenv
+from data_sources.calendar_export import (
+    BERLIN_TZ,
+    build_ics,
+    collect_calendar_export_events,
+    has_valid_basic_auth,
+)
 from data_sources.get_fussball_data import (
     fetch_team_matches,
     fetch_bundesliga_table,
     fetch_cl_data,
+    fetch_cl_ligaphase_table,
     fetch_dfb_data,
     fetch_wm_data,
 )
+from data_sources.get_injured_players import fetch_injured_players
 from data_sources.get_formula1_data import (
     fetch_formula1_weekends,
     fetch_championship_standings,
@@ -32,10 +41,35 @@ from data_sources.get_nfl_data import (
     POSITION_ORDER,
 )
 
+load_dotenv()
+
 app = Flask(__name__)
 app.config['SEND_FILE_MAX_AGE_DEFAULT'] = 60 * 60 * 24 * 7  # 1 Woche
 app.config['UMAMI_SCRIPT_URL'] = (os.environ.get('UMAMI_SCRIPT_URL') or '').strip()
 app.config['UMAMI_WEBSITE_ID'] = (os.environ.get('UMAMI_WEBSITE_ID') or '').strip()
+app.config['EXPORT_USERNAME'] = (os.environ.get('EXPORT_USERNAME') or '').strip()
+app.config['EXPORT_PASSWORD'] = os.environ.get('EXPORT_PASSWORD') or ''
+
+
+def _basic_auth_challenge_response():
+    response = Response('Authentication required', status=401)
+    response.headers['WWW-Authenticate'] = 'Basic realm="Sport Dashboard Export"'
+    return response
+
+
+def _require_export_auth(route_handler):
+    @wraps(route_handler)
+    def _wrapped(*args, **kwargs):
+        if has_valid_basic_auth(
+            request.authorization,
+            app.config.get('EXPORT_USERNAME', ''),
+            app.config.get('EXPORT_PASSWORD', ''),
+        ):
+            return route_handler(*args, **kwargs)
+
+        return _basic_auth_challenge_response()
+
+    return _wrapped
 
 
 class _HumanTrafficLogFilter(logging.Filter):
@@ -229,12 +263,38 @@ def display_matches():
     )
 
 
+@app.route('/fussball/bundesliga/verletzte')
+def bundesliga_injured_players():
+    team_id = request.args.get('team', 7, type=int)
+
+    standings, _ = fetch_bundesliga_table()
+    selected_team = next((t for t in standings if t.get('teamId') == team_id), None)
+    team_name = selected_team['teamName'] if selected_team else None
+
+    if team_name is None:
+        return jsonify({'players': [], 'error': 'unknown_team'}), 404
+
+    players, error = fetch_injured_players(team_name)
+    return jsonify({'players': players, 'error': error, 'teamName': team_name})
+
+
 @app.route('/fussball/champions-league')
 def fussball_cl():
     phase_order_id = request.args.get('phase', type=int)
     spieltag_idx = request.args.get('spieltag', None, type=int)
-    data = fetch_cl_data(phase_order_id=phase_order_id, spieltag_idx=spieltag_idx)
+
+    data = fetch_cl_data(
+        phase_order_id=phase_order_id,
+        spieltag_idx=spieltag_idx,
+        include_table=False,
+    )
     return render_template('fussball_cl.html', **data)
+
+
+@app.route('/api/fussball/champions-league/table')
+def fussball_cl_table_api():
+    table = fetch_cl_ligaphase_table()
+    return jsonify({'table': table})
 
 
 @app.route('/fussball/dfb-pokal')
@@ -436,6 +496,33 @@ def american_football_roster(team_abv):
         "positionOrder": POSITION_ORDER,
         "rate_limited": rate_limited,
     })
+
+
+@app.route('/calendar-export')
+@_require_export_auth
+def calendar_export_page():
+    return render_template('calendar_export.html')
+
+
+@app.route('/calendar-export/download', methods=['POST'])
+@_require_export_auth
+def calendar_export_download():
+    options = {
+        'football_dortmund': bool(request.form.get('football_dortmund')),
+        'football_bremen': bool(request.form.get('football_bremen')),
+        'f1_sessions': bool(request.form.get('f1_sessions')),
+        'f1_weekend_all_day': bool(request.form.get('f1_weekend_all_day')),
+        'nfl_chiefs': bool(request.form.get('nfl_chiefs')),
+        'nfl_bengals': bool(request.form.get('nfl_bengals')),
+    }
+
+    events = collect_calendar_export_events(options)
+    ics_content = build_ics(events)
+
+    filename = f"sport_dashboard_export_{datetime.now(BERLIN_TZ).strftime('%Y%m%d')}.ics"
+    response = Response(ics_content, content_type='text/calendar; charset=utf-8')
+    response.headers['Content-Disposition'] = f'attachment; filename="{filename}"'
+    return response
 
 
 @app.route('/impressum')

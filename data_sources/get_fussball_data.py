@@ -17,7 +17,7 @@ from .get_bundesliga_data import (
     get_team_logo_path,
     TEAM_LOGO_MAPPING,
 )
-from .get_champions_league_data import fetch_cl_data
+from .get_champions_league_data import fetch_cl_data, fetch_cl_ligaphase_table
 from .get_dfb_pokal_data import fetch_dfb_data
 from .get_wm_data import fetch_wm_data
 
@@ -28,6 +28,7 @@ __all__ = [
     "get_team_logo_path",
     "TEAM_LOGO_MAPPING",
     "fetch_cl_data",
+    "fetch_cl_ligaphase_table",
     "fetch_dfb_data",
     "fetch_wm_data",
 ]

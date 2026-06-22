@@ -7,3 +7,4 @@ test.py
 venv/
 env/
 *.egg-info/
+.cache/

@@ -549,6 +549,59 @@ body.page-fussball .table-wrap td {
 body.page-fussball td.center {
                 font-size: 12px;
             }
+body.page-fussball .fussball-view-injuries {
+                overflow-x: hidden;
+                -webkit-overflow-scrolling: touch;
+            }
+body.page-fussball .fussball-view-injuries.injuries-expanded {
+                overflow-x: auto;
+            }
+body.page-fussball .injuries-mobile-toggle {
+                display: flex;
+                justify-content: flex-end;
+                padding: 0 8px;
+            }
+body.page-fussball .injuries-mobile-toggle[hidden] {
+                display: none !important;
+            }
+body.page-fussball .injuries-toggle-btn {
+                background: #2a2a2a;
+                color: #ffd24a;
+                border: 1px solid #3a3a3a;
+                border-radius: 6px;
+                padding: 6px 10px;
+                font-size: 12px;
+                font-weight: 600;
+                cursor: pointer;
+            }
+body.page-fussball .injuries-table {
+                table-layout: auto;
+                min-width: 0;
+                width: 100%;
+            }
+body.page-fussball .fussball-view-injuries.injuries-expanded .injuries-table {
+                width: max-content;
+                min-width: 540px;
+            }
+body.page-fussball .injuries-extra-col {
+                display: none;
+            }
+body.page-fussball .fussball-view-injuries.injuries-expanded .injuries-extra-col {
+                display: table-cell;
+            }
+body.page-fussball .injuries-table th,
+body.page-fussball .injuries-table td {
+                white-space: normal;
+                font-size: 12px;
+                padding: 8px 8px;
+            }
+body.page-fussball .fussball-view-injuries.injuries-expanded .injuries-table th,
+body.page-fussball .fussball-view-injuries.injuries-expanded .injuries-table td {
+                white-space: nowrap;
+            }
+body.page-fussball .injuries-table .injury-name {
+                white-space: normal;
+            }
 body.page-fussball .team-cell {
                 gap: 6px;
             }
@@ -666,6 +719,10 @@ body.page-formula1 footer {
         padding-left: 16px;
         padding-right: 16px;
     }
+
+body.page-calendar-export .export-rules-grid {
+    grid-template-columns: 1fr;
+}
 }
 
 @media (max-width: 700px) {

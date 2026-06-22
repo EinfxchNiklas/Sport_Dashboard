@@ -3,3 +3,5 @@ requests
 gunicorn
 python-dotenv
 pytz
+beautifulsoup4
+lxml
