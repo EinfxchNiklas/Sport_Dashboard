@@ -754,3 +754,17 @@ body.page-impressum .home-button:hover {
         color: #ffffff;
     }
 }
+
+/* Sport-Navigation: in der mobilen Ansicht oben rechts auf allen Seiten */
+@media (max-width: 700px) {
+.sport-nav {
+        top: 18px;
+        right: 18px;
+        left: auto;
+    }
+
+.sport-nav-menu {
+        left: auto;
+        right: 0;
+    }
+}

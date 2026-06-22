@@ -12,7 +12,8 @@
     {% endif %}
 </head>
 <body class="page-fussball page-cl{% if is_ligaphase %} has-mobile-ligaphase-tabs{% endif %}">
-    <a href="/fussball" class="home-button">← Wettbewerbe</a>
+    <a href="/" class="home-button">← Home</a>
+    {% include '_sport_nav.html' %}
     <div class="page-content">
     <h1>Champions League <span class="season-tag">{{ season }}/{{ '%02d' % ((season + 1) % 100) }}</span></h1>
 
