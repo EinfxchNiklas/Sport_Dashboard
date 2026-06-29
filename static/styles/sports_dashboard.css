@@ -2937,7 +2937,11 @@ body.page-wm .bracket-match {
     min-width: 0;
 }
 
-body.page-wm .bracket-match--live {
+body.page-wm .bracket-round--active .bracket-match {
+    border-color: rgba(255, 210, 74, 0.45);
+}
+
+body.page-wm .bracket-round--active .bracket-match--live {
     border-color: #ffd24a;
 }
 

@@ -274,7 +274,8 @@
         {% for round in bracket.rounds[:-1] %}
         {% set half = round.matches | length // 2 %}
         {% set is_hf = loop.last %}
-        <div class="bracket-round bracket-round--left" data-depth="{{ loop.index - 1 }}">
+        {% set is_active = (current_phase_id == loop.index + 3) %}
+        <div class="bracket-round bracket-round--left{% if is_active %} bracket-round--active{% endif %}" data-depth="{{ loop.index - 1 }}">
             <div class="bracket-round-header">{{ round.name }}</div>
             <div class="bracket-slots">
                 {% for match in round.matches[:half] %}
@@ -294,7 +295,7 @@
         {% endfor %}
 
         {# ===== Finale (Mitte) ===== #}
-        <div class="bracket-round bracket-round--finale">
+        <div class="bracket-round bracket-round--finale{% if current_phase_id == 8 %} bracket-round--active{% endif %}">
             <div class="bracket-round-header">{{ bracket.rounds[-1].name }}</div>
             <div class="bracket-slots">
                 <div class="bracket-slot">
@@ -307,7 +308,8 @@
         {% for round in bracket.rounds[:-1] | reverse %}
         {% set half = round.matches | length // 2 %}
         {% set is_hf = loop.first %}
-        <div class="bracket-round bracket-round--right" data-depth="{{ 4 - loop.index }}">
+        {% set is_active = (current_phase_id == 8 - loop.index) %}
+        <div class="bracket-round bracket-round--right{% if is_active %} bracket-round--active{% endif %}" data-depth="{{ 4 - loop.index }}">
             <div class="bracket-round-header">{{ round.name }}</div>
             <div class="bracket-slots">
                 {% for match in round.matches[half:] %}
