@@ -418,7 +418,7 @@ def fetch_wm_data(phase_order_id=None):
     if phase_order_id not in valid_phase_ids:
         phase_order_id = 1
 
-    cache_key = f"wm_v5_{phase_order_id}"
+    cache_key = f"wm_v6_{phase_order_id}"
     cached = _get_cached(cache_key)
     if cached:
         return cached
@@ -478,11 +478,14 @@ def fetch_wm_data(phase_order_id=None):
             "groups": groups,
             "chronological_matches": chronological_matches,
             "matches": [],
+            "bracket": None,
         }
     else:
         raw = _fetch_or_cache_phase_raw(phase_order_id)
         matches = [m for m in [_transform_raw_match(r, local_tz) for r in raw] if m]
         matches.sort(key=lambda m: m["matchDateTimeUTC"])
+
+        bracket = _build_bracket(local_tz)
 
         result = {
             "phases": WM_PHASES,
@@ -491,7 +494,233 @@ def fetch_wm_data(phase_order_id=None):
             "groups": [],
             "chronological_matches": [],
             "matches": matches,
+            "bracket": bracket,
         }
 
     _set_cached(cache_key, result)
     return result
+
+
+# ---------------------------------------------------------------------------
+# Turnierbaum-Builder (K.o.-Phase)
+# ---------------------------------------------------------------------------
+
+def _get_winner(match):
+    """Gibt die teamId des Siegers zurück, oder None bei Unentschieden/offen."""
+    if not match.get("isFinished"):
+        return None
+    h = match.get("homeScore")
+    a = match.get("awayScore")
+    try:
+        h, a = int(h), int(a)
+    except (TypeError, ValueError):
+        return None
+    if h > a:
+        return match["team1"]["teamId"]
+    if a > h:
+        return match["team2"]["teamId"]
+    return None
+
+
+def _get_loser(match):
+    """Gibt die teamId des Verlierers zurück, oder None."""
+    winner = _get_winner(match)
+    if winner is None:
+        return None
+    t1 = match["team1"]["teamId"]
+    t2 = match["team2"]["teamId"]
+    return t2 if winner == t1 else t1
+
+
+def _make_placeholder():
+    """Erstellt einen leeren Slot mit 'noch offen'-Daten."""
+    return {
+        "matchId": None,
+        "team1": {"teamId": None, "teamName": "noch offen", "logo": None},
+        "team2": {"teamId": None, "teamName": "noch offen", "logo": None},
+        "homeScore": None,
+        "awayScore": None,
+        "isFinished": False,
+        "winnerTeamId": None,
+        "formattedDateTime": None,
+        "resultName": "",
+    }
+
+
+def _enrich_match(match):
+    """Hängt winnerTeamId an ein transformiertes Match-Dict."""
+    enriched = dict(match)
+    enriched["winnerTeamId"] = _get_winner(match)
+    return enriched
+
+
+def _build_bracket(local_tz):
+    """Baut den vollständigen WM-Turnierbaum (Sechzehntelfinale → Finale).
+
+    Reihenfolge der Runden:
+        R32 (16 Spiele, orderID 4) → Achtelfinale (8, id 5) →
+        Viertelfinale (4, id 6) → Halbfinale (2, id 7) →
+        Finale (1, id 8)
+
+    Logik:
+    1. Alle K.o.-Phasen parallel laden und transformieren.
+    2. Jede Runde wird nach Anstoßzeit sortiert.
+    3. Winner-Matching: Folgespiele werden den beiden Vorspielen zugeordnet,
+       deren Sieger die Teams des Folgespiels sind (so wird die echte Topologie
+       wiederhergestellt, sobald eine Runde ausgelost ist).
+    4. Lücken werden mit _make_placeholder() aufgefüllt.
+    5. Das "Spiel um Platz 3" ist das Finale-Spiel, dessen Teams die beiden
+       Halbfinal-Verlierer sind – es wird separat zurückgegeben.
+
+    Rückgabe:
+        {
+          "rounds": [
+            {"name": str, "matches": [match_or_placeholder, ...]},
+            ...  # 5 Einträge: R32, AF, VF, HF, Finale
+          ],
+          "third_place": match_or_placeholder,
+        }
+    """
+    # K.o.-Phasen-Metadaten (orderID → Rundenname, Slot-Anzahl)
+    ko_phases = [
+        {"orderID": 4, "name": "Sechzehntelfinale", "slots": 16},
+        {"orderID": 5, "name": "Achtelfinale",       "slots": 8},
+        {"orderID": 6, "name": "Viertelfinale",      "slots": 4},
+        {"orderID": 7, "name": "Halbfinale",         "slots": 2},
+        {"orderID": 8, "name": "Finale",             "slots": 1},
+    ]
+
+    # 1. Parallel laden
+    with ThreadPoolExecutor(max_workers=5) as executor:
+        futures = {
+            p["orderID"]: executor.submit(_fetch_or_cache_phase_raw, p["orderID"])
+            for p in ko_phases
+        }
+        raw_by_phase = {oid: f.result() for oid, f in futures.items()}
+
+    # 2. Transformieren + sortieren
+    matches_by_phase = {}
+    for p in ko_phases:
+        oid = p["orderID"]
+        transformed = [
+            m for m in [_transform_raw_match(r, local_tz) for r in raw_by_phase[oid]] if m
+        ]
+        transformed.sort(key=lambda m: m["matchDateTimeUTC"])
+        matches_by_phase[oid] = [_enrich_match(m) for m in transformed]
+
+    # 3. Halbfinal-Verlierer für "Spiel um Platz 3" merken
+    hf_losers = set()
+    for m in matches_by_phase.get(7, []):
+        loser_id = _get_loser(m)
+        if loser_id:
+            hf_losers.add(loser_id)
+
+    # 4. Spiel um Platz 3 aus Finale-Runde herauslösen (hat beide HF-Verlierer)
+    finale_raw = matches_by_phase.get(8, [])
+    third_place = _make_placeholder()
+    final_match = _make_placeholder()
+
+    if len(finale_raw) == 1:
+        final_match = finale_raw[0]
+    elif len(finale_raw) >= 2:
+        for m in finale_raw:
+            t1 = m["team1"]["teamId"]
+            t2 = m["team2"]["teamId"]
+            both_losers = (t1 in hf_losers or t1 is None) and (t2 in hf_losers or t2 is None)
+            if hf_losers and both_losers:
+                third_place = m
+            else:
+                final_match = m
+        # Fallback wenn keine Verlierer noch ermittelbar
+        if third_place["matchId"] is None and final_match["matchId"] is None:
+            final_match = finale_raw[0]
+            if len(finale_raw) > 1:
+                third_place = finale_raw[1]
+
+    # 5. Winner-Matching: Folgespiel den Vorspielen zuordnen
+    #    Index-Map pro Phase: teamId → match-Slot-Index (für spätere Nutzung im Template)
+    def build_round(phase_oid, slot_count, prev_matches):
+        """Gibt eine aufgefüllte Liste von `slot_count` Matches zurück.
+
+        Wenn prev_matches vorhanden, wird per Winner-Matching die Topologie hergestellt:
+        Jedes aktuelle Match wird dem Paar Vorspiele zugeordnet, deren Sieger seine Teams sind.
+        Falls kein Paar passt (Daten noch nicht verfügbar), werden Platzhalter verwendet.
+        """
+        current = list(matches_by_phase.get(phase_oid, []))
+
+        # Phase noch nicht ausgelost → alles Platzhalter
+        if not current:
+            return [_make_placeholder() for _ in range(slot_count)]
+
+        # Ohne vorherige Runde → Reihenfolge nach Anstoßzeit nehmen
+        if not prev_matches:
+            result = list(current)
+            while len(result) < slot_count:
+                result.append(_make_placeholder())
+            return result[:slot_count]
+
+        # Winner-Matching: Sieger des vorherigen Rundenpaars → aktuelles Match
+        assigned = [None] * slot_count
+        used_curr = set()
+
+        for slot_idx in range(slot_count):
+            prev_a = prev_matches[slot_idx * 2] if slot_idx * 2 < len(prev_matches) else None
+            prev_b = prev_matches[slot_idx * 2 + 1] if slot_idx * 2 + 1 < len(prev_matches) else None
+            winner_a = prev_a["winnerTeamId"] if prev_a else None
+            winner_b = prev_b["winnerTeamId"] if prev_b else None
+
+            best_match = None
+            best_score = -1
+            for ci, cm in enumerate(current):
+                if ci in used_curr:
+                    continue
+                t1 = cm["team1"]["teamId"]
+                t2 = cm["team2"]["teamId"]
+                score = 0
+                if winner_a and t1 == winner_a:
+                    score += 2
+                if winner_a and t2 == winner_a:
+                    score += 2
+                if winner_b and t1 == winner_b:
+                    score += 2
+                if winner_b and t2 == winner_b:
+                    score += 2
+                # Partial match: one winner known and found
+                if winner_a and winner_a in (t1, t2):
+                    score += 1
+                if winner_b and winner_b in (t1, t2):
+                    score += 1
+                if score > best_score:
+                    best_score = score
+                    best_match = (ci, cm)
+
+            if best_match and best_score > 0:
+                used_curr.add(best_match[0])
+                assigned[slot_idx] = best_match[1]
+            else:
+                # Kein Winner-Match möglich → Slot-Index-Reihenfolge fallback
+                for ci, cm in enumerate(current):
+                    if ci not in used_curr:
+                        used_curr.add(ci)
+                        assigned[slot_idx] = cm
+                        break
+
+        return [m if m else _make_placeholder() for m in assigned]
+
+    # Runden aufbauen
+    r32 = build_round(4, 16, [])
+    af  = build_round(5, 8,  r32)
+    vf  = build_round(6, 4,  af)
+    hf  = build_round(7, 2,  vf)
+    # Finale-Slot immer genau 1
+    finale_round = [final_match]
+
+    rounds = [
+        {"name": "Sechzehntelfinale", "matches": r32},
+        {"name": "Achtelfinale",      "matches": af},
+        {"name": "Viertelfinale",     "matches": vf},
+        {"name": "Halbfinale",        "matches": hf},
+        {"name": "Finale",            "matches": finale_round},
+    ]
+
+    return {"rounds": rounds, "third_place": third_place}
