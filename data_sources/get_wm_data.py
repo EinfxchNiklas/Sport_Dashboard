@@ -418,7 +418,7 @@ def fetch_wm_data(phase_order_id=None):
     if phase_order_id not in valid_phase_ids:
         phase_order_id = 1
 
-    cache_key = f"wm_v6_{phase_order_id}"
+    cache_key = f"wm_v7_{phase_order_id}"
     cached = _get_cached(cache_key)
     if cached:
         return cached
@@ -599,13 +599,15 @@ def _build_bracket(local_tz):
         raw_by_phase = {oid: f.result() for oid, f in futures.items()}
 
     # 2. Transformieren + sortieren
+    # K.o.-Runden nach matchId sortieren (API-Reihenfolge = offizielle Bracket-Seedings),
+    # nicht nach Datum – so bleiben die korrekten R32→AF→VF→HF Paarungen erhalten.
     matches_by_phase = {}
     for p in ko_phases:
         oid = p["orderID"]
         transformed = [
             m for m in [_transform_raw_match(r, local_tz) for r in raw_by_phase[oid]] if m
         ]
-        transformed.sort(key=lambda m: m["matchDateTimeUTC"])
+        transformed.sort(key=lambda m: m.get("matchId") or 0)
         matches_by_phase[oid] = [_enrich_match(m) for m in transformed]
 
     # 3. Halbfinal-Verlierer für "Spiel um Platz 3" merken

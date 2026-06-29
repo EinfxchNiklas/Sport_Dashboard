@@ -2850,16 +2850,23 @@ body.page-wm .wm-group-card--deutschland {
    ========================================================================== */
 
 body.page-wm .wm-bracket-wrapper {
+    /* Breakout: volle Viewport-Breite, unabhängig vom page-content max-width */
+    width: 100vw;
+    position: relative;
+    left: 50%;
+    transform: translateX(-50%);
     overflow-x: auto;
     -webkit-overflow-scrolling: touch;
-    padding-bottom: 16px;
+    padding: 0 24px 16px;
+    box-sizing: border-box;
 }
 
 body.page-wm .wm-bracket {
     display: flex;
     gap: 0;
     align-items: stretch;
-    min-width: 900px;
+    min-width: 1400px;
+    width: 100%;
 }
 
 /* Eine Runde = eine Spalte */
@@ -2867,8 +2874,8 @@ body.page-wm .bracket-round {
     display: flex;
     flex-direction: column;
     flex: 1;
-    min-width: 170px;
-    max-width: 210px;
+    min-width: 155px;
+    max-width: none;
 }
 
 body.page-wm .bracket-round-header {
@@ -3076,6 +3083,31 @@ body.page-wm .bracket-third-place-match {
 body.page-wm .bracket-round--finale .bracket-slots {
     justify-content: center;
 }
+
+/* ---- Rechte Seite: Connector auf der linken Seite der Matchkarte ---- */
+/* flex-direction: row-reverse verschiebt den Connector (2. DOM-Kind) visuell nach links */
+body.page-wm .bracket-round--right .bracket-slot {
+    flex-direction: row-reverse;
+}
+
+/* Rechts: horizontale Linie liegt an der Matchkarten-Seite (rechts im Connector-Bereich) */
+body.page-wm .bracket-round--right .bracket-connector--top::before,
+body.page-wm .bracket-round--right .bracket-connector--bottom::before {
+    left: 10px; /* von Mitte bis rechter Rand (= Matchkarten-Seite) */
+}
+/* ::after (vertikale Linie) bleibt bei left:10px – kein Override nötig */
+
+/* Einzelner Connector (Halbfinale → Finale): nur horizontale Linie, kein vertikaler Ast */
+body.page-wm .bracket-connector--single::before {
+    content: "";
+    position: absolute;
+    top: 50%;
+    left: 0;
+    width: 20px; /* volle Breite des Connector-Bereichs */
+    height: 1px;
+    background: #383838;
+}
+/* kein ::after – kein vertikaler Teil */
 
 /* ==========================================================================
    Sport-Navigation (Burger-Menü) — auf allen Sportseiten unter dem Home-Button

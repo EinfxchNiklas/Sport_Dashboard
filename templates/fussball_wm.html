@@ -241,63 +241,84 @@
     {# ---- Turnierbaum-Ansicht ---- #}
     <div class="wm-view{% if ko_view != 'bracket' %} wm-view--hidden{% endif %}" id="wm-view-bracket">
     {% if bracket %}
+    {# Macro: Matchkarte rendern #}
+    {% macro bracket_card(match) %}
+    {% set is_placeholder = (match.matchId is none) %}
+    {% set has_winner = (match.winnerTeamId is not none) %}
+    <div class="bracket-match{% if not match.isFinished and match.matchId is not none %} bracket-match--live{% endif %}">
+        {% set t1_winner = has_winner and match.winnerTeamId == match.team1.teamId %}
+        <div class="bracket-team{% if t1_winner %} bracket-team--winner{% endif %}{% if is_placeholder or match.team1.teamId is none %} bracket-team--placeholder{% endif %}">
+            {% if match.team1.logo %}<img src="{{ match.team1.logo }}" alt="{{ match.team1.teamName }}" class="bracket-team-flag" />{% else %}<span style="width:20px;height:20px;flex-shrink:0;"></span>{% endif %}
+            <span class="bracket-team-name">{{ match.team1.teamName }}</span>
+            {% if match.isFinished %}<span class="bracket-team-score">{{ match.homeScore }}</span>{% endif %}
+        </div>
+        {% set t2_winner = has_winner and match.winnerTeamId == match.team2.teamId %}
+        <div class="bracket-team{% if t2_winner %} bracket-team--winner{% endif %}{% if is_placeholder or match.team2.teamId is none %} bracket-team--placeholder{% endif %}">
+            {% if match.team2.logo %}<img src="{{ match.team2.logo }}" alt="{{ match.team2.teamName }}" class="bracket-team-flag" />{% else %}<span style="width:20px;height:20px;flex-shrink:0;"></span>{% endif %}
+            <span class="bracket-team-name">{{ match.team2.teamName }}</span>
+            {% if match.isFinished %}<span class="bracket-team-score">{{ match.awayScore }}</span>{% endif %}
+        </div>
+        {% if match.isFinished and match.resultName %}
+        <div class="bracket-result-note">{{ match.resultName }}</div>
+        {% endif %}
+        {% if not match.isFinished and match.formattedDateTime %}
+        <div class="bracket-match-time">{{ match.formattedDateTime }}</div>
+        {% endif %}
+    </div>
+    {% endmacro %}
+
     <div class="wm-bracket-wrapper">
     <div class="wm-bracket">
 
-        {# Jede Runde als Spalte rendern #}
-        {% for round in bracket.rounds %}
-        {% set round_loop = loop %}
-        {% set is_finale = loop.last %}
-        <div class="bracket-round{% if is_finale %} bracket-round--finale{% endif %}">
+        {# ===== Linke Seite: Sechzehntelfinale → Halbfinale ===== #}
+        {% for round in bracket.rounds[:-1] %}
+        {% set half = round.matches | length // 2 %}
+        {% set is_hf = loop.last %}
+        <div class="bracket-round bracket-round--left">
             <div class="bracket-round-header">{{ round.name }}</div>
             <div class="bracket-slots">
-                {% for match in round.matches %}
-                {% set is_placeholder = (match.matchId is none) %}
-                {% set has_winner = (match.winnerTeamId is not none) %}
+                {% for match in round.matches[:half] %}
                 <div class="bracket-slot">
-                    <div class="bracket-match{% if not match.isFinished and match.matchId is not none %} bracket-match--live{% endif %}">
-                        {# Team 1 #}
-                        {% set t1_winner = has_winner and match.winnerTeamId == match.team1.teamId %}
-                        <div class="bracket-team{% if t1_winner %} bracket-team--winner{% endif %}{% if is_placeholder or match.team1.teamId is none %} bracket-team--placeholder{% endif %}">
-                            {% if match.team1.logo %}
-                            <img src="{{ match.team1.logo }}" alt="{{ match.team1.teamName }}" class="bracket-team-flag" />
-                            {% else %}
-                            <span style="width:20px;height:20px;flex-shrink:0;"></span>
-                            {% endif %}
-                            <span class="bracket-team-name">{{ match.team1.teamName }}</span>
-                            {% if match.isFinished %}
-                            <span class="bracket-team-score">{{ match.homeScore }}</span>
-                            {% endif %}
-                        </div>
-                        {# Team 2 #}
-                        {% set t2_winner = has_winner and match.winnerTeamId == match.team2.teamId %}
-                        <div class="bracket-team{% if t2_winner %} bracket-team--winner{% endif %}{% if is_placeholder or match.team2.teamId is none %} bracket-team--placeholder{% endif %}">
-                            {% if match.team2.logo %}
-                            <img src="{{ match.team2.logo }}" alt="{{ match.team2.teamName }}" class="bracket-team-flag" />
-                            {% else %}
-                            <span style="width:20px;height:20px;flex-shrink:0;"></span>
-                            {% endif %}
-                            <span class="bracket-team-name">{{ match.team2.teamName }}</span>
-                            {% if match.isFinished %}
-                            <span class="bracket-team-score">{{ match.awayScore }}</span>
-                            {% endif %}
-                        </div>
-                        {# Ergebnis-Anmerkung (n. V., n. E.) #}
-                        {% if match.isFinished and match.resultName %}
-                        <div class="bracket-result-note">{{ match.resultName }}</div>
-                        {% endif %}
-                        {# Datum/Uhrzeit bei offenen Spielen #}
-                        {% if not match.isFinished and match.formattedDateTime %}
-                        <div class="bracket-match-time">{{ match.formattedDateTime }}</div>
-                        {% endif %}
-                    </div>
-                    {# Connector-Linie zur nächsten Runde #}
-                    {% if not is_finale %}
-                        {% if loop.index is odd %}
-                        <div class="bracket-connector bracket-connector--top"></div>
-                        {% else %}
-                        <div class="bracket-connector bracket-connector--bottom"></div>
-                        {% endif %}
+                    {{ bracket_card(match) }}
+                    {% if is_hf %}
+                    <div class="bracket-connector bracket-connector--single"></div>
+                    {% elif loop.index is odd %}
+                    <div class="bracket-connector bracket-connector--top"></div>
+                    {% else %}
+                    <div class="bracket-connector bracket-connector--bottom"></div>
+                    {% endif %}
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+        {% endfor %}
+
+        {# ===== Finale (Mitte) ===== #}
+        <div class="bracket-round bracket-round--finale">
+            <div class="bracket-round-header">{{ bracket.rounds[-1].name }}</div>
+            <div class="bracket-slots">
+                <div class="bracket-slot">
+                    {{ bracket_card(bracket.rounds[-1].matches[0]) }}
+                </div>
+            </div>
+        </div>
+
+        {# ===== Rechte Seite: Halbfinale → Sechzehntelfinale (von innen nach außen) ===== #}
+        {% for round in bracket.rounds[:-1] | reverse %}
+        {% set half = round.matches | length // 2 %}
+        {% set is_hf = loop.first %}
+        <div class="bracket-round bracket-round--right">
+            <div class="bracket-round-header">{{ round.name }}</div>
+            <div class="bracket-slots">
+                {% for match in round.matches[half:] %}
+                <div class="bracket-slot">
+                    {{ bracket_card(match) }}
+                    {% if is_hf %}
+                    <div class="bracket-connector bracket-connector--single"></div>
+                    {% elif loop.index is odd %}
+                    <div class="bracket-connector bracket-connector--top"></div>
+                    {% else %}
+                    <div class="bracket-connector bracket-connector--bottom"></div>
                     {% endif %}
                 </div>
                 {% endfor %}
