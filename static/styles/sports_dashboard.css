@@ -3080,25 +3080,26 @@ body.page-wm .bracket-connector--none {
 }
 
 /* Spiel um Platz 3 */
-body.page-wm .bracket-third-place {
-    margin-top: 24px;
-    padding-top: 20px;
-    border-top: 1px solid #2a2a2a;
+/* Spiel um Platz 3 – absolut am unteren Rand des Finale-Slots */
+body.page-wm .bracket-slot--finale-combined {
+    position: relative;
 }
 
-body.page-wm .bracket-third-place-label {
+body.page-wm .bracket-slot-half--third-place {
+    position: absolute;
+    bottom: 220px;
+    left: 0;
+    right: 0;
+}
+
+body.page-wm .bracket-round-subheader {
     text-align: center;
+    padding: 10px 6px 6px;
     font-size: 11px;
     font-weight: 700;
     text-transform: uppercase;
     letter-spacing: 0.06em;
     color: #9ca3af;
-    margin-bottom: 10px;
-}
-
-body.page-wm .bracket-third-place-match {
-    max-width: 260px;
-    margin: 0 auto;
 }
 
 /* ---- Rechte Seite: Connector auf der linken Seite der Matchkarte ---- */

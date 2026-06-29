@@ -5,7 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>WM 2026</title>
     <link rel="icon" href="{{ url_for('static', filename='images/favicon.svg') }}" type="image/svg+xml">
-    <link rel="stylesheet" href="/static/styles/sports_dashboard.css">
+    <link rel="stylesheet" href="/static/styles/sports_dashboard.css?v=20260629">
     <link rel="stylesheet" href="/static/styles/sports_dashboard.mobile.css">
     {% if umami_enabled %}
     <script defer src="{{ umami_script_url }}" data-website-id="{{ umami_website_id }}"></script>
@@ -298,8 +298,14 @@
         <div class="bracket-round bracket-round--finale{% if current_phase_id == 8 %} bracket-round--active{% endif %}">
             <div class="bracket-round-header">{{ bracket.rounds[-1].name }}</div>
             <div class="bracket-slots">
-                <div class="bracket-slot">
+                <div class="bracket-slot bracket-slot--finale-combined">
                     {{ bracket_card(bracket.rounds[-1].matches[0]) }}
+                    {% if bracket.third_place %}
+                    <div class="bracket-slot-half--third-place">
+                        <div class="bracket-round-subheader">Spiel um Platz 3</div>
+                        {{ bracket_card(bracket.third_place) }}
+                    </div>
+                    {% endif %}
                 </div>
             </div>
         </div>
@@ -330,35 +336,6 @@
 
     </div>{# /.wm-bracket #}
     </div>{# /.wm-bracket-wrapper #}
-
-    {# ---- Spiel um Platz 3 ---- #}
-    {% if bracket.third_place %}
-    {% set tp = bracket.third_place %}
-    <div class="bracket-third-place">
-        <div class="bracket-third-place-label">Spiel um Platz 3</div>
-        <div class="bracket-match bracket-third-place-match">
-            {% set tp_has_winner = (tp.winnerTeamId is not none) %}
-            {% set tp_t1_winner = tp_has_winner and tp.winnerTeamId == tp.team1.teamId %}
-            {% set tp_t2_winner = tp_has_winner and tp.winnerTeamId == tp.team2.teamId %}
-            <div class="bracket-team{% if tp_t1_winner %} bracket-team--winner{% endif %}{% if tp.team1.teamId is none %} bracket-team--placeholder{% endif %}">
-                {% if tp.team1.logo %}<img src="{{ tp.team1.logo }}" alt="{{ tp.team1.teamName }}" class="bracket-team-flag" />{% else %}<span style="width:20px;height:20px;flex-shrink:0;"></span>{% endif %}
-                <span class="bracket-team-name">{{ tp.team1.teamName }}</span>
-                {% if tp.isFinished %}<span class="bracket-team-score">{{ tp.homeScore }}</span>{% endif %}
-            </div>
-            <div class="bracket-team{% if tp_t2_winner %} bracket-team--winner{% endif %}{% if tp.team2.teamId is none %} bracket-team--placeholder{% endif %}">
-                {% if tp.team2.logo %}<img src="{{ tp.team2.logo }}" alt="{{ tp.team2.teamName }}" class="bracket-team-flag" />{% else %}<span style="width:20px;height:20px;flex-shrink:0;"></span>{% endif %}
-                <span class="bracket-team-name">{{ tp.team2.teamName }}</span>
-                {% if tp.isFinished %}<span class="bracket-team-score">{{ tp.awayScore }}</span>{% endif %}
-            </div>
-            {% if tp.isFinished and tp.resultName %}
-            <div class="bracket-result-note">{{ tp.resultName }}</div>
-            {% endif %}
-            {% if not tp.isFinished and tp.formattedDateTime %}
-            <div class="bracket-match-time">{{ tp.formattedDateTime }}</div>
-            {% endif %}
-        </div>
-    </div>
-    {% endif %}
 
     {% else %}
     <div class="no-data">Turnierbaum-Daten nicht verfügbar.</div>
