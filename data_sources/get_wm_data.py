@@ -418,7 +418,7 @@ def fetch_wm_data(phase_order_id=None):
     if phase_order_id not in valid_phase_ids:
         phase_order_id = 1
 
-    cache_key = f"wm_v7_{phase_order_id}"
+    cache_key = f"wm_v8_{phase_order_id}"
     cached = _get_cached(cache_key)
     if cached:
         return cached
@@ -709,11 +709,113 @@ def _build_bracket(local_tz):
 
         return [m if m else _make_placeholder() for m in assigned]
 
+    # ---------------------------------------------------------------------------
+    # R32-Neuordnung: Paare, die dasselbe AF-Spiel erzeugen, nebeneinander stellen.
+    #
+    # Problem: Die API liefert R32-Spiele in Termin-/matchId-Reihenfolge, nicht in
+    # Bracket-Reihenfolge. Dadurch erscheinen im Turnierbaum falsche Nachbarn.
+    #
+    # Lösung: AF zuerst per Winner-Matching korrekt befüllen. Dann R32 anhand der
+    # AF-Zuordnungen umordnen: für AF-Slot i sollen R32[2i] und R32[2i+1] die
+    # beiden Zubringer-Spiele sein.
+    #
+    # Matching-Strategien (in Priorität):
+    #   1. winnerTeamId  → direkter Sieger-Vergleich (funktioniert immer für
+    #                       bereits gespielte R32-Spiele)
+    #   2. teamId direkt → ungespielte Spiele, bei denen die AF das echte Team
+    #                       bereits eingetragen hat
+    #   3. Kurzname-Composite → Platzhalter wie "NED/MAR" werden an "/"
+    #                       aufgeteilt und mit den shortName-Feldern der R32-Teams
+    #                       verglichen (z.B. shortName="NED" ↔ "Niederlande")
+    # ---------------------------------------------------------------------------
+    # Mapping: Kürzel in AF-Composites (FIFA/ISO-Mix) → OpenLigaDB-shortName
+    # Die AF-Platzhalter wie "NED/MAR" verwenden FIFA-Codes, während OpenLigaDB
+    # für einige Länder ISO-3166-Codes als shortName speichert.
+    _CODE_ALIASES = {
+        "NED": "NLD",  # Niederlande: FIFA→ISO
+        "DEU": "GER",  # Deutschland: ISO→FIFA (OpenLigaDB verwendet FIFA)
+        "POR": "PRT",  # Portugal: FIFA→ISO
+        "CRO": "HRV",  # Kroatien: FIFA→ISO
+        "SUI": "CHE",  # Schweiz: FIFA→ISO
+        "ALG": "DZA",  # Algerien: FIFA→ISO
+    }
+
+    def _r32_short(team):
+        """Kurzname für composite-Matching: shortName oder erste 3 Zeichen des Namens."""
+        s = (team.get("teamShortName") or "").strip().upper()
+        return s if s else team.get("teamName", "")[:3].upper()
+
+    def _reorder_r32_from_af(r32_all, af_assigned):
+        used = set()
+        ordered = []
+
+        for af_match in af_assigned:
+            pair = []
+            for af_team in [af_match["team1"], af_match["team2"]]:
+                af_tid = af_team.get("teamId")
+                found = None
+
+                # Strategie 1: Sieger-ID
+                if af_tid:
+                    for i, m in enumerate(r32_all):
+                        if i in used:
+                            continue
+                        if m.get("winnerTeamId") == af_tid:
+                            found = i
+                            break
+
+                # Strategie 2: Team-Beteiligung (echte Team-ID im R32-Spiel)
+                if found is None and af_tid:
+                    for i, m in enumerate(r32_all):
+                        if i in used:
+                            continue
+                        if (m["team1"]["teamId"] == af_tid
+                                or m["team2"]["teamId"] == af_tid):
+                            found = i
+                            break
+
+                # Strategie 3: Composite-Kurzname ("NED/MAR" → {"NLD","MAR"} nach Alias-Auflösung)
+                if found is None:
+                    af_tname = af_team.get("teamName", "")
+                    if "/" in af_tname:
+                        parts = frozenset(
+                            _CODE_ALIASES.get(p.strip().upper(), p.strip().upper())
+                            for p in af_tname.split("/")
+                        )
+                        for i, m in enumerate(r32_all):
+                            if i in used:
+                                continue
+                            shorts = frozenset([
+                                _r32_short(m["team1"]),
+                                _r32_short(m["team2"]),
+                            ])
+                            if shorts == parts:
+                                found = i
+                                break
+
+                if found is not None:
+                    pair.append(r32_all[found])
+                    used.add(found)
+
+            ordered.extend(pair)
+
+        # Nicht zugeordnete R32-Spiele in Originalreihenfolge anhängen
+        for i, m in enumerate(r32_all):
+            if i not in used:
+                ordered.append(m)
+
+        # Auf Originallänge auffüllen / kürzen
+        while len(ordered) < len(r32_all):
+            ordered.append(_make_placeholder())
+        return ordered[:len(r32_all)]
+
     # Runden aufbauen
-    r32 = build_round(4, 16, [])
-    af  = build_round(5, 8,  r32)
-    vf  = build_round(6, 4,  af)
-    hf  = build_round(7, 2,  vf)
+    r32_init = build_round(4, 16, [])            # API-Reihenfolge
+    af_init  = build_round(5, 8,  r32_init)      # AF korrekt via Winner-Matching
+    r32      = _reorder_r32_from_af(r32_init, af_init)  # R32 nach AF-Paarungen sortiert
+    af       = build_round(5, 8,  r32)            # AF auf neugeordnetem R32
+    vf       = build_round(6, 4,  af)
+    hf       = build_round(7, 2,  vf)
     # Finale-Slot immer genau 1
     finale_round = [final_match]
 

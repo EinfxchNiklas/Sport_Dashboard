@@ -2864,9 +2864,10 @@ body.page-wm .wm-bracket-wrapper {
 body.page-wm .wm-bracket {
     display: flex;
     gap: 0;
-    align-items: stretch;
+    align-items: flex-start; /* Spalten hängen an der Oberkante; Slot-Höhen erzwingen korrekte Ausrichtung */
     min-width: 1400px;
     width: 100%;
+    --wm-slot-unit: 110px; /* Höhe eines R32-Slots; jede innere Runde verdoppelt diesen Wert */
 }
 
 /* Eine Runde = eine Spalte */
@@ -2890,21 +2891,38 @@ body.page-wm .bracket-round-header {
     flex-shrink: 0;
 }
 
-/* Wrapper um Match + Connector. justify-content verteilt Slots gleichmäßig */
+/* Wrapper um Match + Connector – kein space-around, Slots stapeln sich direkt */
 body.page-wm .bracket-slots {
     display: flex;
     flex-direction: column;
-    flex: 1;
-    justify-content: space-around;
-    padding: 8px 0;
     position: relative;
 }
 
-/* Jeder Slot enthält die Match-Karte + den rechten Connector */
+/* Jeder Slot enthält die Match-Karte + den Connector.
+   Höhe wird per data-depth der Elternspalte gesetzt (see unten). */
 body.page-wm .bracket-slot {
     display: flex;
     align-items: center;
+    flex-shrink: 0;
     position: relative;
+}
+
+/* ---- Feste Slot-Höhen nach Bracket-Tiefe ----
+   R32 = 1 Einheit, AF = 2, VF = 4, HF = Finale = 8.
+   Dadurch liegen Slot-Mittelpunkte immer exakt auf der Höhe des
+   zugehörigen Folgespiels, und Connector-Linien treffen sich präzise. */
+body.page-wm .bracket-round[data-depth="0"] .bracket-slot {
+    height: var(--wm-slot-unit);
+}
+body.page-wm .bracket-round[data-depth="1"] .bracket-slot {
+    height: calc(2 * var(--wm-slot-unit));
+}
+body.page-wm .bracket-round[data-depth="2"] .bracket-slot {
+    height: calc(4 * var(--wm-slot-unit));
+}
+body.page-wm .bracket-round[data-depth="3"] .bracket-slot,
+body.page-wm .bracket-round--finale .bracket-slot {
+    height: calc(8 * var(--wm-slot-unit));
 }
 
 /* Match-Karte */
@@ -3077,11 +3095,6 @@ body.page-wm .bracket-third-place-label {
 body.page-wm .bracket-third-place-match {
     max-width: 260px;
     margin: 0 auto;
-}
-
-/* Finale-Spalte: Karte zentrieren */
-body.page-wm .bracket-round--finale .bracket-slots {
-    justify-content: center;
 }
 
 /* ---- Rechte Seite: Connector auf der linken Seite der Matchkarte ---- */

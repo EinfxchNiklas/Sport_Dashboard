@@ -212,11 +212,13 @@ def _transform_raw_match(match, local_tz):
         "team1": {
             "teamId": match.get("team1", {}).get("teamId"),
             "teamName": match.get("team1", {}).get("teamName", "Unbekannt"),
+            "teamShortName": match.get("team1", {}).get("shortName", ""),
             "logo": _normalize_icon_url(match.get("team1", {}).get("teamIconUrl")),
         },
         "team2": {
             "teamId": match.get("team2", {}).get("teamId"),
             "teamName": match.get("team2", {}).get("teamName", "Unbekannt"),
+            "teamShortName": match.get("team2", {}).get("shortName", ""),
             "logo": _normalize_icon_url(match.get("team2", {}).get("teamIconUrl")),
         },
         "matchDateTimeUTC": match_dt.isoformat(),
