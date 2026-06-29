@@ -1,7 +1,40 @@
 /* Mobile and small-screen overrides (extracted from sports_dashboard.css) */
 /* Keep this file loaded after sports_dashboard.css. */
 
+/* WM-Turnierbaum: auf Mobile horizontal scrollbar, kompaktere Karten */
 @media (max-width: 700px) {
+    body.page-wm .wm-bracket {
+        min-width: 700px;
+    }
+    body.page-wm .bracket-round {
+        min-width: 140px;
+        max-width: 160px;
+    }
+    body.page-wm .bracket-team {
+        font-size: 11px;
+        padding: 6px 7px;
+        gap: 5px;
+    }
+    body.page-wm .bracket-team-score {
+        font-size: 12px;
+    }
+    body.page-wm .bracket-team-flag {
+        width: 16px;
+        height: 16px;
+        min-width: 16px;
+        min-height: 16px;
+        max-width: 16px;
+        max-height: 16px;
+    }
+    body.page-wm .bracket-round-header {
+        font-size: 10px;
+        padding: 8px 4px 10px;
+    }
+    body.page-wm .bracket-match {
+        margin: 3px 4px;
+    }
+}
+
 body.page-american .roster-table th:nth-child(4),
 body.page-american .roster-table td:nth-child(4),
 body.page-american .roster-table th:nth-child(5),

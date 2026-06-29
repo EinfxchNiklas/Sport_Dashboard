@@ -5,7 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>WM 2026</title>
     <link rel="icon" href="{{ url_for('static', filename='images/favicon.svg') }}" type="image/svg+xml">
-    <link rel="stylesheet" href="/static/styles/sports_dashboard.css">
+    <link rel="stylesheet" href="/static/styles/sports_dashboard.css?v=20260629">
     <link rel="stylesheet" href="/static/styles/sports_dashboard.mobile.css">
     {% if umami_enabled %}
     <script defer src="{{ umami_script_url }}" data-website-id="{{ umami_website_id }}"></script>
@@ -52,7 +52,7 @@
     {% set wm_view = current_view if current_view in ['groups', 'chrono'] else 'groups' %}
 
     {# ---- Ansicht-Switch: Gruppen ⇄ Chronologisch ---- #}
-    <div class="wm-view-switch" role="tablist" data-wm-view-switch>
+    <div class="wm-view-switch" role="tablist" data-wm-view-switch data-is-group-phase="true" data-server-view="{{ wm_view }}">
         <button type="button" class="wm-switch-btn{% if wm_view == 'groups' %} active{% endif %}" data-wm-view="groups">Gruppen</button>
         <button type="button" class="wm-switch-btn{% if wm_view == 'chrono' %} active{% endif %}" data-wm-view="chrono">Chronologisch</button>
     </div>
@@ -194,6 +194,16 @@
     {% else %}
     {# ---- K.o.-Phase ---- #}
     {% set current_phase = phases | selectattr("orderID", "equalto", current_phase_id) | first %}
+    {% set ko_view = current_view if current_view in ['list', 'bracket'] else 'list' %}
+
+    {# ---- Ansicht-Switch: Aktuelle Runde ⇄ Turnierbaum ---- #}
+    <div class="wm-view-switch" role="tablist" data-wm-view-switch data-is-group-phase="false" data-server-view="{{ ko_view }}">
+        <button type="button" class="wm-switch-btn{% if ko_view == 'list' %} active{% endif %}" data-wm-view="list">Aktuelle Runde</button>
+        <button type="button" class="wm-switch-btn{% if ko_view == 'bracket' %} active{% endif %}" data-wm-view="bracket">Turnierbaum</button>
+    </div>
+
+    {# ---- Listen-Ansicht (bestehend) ---- #}
+    <div class="wm-view{% if ko_view != 'list' %} wm-view--hidden{% endif %}" id="wm-view-list">
     <section class="panel comp-ko-panel">
         <div class="panel-header">{{ current_phase.name if current_phase else "" }}</div>
         <div class="comp-ko-matches">
@@ -226,6 +236,112 @@
             {% endif %}
         </div>
     </section>
+    </div>{# /#wm-view-list #}
+
+    {# ---- Turnierbaum-Ansicht ---- #}
+    <div class="wm-view{% if ko_view != 'bracket' %} wm-view--hidden{% endif %}" id="wm-view-bracket">
+    {% if bracket %}
+    {# Macro: Matchkarte rendern #}
+    {% macro bracket_card(match) %}
+    {% set is_placeholder = (match.matchId is none) %}
+    {% set has_winner = (match.winnerTeamId is not none) %}
+    <div class="bracket-match{% if not match.isFinished and match.matchId is not none %} bracket-match--live{% endif %}">
+        {% set t1_winner = has_winner and match.winnerTeamId == match.team1.teamId %}
+        <div class="bracket-team{% if t1_winner %} bracket-team--winner{% endif %}{% if is_placeholder or match.team1.teamId is none %} bracket-team--placeholder{% endif %}">
+            {% if match.team1.logo %}<img src="{{ match.team1.logo }}" alt="{{ match.team1.teamName }}" class="bracket-team-flag" />{% else %}<span style="width:20px;height:20px;flex-shrink:0;"></span>{% endif %}
+            <span class="bracket-team-name">{{ match.team1.teamName }}</span>
+            {% if match.isFinished %}<span class="bracket-team-score">{{ match.homeScore }}</span>{% endif %}
+        </div>
+        {% set t2_winner = has_winner and match.winnerTeamId == match.team2.teamId %}
+        <div class="bracket-team{% if t2_winner %} bracket-team--winner{% endif %}{% if is_placeholder or match.team2.teamId is none %} bracket-team--placeholder{% endif %}">
+            {% if match.team2.logo %}<img src="{{ match.team2.logo }}" alt="{{ match.team2.teamName }}" class="bracket-team-flag" />{% else %}<span style="width:20px;height:20px;flex-shrink:0;"></span>{% endif %}
+            <span class="bracket-team-name">{{ match.team2.teamName }}</span>
+            {% if match.isFinished %}<span class="bracket-team-score">{{ match.awayScore }}</span>{% endif %}
+        </div>
+        {% if match.isFinished and match.resultName %}
+        <div class="bracket-result-note">{{ match.resultName }}</div>
+        {% endif %}
+        {% if not match.isFinished and match.formattedDateTime %}
+        <div class="bracket-match-time">{{ match.formattedDateTime }}</div>
+        {% endif %}
+    </div>
+    {% endmacro %}
+
+    <div class="wm-bracket-wrapper">
+    <div class="wm-bracket">
+
+        {# ===== Linke Seite: Sechzehntelfinale → Halbfinale ===== #}
+        {% for round in bracket.rounds[:-1] %}
+        {% set half = round.matches | length // 2 %}
+        {% set is_hf = loop.last %}
+        {% set is_active = (current_phase_id == loop.index + 3) %}
+        <div class="bracket-round bracket-round--left{% if is_active %} bracket-round--active{% endif %}" data-depth="{{ loop.index - 1 }}">
+            <div class="bracket-round-header">{{ round.name }}</div>
+            <div class="bracket-slots">
+                {% for match in round.matches[:half] %}
+                <div class="bracket-slot">
+                    {{ bracket_card(match) }}
+                    {% if is_hf %}
+                    <div class="bracket-connector bracket-connector--single"></div>
+                    {% elif loop.index is odd %}
+                    <div class="bracket-connector bracket-connector--top"></div>
+                    {% else %}
+                    <div class="bracket-connector bracket-connector--bottom"></div>
+                    {% endif %}
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+        {% endfor %}
+
+        {# ===== Finale (Mitte) ===== #}
+        <div class="bracket-round bracket-round--finale{% if current_phase_id == 8 %} bracket-round--active{% endif %}">
+            <div class="bracket-round-header">{{ bracket.rounds[-1].name }}</div>
+            <div class="bracket-slots">
+                <div class="bracket-slot bracket-slot--finale-combined">
+                    {{ bracket_card(bracket.rounds[-1].matches[0]) }}
+                    {% if bracket.third_place %}
+                    <div class="bracket-slot-half--third-place">
+                        <div class="bracket-round-subheader">Spiel um Platz 3</div>
+                        {{ bracket_card(bracket.third_place) }}
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+
+        {# ===== Rechte Seite: Halbfinale → Sechzehntelfinale (von innen nach außen) ===== #}
+        {% for round in bracket.rounds[:-1] | reverse %}
+        {% set half = round.matches | length // 2 %}
+        {% set is_hf = loop.first %}
+        {% set is_active = (current_phase_id == 8 - loop.index) %}
+        <div class="bracket-round bracket-round--right{% if is_active %} bracket-round--active{% endif %}" data-depth="{{ 4 - loop.index }}">
+            <div class="bracket-round-header">{{ round.name }}</div>
+            <div class="bracket-slots">
+                {% for match in round.matches[half:] %}
+                <div class="bracket-slot">
+                    {{ bracket_card(match) }}
+                    {% if is_hf %}
+                    <div class="bracket-connector bracket-connector--single"></div>
+                    {% elif loop.index is odd %}
+                    <div class="bracket-connector bracket-connector--top"></div>
+                    {% else %}
+                    <div class="bracket-connector bracket-connector--bottom"></div>
+                    {% endif %}
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+        {% endfor %}
+
+    </div>{# /.wm-bracket #}
+    </div>{# /.wm-bracket-wrapper #}
+
+    {% else %}
+    <div class="no-data">Turnierbaum-Daten nicht verfügbar.</div>
+    {% endif %}
+    </div>{# /#wm-view-bracket #}
+
     {% endif %}
 
     </div>
@@ -240,20 +356,33 @@
             if (!switchBar) return;
             const phaseSelect = document.querySelector('[data-wm-phase-select]');
             const phaseLinks = document.querySelectorAll('[data-wm-phase-target]');
-            const views = {
-                groups: document.getElementById('wm-view-groups'),
-                chrono: document.getElementById('wm-view-chrono'),
-            };
+
+            // Gruppenphase: groups/chrono; K.o.-Phase: list/bracket
+            const isGroupPhase = switchBar.dataset.isGroupPhase === 'true';
+            const viewIds = isGroupPhase
+                ? { groups: 'wm-view-groups', chrono: 'wm-view-chrono' }
+                : { list: 'wm-view-list', bracket: 'wm-view-bracket' };
+
+            const views = {};
+            Object.keys(viewIds).forEach(function (key) {
+                views[key] = document.getElementById(viewIds[key]);
+            });
+
+            const defaultView = isGroupPhase ? 'groups' : 'list';
+            const validViews = Object.keys(viewIds);
 
             function getCurrentView() {
-                return switchBar.querySelector('.wm-switch-btn.active')?.dataset.wmView || 'groups';
+                const active = switchBar.querySelector('.wm-switch-btn.active');
+                return active ? active.dataset.wmView : defaultView;
             }
 
             function buildPhaseUrl(phaseId) {
                 const params = new URLSearchParams(window.location.search);
                 params.set('phase', String(phaseId));
-                if (getCurrentView() === 'chrono') {
-                    params.set('view', 'chrono');
+                const cv = getCurrentView();
+                const nonDefault = isGroupPhase ? 'chrono' : 'bracket';
+                if (cv === nonDefault) {
+                    params.set('view', nonDefault);
                 } else {
                     params.delete('view');
                 }
@@ -261,6 +390,7 @@
             }
 
             function applyView(target, updateUrl) {
+                if (!validViews.includes(target)) target = defaultView;
                 switchBar.querySelectorAll('.wm-switch-btn').forEach(function (b) {
                     b.classList.toggle('active', b.dataset.wmView === target);
                 });
@@ -271,8 +401,9 @@
                 });
                 if (updateUrl) {
                     const params = new URLSearchParams(window.location.search);
-                    if (target === 'chrono') {
-                        params.set('view', 'chrono');
+                    const nonDefault = isGroupPhase ? 'chrono' : 'bracket';
+                    if (target === nonDefault) {
+                        params.set('view', nonDefault);
                     } else {
                         params.delete('view');
                     }
@@ -302,7 +433,8 @@
             });
 
             const initialUrlView = new URLSearchParams(window.location.search).get('view');
-            applyView(initialUrlView === 'chrono' ? 'chrono' : '{{ wm_view }}', false);
+            const serverView = switchBar.dataset.serverView || defaultView;
+            applyView(initialUrlView || serverView || defaultView, false);
         })();
     </script>
 </body>

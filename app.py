@@ -303,7 +303,10 @@ def fussball_wm():
     phase_order_id = request.args.get('phase', type=int)
     data = fetch_wm_data(phase_order_id=phase_order_id)
     requested_view = (request.args.get('view', 'groups', type=str) or 'groups').lower()
-    data['current_view'] = 'chrono' if requested_view == 'chrono' and data.get('is_group_phase') else 'groups'
+    if data.get('is_group_phase'):
+        data['current_view'] = 'chrono' if requested_view == 'chrono' else 'groups'
+    else:
+        data['current_view'] = 'bracket' if requested_view == 'bracket' else 'list'
     return render_template('fussball_wm.html', **data)
 
 
