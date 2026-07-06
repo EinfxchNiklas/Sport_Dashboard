@@ -418,7 +418,7 @@ def fetch_wm_data(phase_order_id=None):
     if phase_order_id not in valid_phase_ids:
         phase_order_id = 1
 
-    cache_key = f"wm_v9_{phase_order_id}"
+    cache_key = f"wm_v10_{phase_order_id}"
     cached = _get_cached(cache_key)
     if cached:
         return cached
@@ -665,6 +665,9 @@ def _build_bracket(local_tz):
         assigned = [None] * slot_count
         used_curr = set()
 
+        # Pass 1: Nur Slots belegen, für die Sieger-Info vorliegt (score > 0).
+        # Slots ohne bekannte Sieger werden vorerst ausgelassen, damit sie nicht
+        # irrtümlich einen Match "stehlen", der eigentlich einem späteren Slot gehört.
         for slot_idx in range(slot_count):
             prev_a = prev_matches[slot_idx * 2] if slot_idx * 2 < len(prev_matches) else None
             prev_b = prev_matches[slot_idx * 2 + 1] if slot_idx * 2 + 1 < len(prev_matches) else None
@@ -699,13 +702,14 @@ def _build_bracket(local_tz):
             if best_match and best_score > 0:
                 used_curr.add(best_match[0])
                 assigned[slot_idx] = best_match[1]
-            else:
-                # Kein Winner-Match möglich → Slot-Index-Reihenfolge fallback
-                for ci, cm in enumerate(current):
-                    if ci not in used_curr:
-                        used_curr.add(ci)
-                        assigned[slot_idx] = cm
-                        break
+
+        # Pass 2: Verbleibende None-Slots mit nicht zugeordneten Matches auffüllen
+        # (in API-Reihenfolge nach matchId = chronologische Bracket-Reihenfolge).
+        remaining = [m for i, m in enumerate(current) if i not in used_curr]
+        for slot_idx in range(slot_count):
+            if assigned[slot_idx] is None:
+                if remaining:
+                    assigned[slot_idx] = remaining.pop(0)
 
         return [m if m else _make_placeholder() for m in assigned]
 
