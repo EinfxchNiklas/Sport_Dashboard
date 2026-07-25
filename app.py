@@ -26,6 +26,7 @@ from data_sources.get_formula1_data import (
     fetch_formula1_weekends,
     fetch_championship_standings,
     fetch_meeting_session_result_summaries,
+    fetch_current_race_weekend,
 )
 from data_sources.get_nfl_data import (
     fetch_nfl_scores,
@@ -314,21 +315,27 @@ def fussball_wm():
 def formula1_dashboard():
     upcoming_weekends = fetch_formula1_weekends(limit=None, timeframe='upcoming')
     championship = fetch_championship_standings()
+    current_race = fetch_current_race_weekend()
     return render_template(
         'formula1.html',
         upcoming_weekends=upcoming_weekends,
         past_weekends=[],
         championship=championship,
+        current_race=current_race,
     )
 
 
 @app.route('/formula1/past-weekends')
 def formula1_past_weekends():
+    current_race = fetch_current_race_weekend()
+    active_meeting_key = current_race['meeting_key'] if current_race else None
     past_weekends = fetch_formula1_weekends(
         limit=None,
         timeframe='past',
         include_session_results=False,
     )
+    if active_meeting_key:
+        past_weekends = [w for w in past_weekends if w.get('meeting_key') != active_meeting_key]
     return jsonify(past_weekends)
 
 

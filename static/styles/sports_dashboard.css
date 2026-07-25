@@ -1157,6 +1157,32 @@ body.page-formula1 .subtitle {
             color: var(--muted);
             font-size: 1rem;
         }
+body.page-formula1 .current-race-section {
+            margin-bottom: 20px;
+        }
+body.page-formula1 .current-race-section-label {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            font-size: 0.78rem;
+            font-weight: 700;
+            letter-spacing: 0.08em;
+            text-transform: uppercase;
+            color: var(--muted);
+            margin-bottom: 10px;
+        }
+body.page-formula1 .current-race-section-label::before {
+            content: '';
+            display: block;
+            width: 3px;
+            height: 14px;
+            background: #e50000;
+            border-radius: 2px;
+            flex-shrink: 0;
+        }
+body.page-formula1 .current-race-section [data-weekend] {
+            border-color: rgba(229,0,0,0.35);
+        }
 body.page-formula1 .weekend-filter {
             display: flex;
             width: 100%;
