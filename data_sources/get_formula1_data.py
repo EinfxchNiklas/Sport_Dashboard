@@ -627,6 +627,102 @@ def _past_session_sort_key(session):
     return (priority, -timestamp)
 
 
+def fetch_current_race_weekend():
+    """
+    Returns the currently active race weekend, or None if no race weekend is active.
+    A weekend is considered active when at least one session has started and the
+    Race session ended less than 4 hours ago (or hasn't started yet).
+    """
+    from datetime import timedelta
+
+    now = datetime.now(BERLIN_TZ)
+    year = now.year
+    meeting_params = {"year": year}
+    meetings_payload = _get_json("meetings", params=meeting_params)
+    sessions_payload = _get_json("sessions", params=meeting_params)
+
+    if not meetings_payload or not sessions_payload:
+        return None
+
+    excluded_meeting_keys = {"1282", "1283"}
+
+    sessions_by_meeting = {}
+    for session in sessions_payload:
+        meeting_key = session.get("meeting_key")
+        if not meeting_key:
+            continue
+        sessions_by_meeting.setdefault(meeting_key, []).append(session)
+
+    for meeting in sorted(meetings_payload, key=lambda m: m.get("date_start") or ""):
+        meeting_key = meeting.get("meeting_key")
+        if not meeting_key or str(meeting_key) in excluded_meeting_keys:
+            continue
+
+        sessions = sessions_by_meeting.get(meeting_key, [])
+        if not sessions:
+            continue
+
+        session_starts = [
+            _parse_iso_datetime(s.get("date_start"))
+            for s in sessions
+            if s.get("date_start")
+        ]
+        if not session_starts:
+            continue
+
+        first_session_start = min(session_starts)
+
+        # Find the Race session to determine end of weekend
+        race_session_start = None
+        for s in sessions:
+            if s.get("session_name") == "Race":
+                race_session_start = _parse_iso_datetime(s.get("date_start"))
+                break
+
+        # Fall back to last session start if no Race session found
+        end_anchor = race_session_start if race_session_start else max(session_starts)
+        weekend_end = end_anchor + timedelta(hours=4)
+
+        if first_session_start <= now <= weekend_end:
+            parsed_sessions = []
+            for s in sorted(sessions, key=lambda x: x.get("date_start") or ""):
+                start_dt = _parse_iso_datetime(s.get("date_start"))
+                parsed_sessions.append({
+                    "session_name": s.get("session_name", "Session"),
+                    "date_start": s.get("date_start"),
+                    "session_key": s.get("session_key"),
+                    "formatted_date": start_dt.astimezone(BERLIN_TZ).strftime("%d.%m.%Y") if start_dt else "TBA",
+                    "formatted_time": start_dt.astimezone(BERLIN_TZ).strftime("%H:%M") if start_dt else "--:--",
+                    "is_past": bool(start_dt and start_dt < now),
+                    "is_live": bool(
+                        start_dt
+                        and start_dt <= now <= start_dt + timedelta(hours=3)
+                    ),
+                })
+
+            has_practice = any(s.get("session_name", "").startswith("Practice") for s in sessions)
+            is_sprint = any("Sprint" in s.get("session_name", "") for s in sessions)
+
+            meeting_start = _parse_iso_datetime(meeting.get("date_start"))
+            return {
+                "meeting_key": meeting_key,
+                "meeting_name": meeting.get("meeting_name", "Grand Prix"),
+                "country_name": meeting.get("country_name", "Unknown"),
+                "country_code": meeting.get("country_code"),
+                "location": meeting.get("location", "Unknown"),
+                "year": meeting.get("year"),
+                "formatted_weekend": (
+                    meeting_start.astimezone(BERLIN_TZ).strftime("%d.%m.%Y")
+                    if meeting_start
+                    else "TBA"
+                ),
+                "sessions": parsed_sessions,
+                "show_practice_compare": has_practice and not is_sprint,
+            }
+
+    return None
+
+
 def fetch_formula1_weekends(
     limit=12,
     year=None,

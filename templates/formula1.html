@@ -27,6 +27,36 @@
 
         <div class="content-grid">
             <section>
+                {% if current_race %}
+                <div class="current-race-section">
+                    <div class="current-race-section-label">Aktives Rennwochenende</div>
+                    <article class="weekend open" data-weekend data-meeting-key="{{ current_race.meeting_key }}" data-current-race="1">
+                        <button class="weekend-header" type="button" data-toggle>
+                            <div>
+                                <div class="weekend-title">{{ current_race.meeting_name }}</div>
+                                <div class="weekend-meta">{{ current_race.location }}, {{ current_race.country_name }} | Start: {{ current_race.formatted_weekend }}</div>
+                            </div>
+                        </button>
+                        <div class="sessions">
+                            <div class="sessions-inner">
+                                {% for session in current_race.sessions %}
+                                    <div class="session-row session-toggleable">
+                                        <button class="session-toggle" type="button" data-session-toggle>
+                                            <span class="session-name">{{ session.session_name }}</span>
+                                            <span class="session-time">{{ session.formatted_date }} - {{ session.formatted_time }}</span>
+                                        </button>
+                                        <div class="session-result" data-result-for="{{ session.session_key }}">Ergebnisse werden geladen ...</div>
+                                    </div>
+                                {% endfor %}
+                                {% if current_race.show_practice_compare %}
+                                <div class="practice-compare-wrap"><button class="practice-compare-btn" type="button" data-practice-compare>Alle Trainings vergleichen</button><div class="practice-compare-grid" data-practice-grid></div></div>
+                                {% endif %}
+                            </div>
+                        </div>
+                    </article>
+                </div>
+                {% endif %}
+
                 <div class="weekend-filter" data-weekend-filter>
                     <button type="button" class="weekend-filter-btn active" data-weekend-target="upcoming">Upcoming Races</button>
                     <button type="button" class="weekend-filter-btn" data-weekend-target="past">Past Races</button>
@@ -234,14 +264,16 @@
                     const isOpen = card.classList.contains('open');
 
                     weekendCards.forEach((otherCard) => {
-                        otherCard.classList.remove('open');
+                        if (otherCard.dataset.currentRace !== '1') {
+                            otherCard.classList.remove('open');
+                        }
                     });
 
                     if (!isOpen) {
                         card.classList.add('open');
 
                         const parentView = card.closest('[data-weekends-view]');
-                        if (parentView && parentView.dataset.weekendsView === 'past') {
+                        if ((parentView && parentView.dataset.weekendsView === 'past') || card.dataset.currentRace === '1') {
                             loadPastResultsForMeeting(card);
                         }
                     }
@@ -408,6 +440,13 @@
 
         bindWeekendCardToggles();
         bindSessionResultToggles();
+        bindPracticeCompareButtons();
+
+        // Auto-load results for the active race weekend card
+        const currentRaceCard = document.querySelector('[data-weekend][data-current-race="1"]');
+        if (currentRaceCard) {
+            loadPastResultsForMeeting(currentRaceCard);
+        }
 
         function renderPastWeekends(weekends) {
             const pastContent = document.querySelector('[data-past-content]');
