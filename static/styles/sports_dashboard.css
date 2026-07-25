@@ -733,7 +733,7 @@ body.page-home .sport-section:hover .trophy-layer {
         filter: saturate(1.16) contrast(1.1);
     }
 body.page-home .trophy-fussball {
-        background-image: url('/static/images/Trophies/wm-pokal.png');
+        background-image: url('/static/images/Trophies/Bundesligaschale1.png');
     }
 body.page-home .trophy-formula1 {
         background-image: url('/static/images/Trophies/f1_trophy.png');
