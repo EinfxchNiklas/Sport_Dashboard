@@ -138,7 +138,7 @@ def _current_season_year(now_utc=None):
     """Gibt das Startjahr der aktuellen Bundesliga-Saison zurück (Grenze: August)."""
     if now_utc is None:
         now_utc = datetime.now(timezone.utc)
-    return now_utc.year if now_utc.month >= 8 else now_utc.year - 1
+    return now_utc.year if now_utc.month >= 7 else now_utc.year - 1
 
 
 # ---------------------------------------------------------------------------
