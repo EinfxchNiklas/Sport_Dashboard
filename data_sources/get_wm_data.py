@@ -418,7 +418,7 @@ def fetch_wm_data(phase_order_id=None):
     if phase_order_id not in valid_phase_ids:
         phase_order_id = 1
 
-    cache_key = f"wm_v8_{phase_order_id}"
+    cache_key = f"wm_v10_{phase_order_id}"
     cached = _get_cached(cache_key)
     if cached:
         return cached
@@ -665,6 +665,9 @@ def _build_bracket(local_tz):
         assigned = [None] * slot_count
         used_curr = set()
 
+        # Pass 1: Nur Slots belegen, für die Sieger-Info vorliegt (score > 0).
+        # Slots ohne bekannte Sieger werden vorerst ausgelassen, damit sie nicht
+        # irrtümlich einen Match "stehlen", der eigentlich einem späteren Slot gehört.
         for slot_idx in range(slot_count):
             prev_a = prev_matches[slot_idx * 2] if slot_idx * 2 < len(prev_matches) else None
             prev_b = prev_matches[slot_idx * 2 + 1] if slot_idx * 2 + 1 < len(prev_matches) else None
@@ -699,124 +702,230 @@ def _build_bracket(local_tz):
             if best_match and best_score > 0:
                 used_curr.add(best_match[0])
                 assigned[slot_idx] = best_match[1]
-            else:
-                # Kein Winner-Match möglich → Slot-Index-Reihenfolge fallback
-                for ci, cm in enumerate(current):
-                    if ci not in used_curr:
-                        used_curr.add(ci)
-                        assigned[slot_idx] = cm
-                        break
+
+        # Pass 2: Verbleibende None-Slots mit nicht zugeordneten Matches auffüllen
+        # (in API-Reihenfolge nach matchId = chronologische Bracket-Reihenfolge).
+        remaining = [m for i, m in enumerate(current) if i not in used_curr]
+        for slot_idx in range(slot_count):
+            if assigned[slot_idx] is None:
+                if remaining:
+                    assigned[slot_idx] = remaining.pop(0)
 
         return [m if m else _make_placeholder() for m in assigned]
 
     # ---------------------------------------------------------------------------
-    # R32-Neuordnung: Paare, die dasselbe AF-Spiel erzeugen, nebeneinander stellen.
+    # R32-Neuordnung: Offizielle WM-2026-Bracket-Reihenfolge (hartkodiert)
     #
-    # Problem: Die API liefert R32-Spiele in Termin-/matchId-Reihenfolge, nicht in
-    # Bracket-Reihenfolge. Dadurch erscheinen im Turnierbaum falsche Nachbarn.
-    #
-    # Lösung: AF zuerst per Winner-Matching korrekt befüllen. Dann R32 anhand der
-    # AF-Zuordnungen umordnen: für AF-Slot i sollen R32[2i] und R32[2i+1] die
-    # beiden Zubringer-Spiele sein.
-    #
-    # Matching-Strategien (in Priorität):
-    #   1. winnerTeamId  → direkter Sieger-Vergleich (funktioniert immer für
-    #                       bereits gespielte R32-Spiele)
-    #   2. teamId direkt → ungespielte Spiele, bei denen die AF das echte Team
-    #                       bereits eingetragen hat
-    #   3. Kurzname-Composite → Platzhalter wie "NED/MAR" werden an "/"
-    #                       aufgeteilt und mit den shortName-Feldern der R32-Teams
-    #                       verglichen (z.B. shortName="NED" ↔ "Niederlande")
+    # Hintergrund: Die API liefert R32-Spiele in Termin-/matchId-Reihenfolge,
+    # nicht in Bracket-Reihenfolge. Solange noch keine Spiele gespielt wurden,
+    # kann keine Sieger-basierte Zuordnung erfolgen.
+    # Lösung: Die offizielle Auslosung (FIFA, Stand 2025) wird fest hinterlegt.
+    # Slots 0–7: linke Bracket-Hälfte; Slots 8–15: rechte Bracket-Hälfte.
     # ---------------------------------------------------------------------------
-    # Mapping: Kürzel in AF-Composites (FIFA/ISO-Mix) → OpenLigaDB-shortName
-    # Die AF-Platzhalter wie "NED/MAR" verwenden FIFA-Codes, während OpenLigaDB
-    # für einige Länder ISO-3166-Codes als shortName speichert.
-    _CODE_ALIASES = {
-        "NED": "NLD",  # Niederlande: FIFA→ISO
-        "DEU": "GER",  # Deutschland: ISO→FIFA (OpenLigaDB verwendet FIFA)
-        "POR": "PRT",  # Portugal: FIFA→ISO
-        "CRO": "HRV",  # Kroatien: FIFA→ISO
-        "SUI": "CHE",  # Schweiz: FIFA→ISO
-        "ALG": "DZA",  # Algerien: FIFA→ISO
-    }
+    _R32_OFFICIAL_ORDER = [
+        # ── Linke Seite ──────────────────────────────────────────────────────
+        ("deutschland",    "paraguay"),
+        ("frankreich",     "schweden"),
+        ("suedafrika",     "kanada"),
+        ("niederlande",    "marokko"),
+        ("portugal",       "kroatien"),
+        ("spanien",        "oesterreich"),
+        ("usa",            "bosnien"),          # Bosnien-Herzegowina
+        ("belgien",        "senegal"),
+        # ── Rechte Seite ─────────────────────────────────────────────────────
+        ("brasilien",      "japan"),
+        ("elfenbeinkueste", "norwegen"),
+        ("mexiko",         "ecuador"),
+        ("england",        "dr kongo"),
+        ("argentinien",    "kap verde"),
+        ("australien",     "aegypten"),
+        ("schweiz",        "algerien"),
+        ("kolumbien",      "ghana"),
+    ]
 
-    def _r32_short(team):
-        """Kurzname für composite-Matching: shortName oder erste 3 Zeichen des Namens."""
-        s = (team.get("teamShortName") or "").strip().upper()
-        return s if s else team.get("teamName", "")[:3].upper()
+    def _reorder_r32_official(r32_all):
+        """Sortiert R32-Spiele in die offizielle WM-2026-Bracket-Reihenfolge.
 
-    def _reorder_r32_from_af(r32_all, af_assigned):
+        Matching per Teilstring-Vergleich (normalisierte Namen), damit
+        Abkürzungen wie 'Bosnien-Herz.' trotzdem erkannt werden.
+        """
         used = set()
         ordered = []
 
-        for af_match in af_assigned:
-            pair = []
-            for af_team in [af_match["team1"], af_match["team2"]]:
-                af_tid = af_team.get("teamId")
-                found = None
+        for exp_t1, exp_t2 in _R32_OFFICIAL_ORDER:
+            best_idx = None
+            best_score = 0
 
-                # Strategie 1: Sieger-ID
-                if af_tid:
-                    for i, m in enumerate(r32_all):
-                        if i in used:
-                            continue
-                        if m.get("winnerTeamId") == af_tid:
-                            found = i
-                            break
+            for i, m in enumerate(r32_all):
+                if i in used:
+                    continue
+                n1 = _normalize_for_matching(m["team1"]["teamName"])
+                n2 = _normalize_for_matching(m["team2"]["teamName"])
 
-                # Strategie 2: Team-Beteiligung (echte Team-ID im R32-Spiel)
-                if found is None and af_tid:
-                    for i, m in enumerate(r32_all):
-                        if i in used:
-                            continue
-                        if (m["team1"]["teamId"] == af_tid
-                                or m["team2"]["teamId"] == af_tid):
-                            found = i
-                            break
+                def _partial(a, b):
+                    return 1 if (a in b or b in a) else 0
 
-                # Strategie 3: Composite-Kurzname ("NED/MAR" → {"NLD","MAR"} nach Alias-Auflösung)
-                if found is None:
-                    af_tname = af_team.get("teamName", "")
-                    if "/" in af_tname:
-                        parts = frozenset(
-                            _CODE_ALIASES.get(p.strip().upper(), p.strip().upper())
-                            for p in af_tname.split("/")
-                        )
-                        for i, m in enumerate(r32_all):
-                            if i in used:
-                                continue
-                            shorts = frozenset([
-                                _r32_short(m["team1"]),
-                                _r32_short(m["team2"]),
-                            ])
-                            if shorts == parts:
-                                found = i
-                                break
+                # Normal + Getauscht – höchste Punktzahl gewinnt
+                score_normal  = _partial(exp_t1, n1) + _partial(exp_t2, n2)
+                score_swapped = _partial(exp_t1, n2) + _partial(exp_t2, n1)
+                score = max(score_normal, score_swapped)
 
-                if found is not None:
-                    pair.append(r32_all[found])
-                    used.add(found)
+                if score > best_score:
+                    best_score = score
+                    best_idx = i
 
-            ordered.extend(pair)
+            if best_idx is not None and best_score > 0:
+                ordered.append(r32_all[best_idx])
+                used.add(best_idx)
+            else:
+                ordered.append(_make_placeholder())
 
-        # Nicht zugeordnete R32-Spiele in Originalreihenfolge anhängen
+        # Nicht zugeordnete R32-Spiele hinten anfügen
         for i, m in enumerate(r32_all):
             if i not in used:
                 ordered.append(m)
 
-        # Auf Originallänge auffüllen / kürzen
-        while len(ordered) < len(r32_all):
+        while len(ordered) < 16:
             ordered.append(_make_placeholder())
-        return ordered[:len(r32_all)]
+        return ordered[:16]
+
+    def _reorder_af_by_r32(af_all, r32_ordered):
+        """Ordnet Achtelfinale-Spiele anhand der Sechzehntelfinale-Zubringer-Paare.
+
+        Für AF-Slot i sind R32[2i] und R32[2i+1] die Zubringer.
+        Matching-Strategien (in Priorität):
+          1. winnerTeamId   – greift, sobald R32-Spiele gespielt wurden
+          2. Echter Teamname – direkte Übereinstimmung nach R32-Ende
+          3. Composite-Code – "DEU/PAR" → Teilstrings gegen normalisierte R32-Namen
+             (z.B. "deu" ist Teilstring von "deutschland")
+        """
+        used = set()
+        ordered = []
+
+        for slot_idx in range(8):
+            r32_a = r32_ordered[slot_idx * 2]     if slot_idx * 2     < len(r32_ordered) else None
+            r32_b = r32_ordered[slot_idx * 2 + 1] if slot_idx * 2 + 1 < len(r32_ordered) else None
+
+            r32_names = set()
+            winner_ids = set()
+            for r32m in (r32_a, r32_b):
+                if not r32m or r32m.get("matchId") is None:
+                    continue
+                for tk in ("team1", "team2"):
+                    r32_names.add(_normalize_for_matching(r32m[tk]["teamName"]))
+                if r32m.get("winnerTeamId"):
+                    winner_ids.add(r32m["winnerTeamId"])
+
+            best_idx   = None
+            best_score = 0
+
+            for i, af_m in enumerate(af_all):
+                if i in used:
+                    continue
+                score = 0
+
+                for tk in ("team1", "team2"):
+                    tid  = af_m[tk].get("teamId")
+                    norm = _normalize_for_matching(af_m[tk].get("teamName", ""))
+
+                    # Strategie 1: Sieger-ID (R32 bereits gespielt)
+                    if tid and tid in winner_ids:
+                        score += 10
+
+                    # Strategie 2: echter Teamname
+                    if norm in r32_names:
+                        score += 5
+
+                    # Strategie 3: Composite-Codes ("deu par") → Teilstring gegen R32-Namen
+                    for part in norm.split():
+                        if len(part) >= 3:
+                            for r32n in r32_names:
+                                if part in r32n:
+                                    score += 1
+
+                if score > best_score:
+                    best_score = score
+                    best_idx   = i
+
+            if best_idx is not None and best_score > 0:
+                ordered.append(af_all[best_idx])
+                used.add(best_idx)
+            else:
+                # Fallback: nächste freie Stelle in API-Reihenfolge
+                for i, m in enumerate(af_all):
+                    if i not in used:
+                        ordered.append(m)
+                        used.add(i)
+                        break
+                else:
+                    ordered.append(_make_placeholder())
+
+        # Nicht zugeordnete AF-Spiele hinten anfügen
+        for i, m in enumerate(af_all):
+            if i not in used:
+                ordered.append(m)
+
+        while len(ordered) < 8:
+            ordered.append(_make_placeholder())
+        return ordered[:8]
+
+    # ---------------------------------------------------------------------------
+    # Fallback-Termine (CEST = UTC+2) für Phasen, die noch nicht in der API sind.
+    # Quelle: offizieller FIFA-Spielplan WM 2026.
+    #
+    # Viertelfinale (VF):
+    #   VF[0]: W(DEU/PAR) vs W(FRA/SWE)  ↔  W(KAN/NED/MAR)     → 09.07. MetLife
+    #   VF[1]: W(POR/CRO) vs W(ESP/AUT)  ↔  W(USA/BIH) vs W(BEL/SEN) → 10.07. SoFi
+    #   VF[2]: W(BRA/JPN) vs W(CIV/NOR)  ↔  W(MEX/ECU) vs W(ENG/COD) → 11.07. Miami
+    #   VF[3]: W(ARG/CPV) vs W(AUS/EGY)  ↔  W(SUI/ALG) vs W(COL/GHA) → 11./12.07. KC
+    # ---------------------------------------------------------------------------
+    _FALLBACK_DATETIMES = {
+        # Viertelfinale – Slots 0–3
+        (6, 0): "Do 22:00 – 09.07.2026",   # 16:00 EDT → MetLife, E. Rutherford
+        (6, 1): "Fr 21:00 – 10.07.2026",   # 12:00 PDT → SoFi Stadium, Inglewood
+        (6, 2): "Sa 23:00 – 11.07.2026",   # 17:00 EDT → Hard Rock Stadium, Miami
+        (6, 3): "So 03:00 – 12.07.2026",   # 20:00 CDT → Arrowhead Stadium, KC
+        # Halbfinale – Slots 0–1
+        (7, 0): "Di 21:00 – 14.07.2026",   # 14:00 CDT → AT&T Stadium, Arlington
+        (7, 1): "Mi 21:00 – 15.07.2026",   # 15:00 EDT → Mercedes-Benz, Atlanta
+        # Finale – Slot 0
+        (8, 0): "So 21:00 – 19.07.2026",   # 15:00 EDT → MetLife Stadium, E. Rutherford
+        # Spiel um Platz 3 – Slot 1 (getrennt als third_place behandelt)
+        (8, 1): "Sa 23:00 – 18.07.2026",   # 17:00 EDT → Hard Rock Stadium, Miami
+    }
+
+    def _apply_fallback_dt(matches, phase_oid):
+        """Ersetzt None-formattedDateTime durch offiziellen Fallback-Termin."""
+        result = []
+        for idx, m in enumerate(matches):
+            if m.get("formattedDateTime") is None:
+                fb = _FALLBACK_DATETIMES.get((phase_oid, idx))
+                if fb:
+                    m = dict(m)
+                    m["formattedDateTime"] = fb
+            result.append(m)
+        return result
 
     # Runden aufbauen
-    r32_init = build_round(4, 16, [])            # API-Reihenfolge
-    af_init  = build_round(5, 8,  r32_init)      # AF korrekt via Winner-Matching
-    r32      = _reorder_r32_from_af(r32_init, af_init)  # R32 nach AF-Paarungen sortiert
-    af       = build_round(5, 8,  r32)            # AF auf neugeordnetem R32
-    vf       = build_round(6, 4,  af)
-    hf       = build_round(7, 2,  vf)
-    # Finale-Slot immer genau 1
+    r32_init = build_round(4, 16, [])                        # API-Reihenfolge
+    r32      = _reorder_r32_official(r32_init)               # offizielle Bracket-Reihenfolge
+    af_raw   = list(matches_by_phase.get(5, []))
+    af       = _reorder_af_by_r32(af_raw, r32)              # Composite-/Sieger-Matching
+    vf       = _apply_fallback_dt(build_round(6, 4, af), 6)
+    hf       = _apply_fallback_dt(build_round(7, 2, vf), 7)
+
+    # Finale + Spiel um Platz 3 mit Fallback-Terminen befüllen
+    if final_match.get("formattedDateTime") is None:
+        fb = _FALLBACK_DATETIMES.get((8, 0))
+        if fb:
+            final_match = dict(final_match)
+            final_match["formattedDateTime"] = fb
+    if third_place.get("formattedDateTime") is None:
+        fb = _FALLBACK_DATETIMES.get((8, 1))
+        if fb:
+            third_place = dict(third_place)
+            third_place["formattedDateTime"] = fb
+
     finale_round = [final_match]
 
     rounds = [
