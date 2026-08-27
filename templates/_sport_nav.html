@@ -14,10 +14,10 @@
                 <span class="sport-nav-caret" aria-hidden="true">›</span>
             </button>
             <div class="sport-nav-submenu" id="sport-nav-fussball"{% if not is_fussball %} hidden{% endif %}>
-                <a href="/fussball/wm" class="sport-nav-sublink{% if request.path.startswith('/fussball/wm') %} active{% endif %}">WM 2026</a>
                 <a href="/fussball/champions-league" class="sport-nav-sublink{% if request.path.startswith('/fussball/champions-league') %} active{% endif %}">Champions League</a>
                 <a href="/fussball/dfb-pokal" class="sport-nav-sublink{% if request.path.startswith('/fussball/dfb-pokal') %} active{% endif %}">DFB-Pokal</a>
                 <a href="/fussball/bundesliga" class="sport-nav-sublink{% if request.path.startswith('/fussball/bundesliga') %} active{% endif %}">Bundesliga</a>
+                <a href="/fussball/wm" class="sport-nav-sublink{% if request.path.startswith('/fussball/wm') %} active{% endif %}">WM 2026</a>
             </div>
         </div>
         <a href="/formula1" class="sport-nav-link{% if request.path.startswith('/formula1') %} active{% endif %}">
